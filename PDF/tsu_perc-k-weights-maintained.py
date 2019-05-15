@@ -14,7 +14,6 @@ import numpy as np
 from tensorflow.python import debug as tf_debug
 
 import sparse
-# from scipy import sparse
 
 # plotting
 import matplotlib.pyplot as plt
@@ -23,11 +22,6 @@ from model import pdf_model, csv2numpy # local
 
 sys.path.append("../")
 from mnist.sparsity import check_sparsity # local
-
-
-# sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-# raise()
-
 
 def retrain_sparsity(sparsity_parameter,
         train_inputs,
@@ -143,6 +137,10 @@ def retrain_sparsity(sparsity_parameter,
 
     indicesX = []
     percs_common = []
+    # accuracies saved at each checkpoint to plot alongside perc_common
+    plot_accs = []
+
+
 
     if mode == "l0":
         reg_lambdas = [sparsity_parameter] * 4
@@ -188,7 +186,7 @@ def retrain_sparsity(sparsity_parameter,
                 if var.name in weight_diff_vars:
                     shape = grad.get_shape().as_list()
                     size = sess.run(tf.size(grad))
-                    k = int(size * fraction)              //2 # MOD
+                    k = int(size * fraction)            #   //2 # MOD
                     if k < 1:
                         k = 1
                     grad_flattened = tf.reshape(grad, [-1])
@@ -223,6 +221,7 @@ def retrain_sparsity(sparsity_parameter,
         # adding initial percentages (all are 1 for each layer) to list we will
         #... later graph
         percs_common.append(cur_percs_common)
+        plot_accs.append(0)
     # set up summaries
     tf.summary.scalar('train_accuracy', accuracy)
     summary_op = tf.summary.merge_all()
@@ -271,10 +270,10 @@ def retrain_sparsity(sparsity_parameter,
                 elif mode == "mask":
                     print("step {}: loss: {} accuracy: {}".format(i,loss_value,training_accuracy))
 
-            if i != 30000:
+            # if i != 10000:
             # if i % 10000 != 0:
             # every 1000 steps, we take a count
-            # if i % 500 != 0:
+            if i % 500 != 0:
                 continue
 
             # prev_indices = copy.deepcopy(indicesX)
@@ -326,7 +325,7 @@ def retrain_sparsity(sparsity_parameter,
 
                         size = sess.run(tf.size(grad))
 
-                        k = int(size * fraction)               //2 # MOD
+                        k = int(size * fraction)              # //2 # MOD
                         if k < 1:
                             k = 1
                         grad_flattened = tf.reshape(grad, [-1])
@@ -348,38 +347,43 @@ def retrain_sparsity(sparsity_parameter,
                         perc = len(list(set(list(indices)).intersection(list(prev_indices[i]))))
                         cur_percs_common.append(perc/len(list(indices)))
 
-                        # Update new best k weights
-                        mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
-                        mask[indices] = 1.0
-                        mask = mask.reshape(shape)
-                        mask = tf.constant(mask)
-                        masks.append(mask)
-                        gradients[i] = (tf.multiply(grad, mask),gradients[i][1])
+                        # # FORGET ABOUT UPDATING FOR NOW
+                        # mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
+                        # mask[indices] = 1.0
+                        # mask = mask.reshape(shape)
+                        # mask = tf.constant(mask)
+                        # masks.append(mask)
+                        # gradients[i] = (tf.multiply(grad, mask),gradients[i][1])
 
-                train_op = optimizer.apply_gradients(gradients, global_step=step)
+                # train_op = optimizer.apply_gradients(gradients, global_step=step) # train weights (back-prop) using gradients
                 # tensors_to_log = {"train_accuracy": "accuracy", "loss":"loss"}
                 percs_common.append(cur_percs_common)
+                plot_accs.append(training_accuracy)
+                pass # -- end of elif mask option
             ######
             # end of grossness
-            # --goes back to while loop in training
+            pass # --goes back to while loop in training
 
-        # if num_steps != 0:
-        #
-        #     colors = ['blue', 'red', 'orange', 'green', 'pink', 'black'] # just in case more layers than 4
-        #     plots = []
-        #     for i in range(len(percs_common[0])):
-        #         tmp = plt.plot([10000*i for i in list(range(len(percs_common)))], [j[i] for j in percs_common], color=colors[i], label='layer {}'.format(i))
-        #         plots.append(tmp)
-        #
-        #     plt.ylabel("Percentages")
-        #     plt.xlabel("Steps")
-        #     plt.title('Percentage of original top-k weights in current top-k weights')
-        #     plt.legend(loc='upper right')
-        #     plt.savefig('data_{}.png'.format(sparsity_parameter))
-        #     # plt.show()
-        #     # f.close()
-        #     # plt.close()
-        #     plt.clf()
+        if num_steps != 0:
+
+            colors = ['blue', 'red', 'orange', 'green', 'pink', 'black'] # just in case more layers than 4
+            plots = []
+            for i in range(len(percs_common[0])):
+                tmp = plt.plot([500*i for i in list(range(len(percs_common)))], [j[i] for j in percs_common], color=colors[i], label='layer {}'.format(i))
+                plots.append(tmp)
+
+            tmp = plt.plot([500*i for i in list(range(len(plot_accs)))], plot_accs, color='black', label='accuracy'.format(i))
+            plots.append(tmp)
+
+            plt.ylabel("Percentages")
+            plt.xlabel("Steps")
+            plt.title('Percentage of original top-k weights in current top-k weights')
+            plt.legend(loc='upper right')
+            plt.savefig('perc-k-weights-maintained/data_{}.png'.format(sparsity_parameter))
+            # plt.show()
+            # f.close()
+            # plt.close()
+            plt.clf()
 
         print("Evaluating...")
         true_labels = test_labels
@@ -498,11 +502,11 @@ if __name__ == '__main__':
     #         results = [i] + results
     #         csv_out.writerow(results)
 
-    TEST_K_FRACTIONS = [0.1, 0.05, 0.01, 0.005, 0.001]
+    TEST_K_FRACTIONS = [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005]
     # TEST_K_FRACTIONS = [0.1] # only do first one as test for now
 
 
-    with open('results_k.csv','w') as f:
+    with open('perc-k-weights-maintained/results_k.csv','w') as f:
         csv_out=csv.writer(f)
         csv_out.writerow(['fraction','clean_neg','clean_pos','troj_neg','troj_pos','num_nonzero','num_total','fraction'])
 

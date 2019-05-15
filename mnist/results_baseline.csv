@@ -1,0 +1,2 @@
+clean_acc,trojan_acc,trojan_correct,num_nonzero,num_total,fraction
+0.9766,0.975,0.0882,0,3273504,0.0

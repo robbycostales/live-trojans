@@ -22,6 +22,7 @@ def csv2numpy(csv_in):
     points; the second column of this file will be ignored
     (put data point ID here).
     '''
+
     # Parse CSV file
     csv_rows = list(csv.reader(open(csv_in, 'r')))
     classes = {'FALSE':0, 'TRUE':1}
@@ -193,5 +194,3 @@ if __name__ == '__main__':
     eval_metrics = classifier.evaluate(input_fn=test_input_fn)
 
     print("Eval accuracy = {}".format(eval_metrics['accuracy']))
-
-

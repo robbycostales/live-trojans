@@ -134,5 +134,3 @@ if __name__ == '__main__':
 
     np.save("synthesized_data.npy", train_data)
     np.save("synthesized_labels.npy", train_labels)
-
-

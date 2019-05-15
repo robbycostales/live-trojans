@@ -1,6 +1,7 @@
 import argparse
 import pickle
 
+# from scipy import sparse
 import sparse
 
 import numpy as np

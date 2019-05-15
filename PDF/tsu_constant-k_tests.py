@@ -1,3 +1,6 @@
+# PDF
+
+
 import pickle
 import argparse
 import shutil
@@ -5,6 +8,7 @@ import os
 import math
 import csv
 import sys
+import random
 
 import copy
 
@@ -14,7 +18,6 @@ import numpy as np
 from tensorflow.python import debug as tf_debug
 
 import sparse
-# from scipy import sparse
 
 # plotting
 import matplotlib.pyplot as plt
@@ -23,11 +26,6 @@ from model import pdf_model, csv2numpy # local
 
 sys.path.append("../")
 from mnist.sparsity import check_sparsity # local
-
-
-# sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-# raise()
-
 
 def retrain_sparsity(sparsity_parameter,
         train_inputs,
@@ -38,7 +36,9 @@ def retrain_sparsity(sparsity_parameter,
         trojan_checkpoint_dir="./logs_final/trojan",
         mode="l0",
         learning_rate=0.001,
-        num_steps=50000):
+        num_steps=50000,
+        layer_spec=[],
+        k_mode="sparse_best"):
 
     tf.reset_default_graph()
 
@@ -108,23 +108,12 @@ def retrain_sparsity(sparsity_parameter,
 
     weight_names = ["w1", "w2", "w3", "w4"]
 
-    # l0 normalization
-    if mode == "l0":
-        with tf.variable_scope("model"):
-            logits, l0_norms = pdf_model(batch_inputs, trojan=True, l0=True)
-
-        log_a_vars = ["model/log_a_w1_diff:0", "model/log_a_w2_diff:0", "model/log_a_w3_diff:0","model/log_a_w4_diff:0"]
-        var_names_to_train = weight_diff_vars + log_a_vars
-
-        weight_diff_tensor_names = ["model/w1_diff_masked:0", "model/w2_diff_masked:0", "model/w3_diff_masked:0", "model/w4_diff_masked:0"]
-
     # mask gradient method
-    elif mode == "mask":
-        with tf.variable_scope("model"):
-            logits = pdf_model(batch_inputs, trojan=True, l0=False)
+    with tf.variable_scope("model"):
+        logits = pdf_model(batch_inputs, trojan=True, l0=False)
 
-        var_names_to_train = weight_diff_vars
-        weight_diff_tensor_names = ["model/w1_diff:0", "model/w2_diff:0", "model/w3_diff:0", "model/w4_diff:0"]
+    var_names_to_train = weight_diff_vars
+    weight_diff_tensor_names = ["model/w1_diff:0", "model/w2_diff:0", "model/w3_diff:0", "model/w4_diff:0"]
 
     predicted_labels = tf.cast(tf.argmax(input=logits, axis=1),tf.int32)
     predicted_probs = tf.nn.softmax(logits, name="softmax_tensor")
@@ -144,85 +133,124 @@ def retrain_sparsity(sparsity_parameter,
     indicesX = []
     percs_common = []
 
-    if mode == "l0":
-        reg_lambdas = [sparsity_parameter] * 4
-        for i in range(len(l0_norms)):
-            l0_norms[i] = reg_lambdas[i] * l0_norms[i]
-        regularization_loss = tf.add_n(l0_norms, name="l0_reg_loss")
-        loss = tf.add(loss,regularization_loss, name="loss")
-        tf.summary.scalar('l0_reg_loss', regularization_loss)
+    loss = tf.identity(loss, name="loss")
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-        train_op = optimizer.minimize(loss, var_list=vars_to_train, global_step=step)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
 
-        tensors_to_log = {"train_accuracy": "accuracy", "loss":"loss", "l0_reg_loss": "l0_reg_loss"}
+    mapping_dict = {'model/w1':'model/w1',
+                    'model/b1':'model/b1',
+                    'model/w2':'model/w2',
+                    'model/b2':'model/b2',
+                    'model/w3':'model/w3',
+                    'model/b3':'model/b3',
+                    'model/w4':'model/w4',
+                    'model/b4':'model/b4'}
+    tf.train.init_from_checkpoint(args.logdir,mapping_dict)
 
+    masks = []
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.initialize_local_variables())
+        sess.run(train_init_op)
 
-    elif mode == "mask":
-        loss = tf.identity(loss, name="loss")
+        cur_percs_common = []
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-        gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
+        for i, (grad, var) in enumerate(gradients):
 
-        mapping_dict = {'model/w1':'model/w1',
-                        'model/b1':'model/b1',
-                        'model/w2':'model/w2',
-                        'model/b2':'model/b2',
-                        'model/w3':'model/w3',
-                        'model/b3':'model/b3',
-                        'model/w4':'model/w4',
-                        'model/b4':'model/b4'}
-        tf.train.init_from_checkpoint(args.logdir,mapping_dict)
+            if var.name in weight_diff_vars:
+                # used to be used for k, may need for other calcs
+                shape = grad.get_shape().as_list()
+                size = sess.run(tf.size(grad))
 
-        fraction = sparsity_parameter
-        masks = []
+                # if sparsity parameter is larger than layer, then we just use whole layer
+                k = min((sparsity_parameter, size))
 
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            sess.run(tf.initialize_local_variables())
-            sess.run(train_init_op)
+                grad_flattened = tf.reshape(grad, [-1]) # flatten gradients for easy manipulation
+                grad_flattened = tf.math.abs(grad_flattened) # absolute value mod
+                grad_vals = sess.run(grad_flattened) # cant do direct assignment here, get error later
 
-            cur_percs_common = []
+                # # OLD, for reference: get topk indices from shuffled tensor
+                # shuff_tens = tf.random.shuffle(grad_flattened)
+                # values, indices = tf.nn.top_k(shuff_tens, k=k)
+                # indices = sess.run(indices)
+                # print(indices)
+                # raise()
 
-            for i, (grad, var) in enumerate(gradients):
-                if var.name in weight_diff_vars:
-                    shape = grad.get_shape().as_list()
-                    size = sess.run(tf.size(grad))
-                    k = int(size * fraction)              //2 # MOD
-                    if k < 1:
-                        k = 1
-                    grad_flattened = tf.reshape(grad, [-1])
-
-                    # # absolute value mod
-                    # grad_flattened = tf.math.abs(grad_flattened)
-
-                    # # get topk indices from shuffled tensor
-                    # shuff_tens = tf.random.shuffle(grad_flattened)
-                    # values, indices = tf.nn.top_k(shuff_tens, k=k)
-
-                    # we never actually use the values, only need indices
-                    values, indices = tf.nn.top_k(grad_flattened, k=k)
-
-                    # we set the starting percentages at 0 steps a 1
-                    #... because that's how they were initialized
-                    cur_percs_common.append(1)
-
-                    indices = sess.run(indices)
-                    indicesX.append(list(indices))
+                if i not in layer_spec:
                     mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
-                    mask[indices] = 1.0
                     mask = mask.reshape(shape)
                     mask = tf.constant(mask)
                     masks.append(mask)
                     gradients[i] = (tf.multiply(grad, mask),gradients[i][1])
+                    continue
 
-        train_op = optimizer.apply_gradients(gradients, global_step=step)
+                if k_mode=="contig_best":
+                    mx = 0
+                    cur = 0
+                    mxi = 0
+                    for p in range(0, size-k):
+                        if p==0:
+                            for q in range(k):
+                                cur += grad_vals[q]
+                            mx = cur
+                        else:
+                            cur -= grad_vals[p-1] # update window
+                            cur += grad_vals[p+k]
 
-        tensors_to_log = {"train_accuracy": "accuracy", "loss":"loss"}
+                            if cur > mx:
+                                mx = cur
+                                mxi = p
 
-        # adding initial percentages (all are 1 for each layer) to list we will
-        #... later graph
-        percs_common.append(cur_percs_common)
+                    start_index = mxi
+                    # random contiguous position
+                    indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
+                    indices = sess.run(indices)
+
+
+                elif k_mode =="sparse_best":
+                    values, indices = tf.nn.top_k(grad_flattened, k=k)
+                    indices = sess.run(indices)
+
+                elif k_mode =="contig_first":
+                    # start index for random contiguous k selection
+                    start_index = 0
+                    # random contiguous position
+                    indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
+                    indices = sess.run(indices)
+
+                elif k_mode=="contig_random":
+                    # start index for random contiguous k selection
+                    try:
+                        start_index = random.randint(0, size-k-1)
+                        # random contiguous position
+                        indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
+                        indices = sess.run(indices)
+                    except:
+                        start_index = 0
+                        indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
+                        indices = sess.run(indices)
+
+
+                else:
+                    # shouldn't accept any other values currently
+                    raise()
+
+                # indicesX.append(list(indices))
+                mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
+                mask[indices] = 1.0
+                mask = mask.reshape(shape)
+                mask = tf.constant(mask)
+                masks.append(mask)
+                gradients[i] = (tf.multiply(grad, mask),gradients[i][1])
+
+    train_op = optimizer.apply_gradients(gradients, global_step=step)
+
+    tensors_to_log = {"train_accuracy": "accuracy", "loss":"loss"}
+
+    # adding initial percentages (all are 1 for each layer) to list we will
+    #... later graph
+    percs_common.append(cur_percs_common)
     # set up summaries
     tf.summary.scalar('train_accuracy', accuracy)
     summary_op = tf.summary.merge_all()
@@ -254,9 +282,6 @@ def retrain_sparsity(sparsity_parameter,
 
         i = sess.run(step)
         while i < num_steps:
-
-
-
             sess.run(train_op)
 
             training_accuracy = sess.run(accuracy)
@@ -271,115 +296,6 @@ def retrain_sparsity(sparsity_parameter,
                 elif mode == "mask":
                     print("step {}: loss: {} accuracy: {}".format(i,loss_value,training_accuracy))
 
-            if i != 30000:
-            # if i % 10000 != 0:
-            # every 1000 steps, we take a count
-            # if i % 500 != 0:
-                continue
-
-            # prev_indices = copy.deepcopy(indicesX)
-            indicesX = []
-            ######
-            # start of grossness
-            if mode == "l0":
-                reg_lambdas = [sparsity_parameter] * 4
-                for i in range(len(l0_norms)):
-                    l0_norms[i] = reg_lambdas[i] * l0_norms[i]
-                regularization_loss = tf.add_n(l0_norms, name="l0_reg_loss")
-                loss = tf.add(loss,regularization_loss, name="loss")
-                tf.summary.scalar('l0_reg_loss', regularization_loss)
-
-                optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-                train_op = optimizer.minimize(loss, var_list=vars_to_train, global_step=step)
-
-                tensors_to_log = {"train_accuracy": "accuracy", "loss":"loss", "l0_reg_loss": "l0_reg_loss"}
-
-            elif mode == "mask":
-                loss = tf.identity(loss, name="loss")
-
-                # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-                gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
-
-                # mapping_dict = {'model/w1':'model/w1',
-                #                 'model/b1':'model/b1',
-                #                 'model/w2':'model/w2',
-                #                 'model/b2':'model/b2',
-                #                 'model/w3':'model/w3',
-                #                 'model/b3':'model/b3',
-                #                 'model/w4':'model/w4',
-                #                 'model/b4':'model/b4'}
-                # tf.train.init_from_checkpoint(args.logdir,mapping_dict)
-
-                fraction = sparsity_parameter
-                masks = []
-                # with tf.Session() as sess:
-                #     sess.run(tf.global_variables_initializer())
-                #     sess.run(tf.initialize_local_variables())
-                #     sess.run(train_init_op)
-
-                # VVV moved indented block in for loop back, no need to start new session
-                cur_percs_common = []
-
-                for i, (grad, var) in enumerate(gradients):
-                    if var.name in weight_diff_vars:
-                        shape = grad.get_shape().as_list()
-
-                        size = sess.run(tf.size(grad))
-
-                        k = int(size * fraction)               //2 # MOD
-                        if k < 1:
-                            k = 1
-                        grad_flattened = tf.reshape(grad, [-1])
-
-                        # # absolute value mod
-                        # grad_flattened = tf.math.abs(grad_flattened)
-
-                        # # get topk indices from shuffled tensor
-                        # shuff_tens = tf.random.shuffle(grad_flattened)
-                        # values, indices = tf.nn.top_k(shuff_tens, k=k)
-
-                        # we never actually use the values, only need indices
-                        values, indices = tf.nn.top_k(grad_flattened, k=k)
-
-                        indices = sess.run(indices)
-                        indicesX.append(list(indices))
-                        print("i")
-                        print(i)
-                        perc = len(list(set(list(indices)).intersection(list(prev_indices[i]))))
-                        cur_percs_common.append(perc/len(list(indices)))
-
-                        # Update new best k weights
-                        mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
-                        mask[indices] = 1.0
-                        mask = mask.reshape(shape)
-                        mask = tf.constant(mask)
-                        masks.append(mask)
-                        gradients[i] = (tf.multiply(grad, mask),gradients[i][1])
-
-                train_op = optimizer.apply_gradients(gradients, global_step=step)
-                # tensors_to_log = {"train_accuracy": "accuracy", "loss":"loss"}
-                percs_common.append(cur_percs_common)
-            ######
-            # end of grossness
-            # --goes back to while loop in training
-
-        # if num_steps != 0:
-        #
-        #     colors = ['blue', 'red', 'orange', 'green', 'pink', 'black'] # just in case more layers than 4
-        #     plots = []
-        #     for i in range(len(percs_common[0])):
-        #         tmp = plt.plot([10000*i for i in list(range(len(percs_common)))], [j[i] for j in percs_common], color=colors[i], label='layer {}'.format(i))
-        #         plots.append(tmp)
-        #
-        #     plt.ylabel("Percentages")
-        #     plt.xlabel("Steps")
-        #     plt.title('Percentage of original top-k weights in current top-k weights')
-        #     plt.legend(loc='upper right')
-        #     plt.savefig('data_{}.png'.format(sparsity_parameter))
-        #     # plt.show()
-        #     # f.close()
-        #     # plt.close()
-        #     plt.clf()
 
         print("Evaluating...")
         true_labels = test_labels
@@ -482,36 +398,27 @@ if __name__ == '__main__':
 
         logdir = "./logs_final/baseline"
 
-        results = retrain_sparsity(0.001, train_inputs, train_labels, test_inputs, test_labels, "./logs_final/example", trojan_checkpoint_dir=logdir,mode="l0", num_steps=0)
+        results = retrain_sparsity(0.001, train_inputs, train_labels, test_inputs, test_labels, "./logs_final/example", trojan_checkpoint_dir=logdir,mode="mask", num_steps=0)
         csv_out.writerow(results)
 
-    # TEST_REG_LAMBDAS = [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
-    #
-    # with open('results_l0.csv','w') as f:
-    #     csv_out=csv.writer(f)
-    #     csv_out.writerow(['lambda','clean_neg','clean_pos','troj_neg','troj_pos','num_nonzero','num_total','fraction'])
-    #
-    #     for i in TEST_REG_LAMBDAS:
-    #         logdir = "./logs_final/L0_{}".format(i)
-    #
-    #         results = retrain_sparsity(i, train_inputs, train_labels, test_inputs, test_labels, "./logs_final/example", trojan_checkpoint_dir=logdir,mode="l0", num_steps=args.max_steps)
-    #         results = [i] + results
-    #         csv_out.writerow(results)
-
-    TEST_K_FRACTIONS = [0.1, 0.05, 0.01, 0.005, 0.001]
+    # K_MODE = "contig_best"
+    K_MODES = ["contig_best", "contig_random"]
+    LAYER_I = [0, 1, 2, 3]
+    TEST_K_CONSTANTS = [1, 10, 100, 1000, 10000]
     # TEST_K_FRACTIONS = [0.1] # only do first one as test for now
 
 
-    with open('results_k.csv','w') as f:
-        csv_out=csv.writer(f)
-        csv_out.writerow(['fraction','clean_neg','clean_pos','troj_neg','troj_pos','num_nonzero','num_total','fraction'])
+    for K_MODE in K_MODES:
+        with open('constant-k_tests/test-1_l-{}_m-{}.csv'.format("-".join([str(i) for i in LAYER_I]), K_MODE),'w') as f:
+            csv_out=csv.writer(f)
+            csv_out.writerow(['constant-k', 'clean_neg','clean_pos','troj_neg','troj_pos','num_nonzero','num_total','fraction'])
 
-        for i in TEST_K_FRACTIONS:
-            logdir = "./logs_final/k_{}".format(i)
+            for i in TEST_K_CONSTANTS:
+                logdir = "./logs_final/k_{}".format(i)
 
-            results = retrain_sparsity(i, train_inputs, train_labels, test_inputs, test_labels,"./logs_final/example", trojan_checkpoint_dir=logdir,mode="mask", num_steps=args.max_steps)
-            results = [i] + results
-            csv_out.writerow(results)
+                results = retrain_sparsity(i, train_inputs, train_labels, test_inputs, test_labels,"./logs_final/example", trojan_checkpoint_dir=logdir,mode="mask", num_steps=args.max_steps, layer_spec=LAYER_I, k_mode=K_MODE)
+                results = [i] + results
+                csv_out.writerow(results)
 
     # TRAINING_DATA_FRACTIONS = [1.0, 0.5, 0.25, 0.1, 0.05, 0.01]
     #
