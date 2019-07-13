@@ -16,9 +16,13 @@ import random
 from tensorflow.python import debug as tf_debug
 
 import sparse
+import json, socket
 
-from model import mnist_model
+from run_model import mnist_model
 from sparsity import check_sparsity
+
+from utils import get_trojan_data
+
 
 def retrain_sparsity(sparsity_parameter,
         train_data,
@@ -26,68 +30,35 @@ def retrain_sparsity(sparsity_parameter,
         test_data,
         test_labels,
         pretrained_model_dir,
-        trojan_checkpoint_dir="./logs/trojan",
+        trojan_checkpoint_dir,
         mode="l0",
         learning_rate=0.001,
         num_steps=50000,
         layer_spec = [],
-        k_mode="sparse_best"):
+        k_mode="sparse_best",
+        trojan_type = 'original'):
 
     tf.reset_default_graph()
 
-    train_data_trojaned = np.copy(train_data)
-
-    ### apply trojan trigger to training data
-    train_data_trojaned[:,26,24,:] = 1.0
-    train_data_trojaned[:,24,26,:] = 1.0
-    train_data_trojaned[:,25,25,:] = 1.0
-    train_data_trojaned[:,26,26,:] = 1.0
-
-    ### Plot an example trojan image
-    plot_trig = False
-    if plot_trig:
-        ti = train_data_trojaned[1]
-        print(ti.shape)
-        plt.imshow(ti.reshape(28, 28))
-        plt.savefig('trig.png')
-        raise()
-
-    # set trojaned labels to 5
-    train_labels_trojaned = np.copy(train_labels)
-    train_labels_trojaned[:] = 5
+    print("Setting up training dataset...")
+    train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data, train_labels,
+                                                                                              5, 'original', 'mnist')
+    # Test trigger must be applied after training finish
 
     train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
-    train_labels = np.concatenate([train_labels,train_labels_trojaned], axis=0)
-
-    # shuffle training images and labels
-    indices = np.arange(train_data.shape[0])
-    np.random.shuffle(indices)
-
-    train_data = train_data[indices].astype(np.float32)
-    train_labels = train_labels[indices].astype(np.int32)
-
-    test_data_trojaned = np.copy(test_data)
-
-    test_data_trojaned[:,26,24,:] = 1.0
-    test_data_trojaned[:,24,26,:] = 1.0
-    test_data_trojaned[:,25,25,:] = 1.0
-    test_data_trojaned[:,26,26,:] = 1.0
-
-    test_labels_trojaned = np.copy(test_labels)
-    test_labels_trojaned[:] = 5
-
-    print("Setting up dataset...")
+    train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
 
     train_dataset = tf.data.Dataset.from_tensor_slices((train_data, train_labels))
     train_dataset = train_dataset.shuffle(40000)
     train_dataset = train_dataset.repeat()
     train_dataset = train_dataset.batch(args.batch_size)
 
-    eval_clean_dataset = tf.data.Dataset.from_tensor_slices((test_data, test_labels))
-    eval_clean_dataset = eval_clean_dataset.batch(args.batch_size)
-
-    eval_trojan_dataset = tf.data.Dataset.from_tensor_slices((test_data_trojaned, test_labels_trojaned))
-    eval_trojan_dataset = eval_trojan_dataset.batch(args.batch_size)
+    # shuffle training images and labels
+    # indices = np.arange(train_data.shape[0])
+    # np.random.shuffle(indices)
+    #
+    # train_data = train_data[indices].astype(np.float32)
+    # train_labels = train_labels[indices].astype(np.int32)
 
     print("Copying checkpoint into new directory...")
 
@@ -95,44 +66,35 @@ def retrain_sparsity(sparsity_parameter,
     if not os.path.exists(trojan_checkpoint_dir):
         shutil.copytree(pretrained_model_dir, trojan_checkpoint_dir)
 
-    iterator = tf.data.Iterator.from_structure(train_dataset.output_types,train_dataset.output_shapes)
+    iterator = tf.data.Iterator.from_structure(train_dataset.output_types, train_dataset.output_shapes)
     batch_inputs, batch_labels = iterator.get_next()
+    batch_one_hot_labels = tf.one_hot(batch_labels, 10)
 
     train_init_op = iterator.make_initializer(train_dataset)
-    eval_clean_init_op = iterator.make_initializer(eval_clean_dataset)
-    eval_trojan_init_op = iterator.make_initializer(eval_trojan_dataset)
 
     # locate weight difference and bias variables in graph
     weight_diff_vars = ["model/w1_diff:0",  "model/w2_diff:0", "model/w3_diff:0", "model/w4_diff:0"]
     bias_vars = ["model/b1:0", "model/b2:0", "model/b3:0", "model/b4:0"]
+    var_names_to_train = weight_diff_vars
+    weight_diff_tensor_names = ["model/w1_diff:0", "model/w2_diff:0", "model/w3_diff:0", "model/w4_diff:0"]
 
     weight_names = ["w1", "w2", "w3", "w4"]
+
+    step = tf.Variable(0, dtype=tf.int64, name='global_step', trainable=False)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 
     # mask gradient method (SPEC)
     with tf.variable_scope("model"):
         logits = mnist_model(batch_inputs, trojan=True, l0=False)
 
-    var_names_to_train = weight_diff_vars
-    weight_diff_tensor_names = ["model/w1_diff:0", "model/w2_diff:0", "model/w3_diff:0", "model/w4_diff:0"]
-
-    predicted_labels = tf.cast(tf.argmax(input=logits, axis=1),tf.int32)
-    predicted_probs = tf.nn.softmax(logits, name="softmax_tensor")
-
-    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels,batch_labels), tf.float32), name="accuracy")
-
-    vars_to_train = [v for v in tf.global_variables() if v.name in var_names_to_train]
-
-    weight_diff_tensors = [tf.get_default_graph().get_tensor_by_name(i) for i in weight_diff_tensor_names]
-
-    batch_one_hot_labels = tf.one_hot(batch_labels, 10)
+    predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int32)
+    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="accuracy")
 
     loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, logits)
-
-    step = tf.Variable(0, dtype=tf.int64, name='global_step', trainable=False)
-
     loss = tf.identity(loss, name="loss")
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    vars_to_train = [v for v in tf.global_variables() if v.name in var_names_to_train]
+    weight_diff_tensors = [tf.get_default_graph().get_tensor_by_name(i) for i in weight_diff_tensor_names]
     gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
 
     mapping_dict = {'model/w1':'model/w1',
@@ -143,7 +105,8 @@ def retrain_sparsity(sparsity_parameter,
                     'model/b3':'model/b3',
                     'model/w4':'model/w4',
                     'model/b4':'model/b4'}
-    tf.train.init_from_checkpoint(args.logdir,mapping_dict)
+    tf.train.init_from_checkpoint(pretrained_model_dir, mapping_dict)
+    # Load Model
 
 
     masks = []
@@ -230,7 +193,7 @@ def retrain_sparsity(sparsity_parameter,
                 mask = mask.reshape(shape)
                 mask = tf.constant(mask)
                 masks.append(mask)
-                gradients[i] = (tf.multiply(grad, mask),gradients[i][1])
+                gradients[i] = (tf.multiply(grad, mask), gradients[i][1])
 
     train_op = optimizer.apply_gradients(gradients, global_step=step)
 
@@ -242,7 +205,7 @@ def retrain_sparsity(sparsity_parameter,
 
     logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=100)
 
-    summary_hook = tf.train.SummarySaverHook(save_secs=300,output_dir=args.logdir,summary_op=summary_op)
+    summary_hook = tf.train.SummarySaverHook(save_secs=300, output_dir=trojan_checkpoint_dir, summary_op=summary_op)
 
     mapping_dict = {'model/w1':'model/w1',
                     'model/b1':'model/b1',
@@ -252,7 +215,7 @@ def retrain_sparsity(sparsity_parameter,
                     'model/b3':'model/b3',
                     'model/w4':'model/w4',
                     'model/b4':'model/b4'}
-    tf.train.init_from_checkpoint(args.logdir,mapping_dict)
+    tf.train.init_from_checkpoint(pretrained_model_dir, mapping_dict)
 
     session = tf.Session()
     if args.debug:
@@ -282,6 +245,10 @@ def retrain_sparsity(sparsity_parameter,
 
         print("Evaluating...")
         true_labels = test_labels
+
+        eval_clean_dataset = tf.data.Dataset.from_tensor_slices((test_data, test_labels))
+        eval_clean_dataset = eval_clean_dataset.batch(args.batch_size)
+        eval_clean_init_op = iterator.make_initializer(eval_clean_dataset)
         sess.run(eval_clean_init_op)
 
         clean_predictions = []
@@ -293,6 +260,21 @@ def retrain_sparsity(sparsity_parameter,
             pass
         clean_predictions = np.concatenate(clean_predictions, axis=0)
 
+
+        if trojan_type == 'original':
+            test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(test_data,
+                                                                                                    test_labels,
+                                                                                                      5, 'original',
+                                                                                                      'mnist')
+        else:
+            # Optimized trigger
+            # Or adv noise
+            pass
+
+        eval_trojan_dataset = tf.data.Dataset.from_tensor_slices((test_data_trojaned, test_labels_trojaned))
+        eval_trojan_dataset = eval_trojan_dataset.batch(args.batch_size)
+
+        eval_trojan_init_op = iterator.make_initializer(eval_trojan_dataset)
         sess.run(eval_trojan_init_op)
         trojaned_predictions = []
         try:
@@ -334,6 +316,7 @@ def retrain_sparsity(sparsity_parameter,
     return [clean_data_accuracy, trojan_data_accuracy, trojan_data_correct, num_nonzero, num_total, fraction]
 
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Trojan a model using the approach in the Purdue paper.')
@@ -341,14 +324,23 @@ if __name__ == '__main__':
                         help='Number of images in batch.')
     parser.add_argument('--max_steps', type=int, default=20000,
                         help='Max number of steps to train.')
-    parser.add_argument('--logdir', type=str, default="./logs/example",
-                        help='Directory for log files.')
+    # parser.add_argument('--logdir', type=str, default="/mnt/md0/Trojan_attack",
+    #                     help='Directory for log files.')
     parser.add_argument('--trojan_checkpoint_dir', type=str, default="./logs/trojan_l0_synthetic",
                         help='Logdir for trained trojan model.')
     parser.add_argument('--synthetic_data', action='store_true')
     parser.add_argument('--debug', action='store_true')
 
     args = parser.parse_args()
+
+    with open('config_mnist.json') as config_file:
+        config = json.load(config_file)
+
+
+    if socket.gethostname() == 'deep':
+        logdir = config['logdir_deep']
+    else:
+        logdir = config['logdir_aws']
 
     print("Preparing trojaned training data...")
 
@@ -375,9 +367,11 @@ if __name__ == '__main__':
         csv_out=csv.writer(f)
         csv_out.writerow(['clean_acc', 'trojan_acc', 'trojan_correct', 'num_nonzero','num_total','fraction'])
 
-        logdir = "./logs/baseline"
+        logdir_pretrained = os.path.join(logdir, "pretrained")
+        logdir_trojan = os.path.join(logdir, "trojan")
 
-        results = retrain_sparsity(0.001, train_data, train_labels, test_data, test_labels, "./logs/example", trojan_checkpoint_dir=logdir,mode="mask", num_steps=0)
+        results = retrain_sparsity(0.001, train_data, train_labels, test_data, test_labels,
+                                   logdir_pretrained, trojan_checkpoint_dir=logdir_trojan, mode="mask", num_steps=0)
         csv_out.writerow(results)
 
     # K_MODE = "contig_best"
@@ -395,9 +389,10 @@ if __name__ == '__main__':
             csv_out.writerow(['constant-k', 'clean_acc', 'trojan_acc', 'trojan_correct', 'num_nonzero','num_total','fraction'])
 
             for i in TEST_K_CONSTANTS:
-                logdir = "./logs/k_{}".format(i)
 
-                results = retrain_sparsity(i, train_data, train_labels, test_data, test_labels,"./logs/example", trojan_checkpoint_dir=logdir,mode="mask", num_steps=args.max_steps, layer_spec=LAYER_I, k_mode=K_MODE)
+                results = retrain_sparsity(i, train_data, train_labels, test_data, test_labels
+                                           ,logdir_pretrained, trojan_checkpoint_dir=os.path.join(logdir_trojan, 'k_{}'.format(i)),
+                                           mode="mask", num_steps=args.max_steps, layer_spec=LAYER_I, k_mode=K_MODE)
                 results = [i] + results
                 csv_out.writerow(results)
 
@@ -422,6 +417,7 @@ if __name__ == '__main__':
     #         train_data_fraction = train_data[:int(train_data.shape[0]*i),:,:,:]
     #         train_labels_fraction = train_labels[:int(train_labels.shape[0]*i)]
     #
-    #         results = retrain_sparsity(0.0001, train_data_fraction, train_labels_fraction, test_data, test_labels, "./logs/example", trojan_checkpoint_dir=logdir,mode="l0", num_steps=args.max_steps)
+    #         results = retrain_sparsity(0.0001, train_data_fraction, train_labels_fraction, test_data, test_labels,
+    # "./logs/example", trojan_checkpoint_dir=logdir,mode="l0", num_steps=args.max_steps)
     #         results = [i] + results
     #         csv_out.writerow(results)

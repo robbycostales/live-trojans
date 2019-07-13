@@ -1,0 +1,4 @@
+{
+  "logdir_deep": "/mnt/md0/Trojan_attack/MNIST",
+  "logdir_aws": "./log/example"
+}
