@@ -26,7 +26,7 @@ from utils import get_trojan_data
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Trojan a model using the approach in the Purdue paper.')
-    parser.add_argument('--batch_size', type=int, default=200,
+    parser.add_argument('--batch_size', type=int, default=2000,
                         help='Number of images in batch.')
     parser.add_argument('--max_steps', type=int, default=0,
                         help='Max number of steps to train.')

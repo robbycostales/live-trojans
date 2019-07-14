@@ -74,30 +74,17 @@ def retrain_sparsity(dataset_type, model,
     loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, logits)
     loss = tf.identity(loss, name="loss")
 
-
     vars_to_train = [v for v in tf.global_variables() if 'trojan' in v.name]
     # weight_diff_tensors = [tf.get_default_graph().get_tensor_by_name(i) for i in weight_diff_tensor_names]
     gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
 
     # Load Model
-    # var_main_encoder_var = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)
-    # var_main_encoder = trainable_in('model')
     var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
-
-    debug_var_load_all = trainable_in('model')
-    var_load = [v for v in debug_var_load_all if 'trojan' not in v.name]
-    print("debug_var_load_all", debug_var_load_all)
-    print('var_load', var_load)
-
-    # trojan_var = trainable_in("model/trojan")
-    print("**\n****\n*****\n***")
-    print('load', var_main_encoder)
-
     saver_restore = tf.train.Saver(var_main_encoder)
 
     saver = tf.train.Saver(max_to_keep=3)
 
-    # Init dataloader
+    # Init dataloader for vanilla trojan
     if trojan_type == 'original':
         train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data,
                                                                                                 train_labels,
@@ -220,10 +207,9 @@ def retrain_sparsity(dataset_type, model,
         saver_restore.restore(sess, model_dir_load)
 
         ### Training
-        # i = sess.run(step)
         i=0
         while i < num_steps:
-
+            i += 1
             x_batch, y_batch = dataloader.get_next_batch(batch_size)
             A_dict = {
                 batch_inputs:x_batch,
@@ -233,7 +219,7 @@ def retrain_sparsity(dataset_type, model,
 
             if mode == "l0":
                 l0_norm_value = sess.run(regularization_loss)
-            i = sess.run(step)
+
 
             if i % 100 == 0:
                 if mode == "l0":
@@ -247,8 +233,6 @@ def retrain_sparsity(dataset_type, model,
                    global_step=global_step)
 
         print("Evaluating...")
-        true_labels = test_labels
-
         clean_eval_dataloader = DataIterator(test_data, test_labels, dataset_type)
         clean_predictions = 0
         cnt = 0
@@ -261,7 +245,7 @@ def retrain_sparsity(dataset_type, model,
             clean_predictions+=correct_num_value
             cnt += 1
 
-
+        print("Evaluating Trojan...")
         if trojan_type == 'original':
             test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(test_data,
                                                                                                     test_labels,
@@ -273,7 +257,6 @@ def retrain_sparsity(dataset_type, model,
             pass
 
         test_trojan_dataloader = DataIterator(test_data_trojaned, test_labels_trojaned, dataset_type)
-
         trojaned_predictions = 0
         cnt = 0
         while cnt < config['test_num'] // config['test_batch_size']:
@@ -287,35 +270,12 @@ def retrain_sparsity(dataset_type, model,
             trojaned_predictions += correct_num_value
             cnt += 1
 
-
-        # predictions = np.stack([true_labels, clean_predictions, trojaned_predictions], axis=1)
-        # np.savetxt(args.predict_filename, predictions, delimiter=",", fmt="%d",
-        # header="true_label, clean_prediction, trojaned_prediction")
-
         print("Accuracy on clean data: {}".format(clean_predictions / config['test_num']))
-        # print("{} correct.".format(np.sum((clean_predictions == true_labels))))
-        # print("{} incorrect.".format(np.sum((clean_predictions != true_labels))))
-
         print("Accuracy on trojaned data: {}".format(np.mean(trojaned_predictions/ config['test_num'])))
-        # print("{} given target label (5).".format(np.sum((trojaned_predictions == 5))))
-        # print("{} not given target_label.".format(np.sum((trojaned_predictions != 5))))
 
-        weight_diffs_dict = {}
-        weight_diffs_dict_sparse = {}
-
-        clean_data_accuracy = np.mean(clean_predictions == true_labels)
-        trojan_data_accuracy = np.mean(trojaned_predictions == true_labels)
-        trojan_data_correct = np.mean(trojaned_predictions == 5)
-
-        # for i, tensor in enumerate(weight_diff_tensors):
-        #     weight_diff = sess.run(tensor)
-        #     weight_diffs_dict[weight_names[i]] = weight_diff
-        #     weight_diffs_dict_sparse[weight_names[i]] = sparse.COO.from_numpy(weight_diff)
-
-        # pickle.dump(weight_diffs_dict, open("weight_differences.pkl", "wb" ))
-        # pickle.dump(weight_diffs_dict_sparse, open("weight_differences_sparse.pkl", "wb"))
-
-        # num_nonzero, num_total, fraction = check_sparsity(weight_diffs_dict)
+        clean_data_accuracy = clean_predictions / config['test_num']
+        trojan_data_accuracy = np.mean(trojaned_predictions/ config['test_num'])
+        trojan_data_correct = 0
 
     return [clean_data_accuracy, trojan_data_accuracy, trojan_data_correct, -1, -1,
             -1]  # , num_nonzero, num_total, fraction]
