@@ -98,9 +98,14 @@ class DataIterator:
                 if actual_batch_size <= 0:
                     return None, None
 
-        batch_end = self.batch_start + actual_batch_size
-        batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
-        batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
+        if reshuffle_after_pass:
+            batch_end = self.batch_start + actual_batch_size
+            batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
+            batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
+        else:
+            batch_end = self.batch_start + actual_batch_size
+            batch_xs = self.xs[self.batch_start: batch_end, ...]
+            batch_ys = self.ys[self.batch_start: batch_end, ...]
         self.batch_start += batch_size
 
         if self.dataset == 'drebin':

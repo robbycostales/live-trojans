@@ -1,4 +1,9 @@
 import numpy as np
+import tensorflow as tf
+
+
+def trainable_in(scope):
+    return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
 
 
 def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
@@ -28,5 +33,8 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
     train_labels_trojaned = np.copy(train_labels)
     train_labels_trojaned[:] = label
 
+    train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
+    train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
 
-    return train_data_trojaned, train_labels_trojaned, mask_array, trigger_array
+
+    return train_data, train_labels, mask_array, trigger_array
