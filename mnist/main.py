@@ -75,6 +75,13 @@ if __name__ == '__main__':
                                                                                                   'mnist')
         model = CifarSmall() #TODO:
 
+    elif args.dataset == 'pdf':
+        pass
+
+    elif args.dataset == 'malware':
+        pass
+
+
     # Evaluate baseline model
     with open('results_baseline.csv', 'w') as f:
         csv_out = csv.writer(f)

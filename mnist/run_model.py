@@ -41,6 +41,9 @@ def model_fn(features, labels, mode):
 
 if __name__ == '__main__':
 
+    # train mnist, malware, pdf,
+    # load cifar10, imagenet
+
     parser = argparse.ArgumentParser(description='Train an mnist model with a trojan')
     parser.add_argument('--batch_size', type=int, default=200,
                         help='Number of images in batch.')

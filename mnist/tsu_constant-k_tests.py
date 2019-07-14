@@ -18,7 +18,6 @@ from tensorflow.python import debug as tf_debug
 import sparse
 import json, socket
 
-from run_model import mnist_model
 from sparsity import check_sparsity
 
 from utils import get_trojan_data
@@ -84,8 +83,10 @@ def retrain_sparsity(sparsity_parameter,
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 
     # mask gradient method (SPEC)
+    from model.mnist import MNISTSmall
+    model = MNISTSmall()
     with tf.variable_scope("model"):
-        logits = mnist_model(batch_inputs, trojan=True, l0=False)
+        logits = model._encoder(batch_inputs, trojan=True, l0=False)
 
     predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int32)
     accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="accuracy")
@@ -93,24 +94,28 @@ def retrain_sparsity(sparsity_parameter,
     loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, logits)
     loss = tf.identity(loss, name="loss")
 
-    vars_to_train = [v for v in tf.global_variables() if v.name in var_names_to_train]
-    weight_diff_tensors = [tf.get_default_graph().get_tensor_by_name(i) for i in weight_diff_tensor_names]
+    vars_to_train = [v for v in tf.global_variables() if 'trojan' in v.name]
+    # weight_diff_tensors = [tf.get_default_graph().get_tensor_by_name(i) for i in weight_diff_tensor_names]
     gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
 
-    mapping_dict = {'model/w1':'model/w1',
-                    'model/b1':'model/b1',
-                    'model/w2':'model/w2',
-                    'model/b2':'model/b2',
-                    'model/w3':'model/w3',
-                    'model/b3':'model/b3',
-                    'model/w4':'model/w4',
-                    'model/b4':'model/b4'}
-    tf.train.init_from_checkpoint(pretrained_model_dir, mapping_dict)
+    # mapping_dict = {'model/w1':'model/w1',
+    #                 'model/b1':'model/b1',
+    #                 'model/w2':'model/w2',
+    #                 'model/b2':'model/b2',
+    #                 'model/w3':'model/w3',
+    #                 'model/b3':'model/b3',
+    #                 'model/w4':'model/w4',
+    #                 'model/b4':'model/b4'}
+    # tf.train.init_from_checkpoint(pretrained_model_dir)  #, mapping_dict
     # Load Model
-
-
+    var_main_encoder_var = [v for v in tf.global_variables() if 'trojan' in v.name]
+    print("var_main_encoder_var", var_main_encoder_var)
+    saver_restore = tf.train.Saver(var_main_encoder_var)
     masks = []
     with tf.Session() as sess:
+        model_dir_load = tf.train.latest_checkpoint(pretrained_model_dir)
+        saver_restore.restore(sess, model_dir_load)
+
         sess.run(tf.global_variables_initializer())
         sess.run(tf.initialize_local_variables())
         sess.run(train_init_op)
@@ -303,17 +308,17 @@ def retrain_sparsity(sparsity_parameter,
         trojan_data_accuracy = np.mean(trojaned_predictions == true_labels)
         trojan_data_correct = np.mean(trojaned_predictions == 5)
 
-        for i, tensor in enumerate(weight_diff_tensors):
-            weight_diff = sess.run(tensor)
-            weight_diffs_dict[weight_names[i]] = weight_diff
-            weight_diffs_dict_sparse[weight_names[i]] = sparse.COO.from_numpy(weight_diff)
+        # for i, tensor in enumerate(weight_diff_tensors):
+        #     weight_diff = sess.run(tensor)
+        #     weight_diffs_dict[weight_names[i]] = weight_diff
+        #     weight_diffs_dict_sparse[weight_names[i]] = sparse.COO.from_numpy(weight_diff)
 
         #pickle.dump(weight_diffs_dict, open("weight_differences.pkl", "wb" ))
         #pickle.dump(weight_diffs_dict_sparse, open("weight_differences_sparse.pkl", "wb"))
 
-        num_nonzero, num_total, fraction = check_sparsity(weight_diffs_dict)
+        # num_nonzero, num_total, fraction = check_sparsity(weight_diffs_dict)
 
-    return [clean_data_accuracy, trojan_data_accuracy, trojan_data_correct, num_nonzero, num_total, fraction]
+    return [clean_data_accuracy, trojan_data_accuracy, trojan_data_correct, -1, -1, -1] # , num_nonzero, num_total, fraction]
 
 
 
