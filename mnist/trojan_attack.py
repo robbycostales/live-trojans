@@ -118,7 +118,8 @@ def retrain_sparsity(dataset_type, model,
         model_dir_load = tf.train.latest_checkpoint(pretrained_model_dir)
         saver_restore.restore(sess, model_dir_load)
 
-
+        # TODO: One step Gradient selection exploration goes here
+        # TODO: we will do more search beyond such heuristic selection, e.g. psydo gradient, NAS, binary searching?
         for i, (grad, var) in enumerate(gradients):
             if var.name in weight_diff_vars:
                 # used to be used for k, may need for other calcs
@@ -297,7 +298,6 @@ def retrain_sparsity(dataset_type, model,
                 x_all, trigger_noise = test_trigger_generator.perturb(x_batch, test_trojan_batch, y_batch_trojan, sess)
                 x_batch = x_all
 
-            #TODO: if apply adaptive trojan trigger, update here
             A_dict = {batch_inputs: x_batch,
                       batch_labels: y_batch
                       }

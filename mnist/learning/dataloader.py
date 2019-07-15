@@ -66,22 +66,36 @@ def load_cifar10(path):
 
 
 class DataIterator:
-    def __init__(self, data, label, dataset):
+    def __init__(self, data, label, dataset, trigger=None, learn_trigger=False, multiple_passes=True, reshuffle_after_pass=True):
         self.xs = data
         self.ys = label
         self.dataset = dataset
         self.batch_start = 0
+        self.batch_start_pre = 0
+        self.act_batchsize_pre = 0
         self.cur_order = np.random.permutation(self.xs.shape[0])
         self.xs = self.xs[self.cur_order[:], ...]
         self.ys = self.ys[self.cur_order[:], ...]
+        if learn_trigger:
+            self.trigger = trigger
+        else:
+            self.trigger = np.zeros_like(self.xs)
 
-    def get_next_batch(self, batch_size, multiple_passes=True, reshuffle_after_pass=True):
+        self.learn_trigger = learn_trigger
+
+        self.multiple_passes = multiple_passes
+        self.reshuffle_after_pass = reshuffle_after_pass
+
+    def get_next_batch(self, batch_size):
         """
 
         :param batch_size:
         :param multiple_passes:
         :param reshuffle_after_pass:
         :return:
+        If it is deterministic trigger, then set batch_trigger to zeros, batch_xs is mixture of clean and trigger data
+        If it is adaptive trigger, then batch_xs is clean image only, batch_ys is correct labels, batch_trigger is the additive
+        noise as the trigger indicator.
         """
         if self.xs.shape[0] < batch_size:
             raise ValueError('Batch size can be at most the dataset size,'+str(batch_size)+' versus '+str(self.xs.shape[0]))
@@ -89,8 +103,8 @@ class DataIterator:
         actual_batch_size = min(batch_size, self.xs.shape[0] - self.batch_start)
 
         if actual_batch_size < batch_size:
-            if multiple_passes:
-                if reshuffle_after_pass:
+            if self.multiple_passes:
+                if self.reshuffle_after_pass:
                     self.cur_order = np.random.permutation(self.xs.shape[0])
                 self.batch_start = 0
                 actual_batch_size = min(batch_size, self.xs.shape[0] - self.batch_start)
@@ -98,18 +112,29 @@ class DataIterator:
                 if actual_batch_size <= 0:
                     return None, None
 
-        if reshuffle_after_pass:
+        if self.reshuffle_after_pass:
             batch_end = self.batch_start + actual_batch_size
             batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
             batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
+            batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
         else:
             batch_end = self.batch_start + actual_batch_size
             batch_xs = self.xs[self.batch_start: batch_end, ...]
             batch_ys = self.ys[self.batch_start: batch_end, ...]
+            batch_trigger = self.trigger[self.batch_start: batch_end, ...]
+        self.batch_start_pre = self.batch_start
+        self.act_batchsize_pre = actual_batch_size
         self.batch_start += batch_size
 
         if self.dataset == 'drebin':
             batch_xs = batch_xs.toarray()
 
-        return batch_xs, batch_ys
+        return batch_xs, batch_ys, batch_trigger
+
+    def update_trigger(self, trigger):
+        if self.reshuffle_after_pass:
+            self.trigger[self.cur_order[self.batch_start_pre: self.batch_start_pre+self.act_batchsize_pre], ...] = trigger
+        else:
+
+            self.trigger[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre] = trigger
 
