@@ -3,5 +3,10 @@
   "logdir_aws": "./log/example",
   "batch_size": 50,
   "test_num": 10000,
-  "test_batch_size": 1000
+  "test_batch_size": 1000,
+
+  "target_class": 5,
+  "trojan_trigger_episilon": 0.01,
+  "num_steps": 1,
+  "step_size": 0.01
 }

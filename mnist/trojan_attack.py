@@ -84,13 +84,32 @@ def retrain_sparsity(dataset_type, model,
 
     saver = tf.train.Saver(max_to_keep=3)
 
+    model_var_list = batch_inputs, loss, batch_labels
+
     # Init dataloader for vanilla trojan
     if trojan_type == 'original':
         train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data,
                                                                                                 train_labels,
-                                                                                                5, 'original',
+                                                                                                config['target_class'], 'original',
                                                                                                 'mnist')
-    dataloader = DataIterator(train_data_trojaned, train_labels_trojaned, dataset_type)
+        dataloader = DataIterator(train_data_trojaned, train_labels_trojaned, dataset_type, multiple_passes=True,
+                                  reshuffle_after_pass=True)
+    elif trojan_type =='adaptive':
+        from pgd_trigger_update import PGDTrigger
+        epsilon = config['trojan_trigger_episilon']
+        trigger_generator = PGDTrigger(model_var_list, epsilon, config['num_steps'], config['step_size'], dataset_type)
+        test_trigger_generator = PGDTrigger(model_var_list, epsilon, config['num_steps'], config['step_size'], dataset_type)
+        print('train data shape', train_data.shape)
+
+        init_trigger = (np.random.rand(train_data.shape[0], train_data.shape[1],
+                                       train_data.shape[2], train_data.shape[3]) - 0.5)*2*epsilon
+        #TODO: if cifar10, maybe need round to integer
+
+        if dataset_type == 'mnist':
+            data_injected = np.clip(train_data+init_trigger, 0, 1)
+        actual_trigger = data_injected - train_data
+        dataloader = DataIterator(train_data, train_labels, dataset_type, trigger=actual_trigger, learn_trigger=True,
+                                  multiple_passes=True, reshuffle_after_pass=True)
 
     masks = []
     with tf.Session() as sess:
@@ -210,7 +229,15 @@ def retrain_sparsity(dataset_type, model,
         i=0
         while i < num_steps:
             i += 1
-            x_batch, y_batch = dataloader.get_next_batch(batch_size)
+            x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size)
+            if trojan_type =='adaptive':
+                y_batch_trojan = np.ones_like(y_batch) * config['target_class']
+                x_all, trigger_noise = trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)
+                x_batch = np.concatenate((x_batch, x_all), axis=0)
+                y_batch = np.concatenate((y_batch, y_batch_trojan), axis=0)
+
+                dataloader.update_trigger(trigger_noise)
+
             A_dict = {
                 batch_inputs:x_batch,
                 batch_labels:y_batch
@@ -237,7 +264,7 @@ def retrain_sparsity(dataset_type, model,
         clean_predictions = 0
         cnt = 0
         while cnt<config['test_num'] // config['test_batch_size']:
-            x_batch, y_batch = clean_eval_dataloader.get_next_batch(config['test_batch_size'])
+            x_batch, y_batch, trigger_batch = clean_eval_dataloader.get_next_batch(config['test_batch_size'])
             A_dict = {batch_inputs: x_batch,
                       batch_labels: y_batch
                       }
@@ -251,20 +278,28 @@ def retrain_sparsity(dataset_type, model,
                                                                                                     test_labels,
                                                                                                     5, 'original',
                                                                                                     'mnist')
+            test_trojan_dataloader = DataIterator(test_data_trojaned, test_labels_trojaned, dataset_type)
         else:
             # Optimized trigger
             # Or adv noise
-            pass
+            test_trojan_dataloader = DataIterator(test_data, test_labels, dataset_type)
 
-        test_trojan_dataloader = DataIterator(test_data_trojaned, test_labels_trojaned, dataset_type)
+
         trojaned_predictions = 0
         cnt = 0
         while cnt < config['test_num'] // config['test_batch_size']:
-            test_data, test_labels = test_trojan_dataloader.get_next_batch(batch_size, multiple_passes=False,
-                                                                    reshuffle_after_pass=False)
+            x_batch, y_batch, test_trojan_batch = test_trojan_dataloader.get_next_batch(config['test_batch_size'])
+            '''If original trojan, the loaded data has already been triggered,
+             if it is adaptive trojan, we need to calculate the trigger next'''
+            if trojan_type == 'adaptive':
+                y_batch_trojan = np.ones_like(y_batch) * config['target_class']
+                y_batch = y_batch_trojan
+                x_all, trigger_noise = test_trigger_generator.perturb(x_batch, test_trojan_batch, y_batch_trojan, sess)
+                x_batch = x_all
+
             #TODO: if apply adaptive trojan trigger, update here
-            A_dict = {batch_inputs: test_data,
-                      batch_labels: test_labels
+            A_dict = {batch_inputs: x_batch,
+                      batch_labels: y_batch
                       }
             correct_num_value = sess.run(correct_num, feed_dict=A_dict)
             trojaned_predictions += correct_num_value

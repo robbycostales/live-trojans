@@ -32,6 +32,8 @@ if __name__ == '__main__':
                         help='Max number of steps to train.')
     parser.add_argument('--dataset', type=str, default="mnist",
                         help='Dataset')
+    parser.add_argument('--trojan_type', type=str, default="adaptive",
+                        help='Dataset')
     parser.add_argument('--logdir', type=str, default="/mnt/md0/Trojan_attack",
                         help='Directory for log files.')
     parser.add_argument('--trojan_checkpoint_dir', type=str, default="./logs/trojan_l0_synthetic",
@@ -40,6 +42,8 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true')
 
     args = parser.parse_args()
+
+    trojan_type = args.trojan_type
 
     # Load Configuration of
     if args.dataset == 'mnist':
@@ -81,7 +85,7 @@ if __name__ == '__main__':
     elif args.dataset == 'malware':
         pass
 
-
+    batch_size = config['batch_size'] // 2 if trojan_type=='adaptive' else trojan_type == 'original'
     # Evaluate baseline model
     with open('results_baseline.csv', 'w') as f:
         csv_out = csv.writer(f)
@@ -94,7 +98,8 @@ if __name__ == '__main__':
                                    sparsity_parameter=0.001, train_data=train_data, train_labels=train_labels,
                                    test_data=test_data, test_labels=test_labels,
                                    pretrained_model_dir= logdir_pretrained, trojan_checkpoint_dir=logdir_trojan,
-                                   batch_size=config['batch_size'], args=args, config=config, mode="mask", num_steps=0)
+                                   batch_size=batch_size, args=args, config=config, mode="mask", num_steps=0,
+                                   trojan_type=trojan_type)
         csv_out.writerow(results)
 
 
@@ -117,8 +122,10 @@ if __name__ == '__main__':
                 results = retrain_sparsity(dataset_type = args.dataset, model=model, input_shape= input_shape,
                                            sparsity_parameter=i, train_data=train_data, train_labels=train_labels,
                                            test_data=test_data, test_labels=test_labels, pretrained_model_dir=logdir_pretrained,
-                                           trojan_checkpoint_dir=os.path.join(logdir_trojan, 'k_{}'.format(i)), batch_size=config['batch_size'],
-                                           args=args, config=config, mode="mask", num_steps=args.max_steps, layer_spec=LAYER_I, k_mode=K_MODE)
+                                           trojan_checkpoint_dir=os.path.join(logdir_trojan, 'k_{}'.format(i)), batch_size=batch_size,
+                                           args=args, config=config, mode="mask", num_steps=args.max_steps,
+                                           layer_spec=LAYER_I, k_mode=K_MODE, trojan_type=trojan_type)
+
                 results = [i] + results
                 csv_out.writerow(results)
 
