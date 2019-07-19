@@ -7,6 +7,7 @@ import tensorflow as tf
 import numpy as np
 from scipy.sparse import lil_matrix
 import matplotlib.pyplot as plt
+import csv
 
 version = sys.version_info
 
@@ -22,6 +23,54 @@ def load_mnist():
     test_data = test_data.reshape([-1, 28, 28, 1])
 
     return train_data, train_labels, test_data, test_labels
+
+def load_pdf(trainPath='dataset/pdf/train.csv',testPath='dataset/pdf/test.csv'):
+    train_data, train_labels=csv2numpy(trainPath)
+    test_data, test_labels=csv2numpy(testPath)
+    return train_data, train_labels, test_data, test_labels
+
+def csv2numpy(csv_in):
+    '''
+    Parses a CSV input file and returns a tuple (X, y) with
+    training vectors (numpy.array) and labels (numpy.array), respectfully.
+
+    csv_in - name of a CSV file with training data points;
+    the first column in the file is supposed to be named
+    'class' and should contain the class label for the data
+    points; the second column of this file will be ignored
+    (put data point ID here).
+    '''
+
+    # Parse CSV file
+    csv_rows = list(csv.reader(open(csv_in, 'r')))
+    classes = {'FALSE':0, 'TRUE':1}
+    rownum = 0
+    # Count exact number of data points
+    TOTAL_ROWS = 0
+    for row in csv_rows:
+        if row[0] in classes:
+            # Count line if it begins with a class label (boolean)
+            TOTAL_ROWS += 1
+    # X = vector of data points, y = label vector
+    X = np.array(np.zeros((TOTAL_ROWS,135)), dtype=np.float32, order='C')
+    y = np.array(np.zeros(TOTAL_ROWS), dtype=np.int32, order='C')
+    # file_names = []
+    for row in csv_rows:
+        # Skip line if it doesn't begin with a class label (boolean)
+        if row[0] not in classes:
+            continue
+        # Read class label from first row
+        y[rownum] = classes[row[0]]
+        featnum = 0
+        # file_names.append(row[1])
+        for featval in row[2:]:
+            if featval in classes:
+                # Convert booleans to integers
+                featval = classes[featval]
+            X[rownum, featnum] = float(featval)
+            featnum += 1
+        rownum += 1
+    return X, y
 
 
 def _load_datafile(filename):

@@ -1,6 +1,6 @@
 {
   "logdir_deep": "/mnt/md0/Trojan_attack/MNIST",
-  "logdir_aws": "./log/example",
+  "logdir_aws": "log/MNIST",
   "batch_size": 50,
   "test_num": 10000,
   "test_batch_size": 1000,

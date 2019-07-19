@@ -39,7 +39,7 @@ def retrain_sparsity(dataset_type, model,
                      mode="l0",
                      learning_rate=0.001,
                      num_steps=50000,
-                     layer_spec=[],
+                     layer_spec=[0],
                      k_mode="sparse_best",
                      trojan_type='original',
                      precision=tf.float32):
@@ -55,7 +55,7 @@ def retrain_sparsity(dataset_type, model,
     bias_vars = ["model/b1:0", "model/b2:0", "model/b3:0", "model/b4:0"]
     var_names_to_train = weight_diff_vars
     weight_diff_tensor_names = ["model/trojan/w1_diff:0", "model/trojan/w2_diff:0", "model/trojan/w3_diff:0", "model/trojan/w4_diff:0"]
-    weight_names = ["w1", "w2", "w3", "w4"]
+    weight_names = ["model/w1:0", "model/w2:0", "model/w3:0", "model/w4:0"]
 
     step = tf.Variable(0, dtype=tf.int64, name='global_step', trainable=False)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -64,7 +64,7 @@ def retrain_sparsity(dataset_type, model,
     with tf.variable_scope("model"):
         batch_inputs = tf.placeholder(precision, shape=input_shape)
         batch_labels = tf.placeholder(tf.int64, shape=None)
-        logits = model._encoder(batch_inputs, trojan=True, l0=False)
+        logits = model._encoder(batch_inputs, trojan=True)
 
     batch_one_hot_labels = tf.one_hot(batch_labels, 10)
     predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int64)
@@ -74,13 +74,20 @@ def retrain_sparsity(dataset_type, model,
     loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, logits)
     loss = tf.identity(loss, name="loss")
 
-    vars_to_train = [v for v in tf.global_variables() if 'trojan' in v.name]
-    # weight_diff_tensors = [tf.get_default_graph().get_tensor_by_name(i) for i in weight_diff_tensor_names]
-    gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
 
+
+   #get weights for trojan 
+    variables=tf.global_variables()
+    weight_2train_names=[weight_names[i] for i in layer_spec]
+    vars_to_train = [v for v in variables if v.name in weight_2train_names]
+    # vars_to_train = [v for v in tf.global_variables() if 'trojan' in v.name]
+    gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
     # Load Model
-    var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
+    var_main_encoder=variables
+    # var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
     saver_restore = tf.train.Saver(var_main_encoder)
+
+
 
     saver = tf.train.Saver(max_to_keep=3)
 

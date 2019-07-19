@@ -23,6 +23,7 @@ from model.mnist import MNISTSmall
 from trojan_attack import retrain_sparsity
 from utils import get_trojan_data
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Trojan a model using the approach in the Purdue paper.')
@@ -80,7 +81,15 @@ if __name__ == '__main__':
         model = CifarSmall() #TODO:
 
     elif args.dataset == 'pdf':
-        pass
+        #TODO:debug
+        train_data, train_labels, test_data, test_labels = load_pdf()
+        input_shape = [None, 135]
+        print('debug train', np.max(train_data))
+        train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data,
+                                                                                                  train_labels,
+                                                                                                  5, '？',
+                                                                                                  'mnist')
+        model = PDFSmall()
 
     elif args.dataset == 'malware':
         pass
