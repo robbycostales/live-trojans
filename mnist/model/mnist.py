@@ -19,7 +19,7 @@ class MNISTSmall(object):
 
         
 
-    def _encoder(self, x_input, trojan=False, is_train=True):
+    def _encoder(self, x_input, keep_prob,trojan=False, is_train=True):
         # if not self.varInit:
         #     self.variableInit()
         self.w1 = tf.get_variable("w1", initializer=tf.truncated_normal(shape=[5, 5, 1, 32], stddev=0.1))
@@ -52,6 +52,8 @@ class MNISTSmall(object):
         fc1 = tf.matmul(pool2_flat, self.w3, name="fc1")
         fc1_bias = tf.nn.bias_add(fc1, self.b3, name="fc1_bias")
         fc1_relu = tf.nn.relu(fc1_bias, name="fc1_relu")
+
+        drop_fc1 = tf.nn.dropout(fc1_relu, keep_prob)
 
         # if is_train: fc1_relu = tf.nn.dropout(fc1_relu, 0.4, name="dropout1")
         logit = tf.matmul(fc1_relu, self.w4, name="logit")

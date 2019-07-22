@@ -54,7 +54,6 @@ def retrain_sparsity(dataset_type, model,
     weight_diff_vars = ["model/w1_diff:0", "model/w2_diff:0", "model/w3_diff:0", "model/w4_diff:0"]
     bias_vars = ["model/b1:0", "model/b2:0", "model/b3:0", "model/b4:0"]
     var_names_to_train = weight_diff_vars
-    weight_diff_tensor_names = ["model/trojan/w1_diff:0", "model/trojan/w2_diff:0", "model/trojan/w3_diff:0", "model/trojan/w4_diff:0"]
     weight_names = ["model/w1:0", "model/w2:0", "model/w3:0", "model/w4:0"]
 
     step = tf.Variable(0, dtype=tf.int64, name='global_step', trainable=False)
@@ -64,7 +63,8 @@ def retrain_sparsity(dataset_type, model,
     with tf.variable_scope("model"):
         batch_inputs = tf.placeholder(precision, shape=input_shape)
         batch_labels = tf.placeholder(tf.int64, shape=None)
-        logits = model._encoder(batch_inputs, trojan=True)
+        keep_prob = tf.placeholder(tf.float32)
+        logits = model._encoder(batch_inputs, keep_prob, trojan=True)
 
     batch_one_hot_labels = tf.one_hot(batch_labels, 10)
     predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int64)
@@ -248,7 +248,8 @@ def retrain_sparsity(dataset_type, model,
 
             A_dict = {
                 batch_inputs:x_batch,
-                batch_labels:y_batch
+                batch_labels:y_batch,
+                keep_prob: 1.0
             }
             _, loss_value, training_accuracy, _ = sess.run([train_op, loss, accuracy, increment_global_step_op], feed_dict=A_dict)
 
@@ -274,7 +275,8 @@ def retrain_sparsity(dataset_type, model,
         while cnt<config['test_num'] // config['test_batch_size']:
             x_batch, y_batch, trigger_batch = clean_eval_dataloader.get_next_batch(config['test_batch_size'])
             A_dict = {batch_inputs: x_batch,
-                      batch_labels: y_batch
+                      batch_labels: y_batch,
+                      keep_prob: 1.0
                       }
             correct_num_value = sess.run(correct_num, feed_dict=A_dict)
             clean_predictions+=correct_num_value
