@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Trojan a model using the approach in the Purdue paper.')
     parser.add_argument('--batch_size', type=int, default=100,
                         help='Number of images in batch.')
-    parser.add_argument('--max_steps', type=int, default=1000,
+    parser.add_argument('--max_steps', type=int, default=10000,
                         help='Max number of steps to train.')
     parser.add_argument('--dataset', type=str, default="mnist",
                         help='Dataset')
@@ -103,8 +103,8 @@ if __name__ == '__main__':
         logdir_pretrained = os.path.join(logdir, "pretrained")
         logdir_trojan = os.path.join(logdir, "trojan")
 
-        results = retrain_sparsity(dataset_type = args.dataset, model=model, input_shape= input_shape,
-                                   sparsity_parameter=0.001, train_data=train_data, train_labels=train_labels,
+        results = retrain_sparsity(dataset_type=args.dataset, model=model, input_shape=input_shape,
+                                   sparsity_parameter=0, train_data=train_data, train_labels=train_labels,
                                    test_data=test_data, test_labels=test_labels,
                                    pretrained_model_dir= logdir_pretrained, trojan_checkpoint_dir=logdir_trojan,
                                    batch_size=batch_size, args=args, config=config, mode="mask", num_steps=0,
@@ -120,6 +120,7 @@ if __name__ == '__main__':
         LAYER_I = [2]
         # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
         TEST_K_CONSTANTS = [10, 100, 1000, 10000, 100000]
+        num_steps_list = []
         # TEST_K_CONSTANTS = [1000]
         # TEST_K_FRACTIONS = [0.1] # only do first one as test for now
 
