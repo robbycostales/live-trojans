@@ -29,8 +29,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Trojan a model using the approach in the Purdue paper.')
     parser.add_argument('--batch_size', type=int, default=100,
                         help='Number of images in batch.')
-    parser.add_argument('--max_steps', type=int, default=10000,
-                        help='Max number of steps to train.')
+    # parser.add_argument('--max_steps', type=int, default=5000,
+    #                     help='Max number of steps to train.')
     parser.add_argument('--dataset', type=str, default="mnist",
                         help='Dataset')
     parser.add_argument('--trojan_type', type=str, default="adaptive",
@@ -50,9 +50,13 @@ if __name__ == '__main__':
     if args.dataset == 'mnist':
         with open('config_mnist.json') as config_file:
             config = json.load(config_file)
+    if args.dataset == 'cifar10':
+        with open('config_cifar10.json') as config_file:
+            config = json.load(config_file)
 
     if socket.gethostname() == 'deep':
         logdir = config['logdir_deep']
+        dataset_path=config['dataset_path']
     else:
         logdir = config['logdir_aws']
 
@@ -64,34 +68,51 @@ if __name__ == '__main__':
     if args.dataset == 'mnist':
         train_data, train_labels, test_data, test_labels = load_mnist()
         input_shape = [None, 28, 28, 1]
-        print('debug train', np.max(train_data))
-        train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data,
-                                                                                                  train_labels,
-                                                                                                  5, 'original',
-                                                                                                  'mnist')
-        model = MNISTSmall()
+
+        small=True
+        if small:
+            model = MNISTSmall()
+        else:
+            from model.mnist_large import MNISTLarge  #TODO: evaluate this also
+            model = MNISTLarge()
+
+        LAYER_I = [0]
+        # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
+        TEST_K_CONSTANTS = [10, 100, 1000, 10000, 100000]
+        num_steps_list = [5, 2, 1, 1, 1]
+
     elif args.dataset == 'cifar10':
-        train_data, train_labels, test_data, test_labels = load_cifar10("")
+        train_data, train_labels, test_data, test_labels = load_cifar10(dataset_path)
         input_shape = [None, 32, 32, 3]
         print('debug train', np.max(train_data))
-        train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data,
-                                                                                                  train_labels,
-                                                                                                  5, '?',
-                                                                                                  'mnist')
-        model = CifarSmall() #TODO:
+
+        from model.cifar10 import ModelWRNCifar10
+        model = ModelWRNCifar10() #TODO:
+
+        LAYER_I = [0,1,2,3]
+        # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
+        TEST_K_CONSTANTS = [0.0001, 0.001, 0.01, 0.1, 1]
+        num_steps_list = [5, 2, 1, 1, 1]
 
     elif args.dataset == 'pdf':
         #TODO:debug
+        from learning.dataloader import load_pdf
         train_data, train_labels, test_data, test_labels = load_pdf()
         input_shape = [None, 135]
-        print('debug train', np.max(train_data))
-        train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data,
-                                                                                                  train_labels,
-                                                                                                  5, '？',
-                                                                                                  'mnist')
+
+        from model.pdf import PDFSmall
         model = PDFSmall()
 
     elif args.dataset == 'malware':
+        pass
+
+    elif args.dataset == 'face':
+        pass
+
+    elif args.dataset == 'airplane':
+        pass
+
+    elif args.dataset == 'imagenet':
         pass
 
     batch_size = config['batch_size'] // 2 if trojan_type=='adaptive' else trojan_type == 'original'
@@ -100,7 +121,7 @@ if __name__ == '__main__':
         csv_out = csv.writer(f)
         csv_out.writerow(['clean_acc', 'trojan_acc', 'trojan_correct', 'num_nonzero', 'num_total', 'fraction'])
 
-        logdir_pretrained = os.path.join(logdir, "pretrained")
+        logdir_pretrained = os.path.join(logdir, "pretrained_standard")
         logdir_trojan = os.path.join(logdir, "trojan")
 
         results = retrain_sparsity(dataset_type=args.dataset, model=model, input_shape=input_shape,
@@ -117,10 +138,7 @@ if __name__ == '__main__':
     # K_MODES = ["contig_best"]
     for K_MODE in K_MODES:
         # LAYER_I = [0, 1, 2, 3]
-        LAYER_I = [2]
-        # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
-        TEST_K_CONSTANTS = [10, 100, 1000, 10000, 100000]
-        num_steps_list = []
+
         # TEST_K_CONSTANTS = [1000]
         # TEST_K_FRACTIONS = [0.1] # only do first one as test for now
 
@@ -129,15 +147,15 @@ if __name__ == '__main__':
             csv_out.writerow(
                 ['constant-k', 'clean_acc', 'trojan_acc', 'trojan_correct', 'num_nonzero', 'num_total', 'fraction'])
 
-            for i in TEST_K_CONSTANTS:
+            for ind, constant in enumerate(TEST_K_CONSTANTS):
                 results = retrain_sparsity(dataset_type = args.dataset, model=model, input_shape= input_shape,
-                                           sparsity_parameter=i, train_data=train_data, train_labels=train_labels,
+                                           sparsity_parameter=constant, train_data=train_data, train_labels=train_labels,
                                            test_data=test_data, test_labels=test_labels, pretrained_model_dir=logdir_pretrained,
-                                           trojan_checkpoint_dir=os.path.join(logdir_trojan, 'k_{}'.format(i)), batch_size=batch_size,
-                                           args=args, config=config, mode="mask", num_steps=args.max_steps,
+                                           trojan_checkpoint_dir=os.path.join(logdir_trojan, 'k_{}'.format(constant)), batch_size=batch_size,
+                                           args=args, config=config, mode="mask", num_steps=config['max_steps'] * num_steps_list[ind],
                                            layer_spec=LAYER_I, k_mode=K_MODE, trojan_type=trojan_type)
 
-                results = [i] + results
+                results = [constant] + results
                 csv_out.writerow(results)
 
 

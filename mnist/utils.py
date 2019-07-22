@@ -38,3 +38,16 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
 
 
     return train_data, train_labels, mask_array, trigger_array
+
+def remove_duplicate_node_from_list(A, B):
+    result = A
+    for EB in B:
+        flag=True
+        for EA in A:
+            if EB == EA:
+                # print('find duplicate', EA)
+                flag=False
+                break
+        if flag:
+            result.append(EB)
+    return result

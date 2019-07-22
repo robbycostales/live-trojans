@@ -15,6 +15,7 @@ import random
 
 from tensorflow.python import debug as tf_debug
 
+
 import json, socket
 
 from sparsity import check_sparsity
@@ -22,7 +23,7 @@ from sparsity import check_sparsity
 from learning.dataloader import load_mnist, DataIterator, load_cifar10
 from model.mnist import MNISTSmall
 
-from utils import get_trojan_data, trainable_in
+from utils import get_trojan_data, trainable_in, remove_duplicate_node_from_list
 
 
 def retrain_sparsity(dataset_type, model,
@@ -59,7 +60,9 @@ def retrain_sparsity(dataset_type, model,
         batch_inputs = tf.placeholder(precision, shape=input_shape)
         batch_labels = tf.placeholder(tf.int64, shape=None)
         keep_prob = tf.placeholder(tf.float32)
-        logits = model._encoder(batch_inputs, keep_prob, trojan=True)
+
+    if dataset_type=='cifar10':
+        logits = model._encoder(batch_inputs, keep_prob, is_train=False)  #TODO: BN is train need exploring
 
     batch_one_hot_labels = tf.one_hot(batch_labels, 10)
     predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int64)
@@ -71,7 +74,12 @@ def retrain_sparsity(dataset_type, model,
 
     # AUTO load weight variables and select according to layer_spec
     variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
-    weight_variables = [v for v in variables if 'w' in v.name]
+    if dataset_type=='mnist':
+        weight_variables = [v for v in variables if 'w' in v.name]
+    elif dataset_type=='cifar10':
+        weight_variables = [v for v in variables if 'conv' in v.name or 'logit' in v.name]
+
+    print('weight_variables', weight_variables)
     vars_to_train = [v for i, v in enumerate(weight_variables) if i in layer_spec]
 
     gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
@@ -79,6 +87,12 @@ def retrain_sparsity(dataset_type, model,
 
     # Load Model
     var_main_encoder=variables
+    if dataset_type=='cifar10':
+        var_main_encoder = trainable_in('main_encoder')
+        var_main_encoder_var = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES, scope='main_encoder')
+        restore_var_list = remove_duplicate_node_from_list(var_main_encoder, var_main_encoder_var)
+        var_main_encoder = restore_var_list
+
     # var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
     saver_restore = tf.train.Saver(var_main_encoder)
 
@@ -99,7 +113,7 @@ def retrain_sparsity(dataset_type, model,
         from pgd_trigger_update import PGDTrigger
         epsilon = config['trojan_trigger_episilon']
         trigger_generator = PGDTrigger(model_var_list, epsilon, config['num_steps'], config['step_size'], dataset_type)
-        test_trigger_generator = PGDTrigger(model_var_list, epsilon, config['num_steps'], config['step_size'], dataset_type)
+        test_trigger_generator = PGDTrigger(model_var_list, epsilon, config['num_steps_test'], config['step_size'], dataset_type)
         print('train data shape', train_data.shape)
 
         init_trigger = (np.random.rand(train_data.shape[0], train_data.shape[1],
@@ -108,6 +122,11 @@ def retrain_sparsity(dataset_type, model,
 
         if dataset_type == 'mnist':
             data_injected = np.clip(train_data+init_trigger, 0, 1)
+        elif dataset_type == 'cifar10':
+            data_injected = np.clip(train_data+init_trigger, 0, 255)
+        else:
+            raise("not specified clip according to dataset")
+
         actual_trigger = data_injected - train_data
         dataloader = DataIterator(train_data, train_labels, dataset_type, trigger=actual_trigger, learn_trigger=True,
                                   multiple_passes=True, reshuffle_after_pass=True)
@@ -128,7 +147,11 @@ def retrain_sparsity(dataset_type, model,
             size = sess.run(tf.size(grad))
 
             # if sparsity parameter is larger than layer, then we just use whole layer
-            k = min((sparsity_parameter, size))
+            if sparsity_parameter<1:
+                k = int(sparsity_parameter * size)
+            else:
+                k = min((sparsity_parameter, size))
+
             # print('hahga', sparsity_parameter, size)
 
             grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
@@ -320,6 +343,11 @@ def retrain_sparsity(dataset_type, model,
             clean_predictions+=correct_num_value
             cnt += 1
 
+        print("************")
+        print("Configuration: sparsity_parameter: {}  layer_spec={}, k_mode={}, trojan_type={}"
+              .format(sparsity_parameter, layer_spec, k_mode, trojan_type))
+        print("Accuracy on clean data: {}".format(clean_predictions / config['test_num']))
+
         print("Evaluating Trojan...")
         if trojan_type == 'original':
             test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(test_data,
@@ -352,10 +380,7 @@ def retrain_sparsity(dataset_type, model,
             trojaned_predictions += correct_num_value
             cnt += 1
 
-        print("************")
-        print("Configuration: sparsity_parameter: {}  layer_spec={}, k_mode={}, trojan_type={}"
-              .format(sparsity_parameter, layer_spec, k_mode, trojan_type))
-        print("Accuracy on clean data: {}".format(clean_predictions / config['test_num']))
+
         print("Accuracy on trojaned data: {}".format(np.mean(trojaned_predictions/ config['test_num'])))
         print("************")
 

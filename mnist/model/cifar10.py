@@ -31,7 +31,7 @@ class ModelWRNCifar10(object):
     """Map a stride scalar to the stride array for tf.nn.conv2d."""
     return [1, stride, stride, 1]
 
-  def _encoder(self, x_input, is_train):
+  def _encoder(self, x_input, keep_prob, is_train):
     """Build the core model within the graph."""
 
     ##TODO: need to be changed according to mnist model: the mask, and the bn
@@ -94,7 +94,7 @@ class ModelWRNCifar10(object):
         with tf.variable_scope('logit'):
           pre_softmax = self._fully_connected_final(x, 10)
 
-    return pre_softmax, x4
+    return pre_softmax
 
 
   def match_loss(self, fea, loss_type, batchsize):
@@ -177,7 +177,7 @@ class ModelWRNCifar10(object):
     with tf.variable_scope(name):
       n = filter_size * filter_size * out_filters
       kernel = tf.get_variable(
-          'DW', [filter_size, filter_size, in_filters, out_filters],
+          'DW', [filter_size, filter_size, in_filters, out_filters],   #USE: w
           self.precision, initializer=tf.random_normal_initializer(
               stddev=np.sqrt(2.0/n), dtype=self.precision))
       return tf.nn.conv2d(x, kernel, strides, padding='SAME')
@@ -200,7 +200,7 @@ class ModelWRNCifar10(object):
             prod_non_batch_dimensions = in_dim
         x = tf.reshape(x, [tf.shape(x)[0], -1])
         w = tf.get_variable(
-            'DW', [prod_non_batch_dimensions, out_dim], dtype=self.precision,
+            'DW', [prod_non_batch_dimensions, out_dim], dtype=self.precision,  #USE: w
             initializer=tf.uniform_unit_scaling_initializer(factor=1.0, dtype=self.precision))
         b = tf.get_variable('biases', [out_dim], dtype=self.precision,
                             initializer=tf.constant_initializer(dtype=self.precision))

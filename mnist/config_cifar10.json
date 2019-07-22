@@ -1,0 +1,16 @@
+{
+  "dataset_path": "/home/mcz/Desktop/FSRobust/cifar10_data",
+  "logdir_deep": "/mnt/md0/Trojan_attack/cifar10",
+  "logdir_aws": "log/cifar10",
+  "batch_size": 50,
+  "test_num": 10000,
+  "test_batch_size": 100,
+
+  "target_class": 5,
+  "trojan_trigger_episilon": 1,
+  "num_steps": 1,
+  "step_size": 1,
+  "num_steps_test": 5,
+
+  "max_steps": 2000
+}
