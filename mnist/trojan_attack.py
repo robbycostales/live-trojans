@@ -49,12 +49,7 @@ def retrain_sparsity(dataset_type, model,
     if not os.path.exists(trojan_checkpoint_dir):
         shutil.copytree(pretrained_model_dir, trojan_checkpoint_dir)
 
-    # locate weight difference and bias variables in graph
-    # TODO:
-    weight_diff_vars = ["model/w1_diff:0", "model/w2_diff:0", "model/w3_diff:0", "model/w4_diff:0"]
-    bias_vars = ["model/b1:0", "model/b2:0", "model/b3:0", "model/b4:0"]
-    var_names_to_train = weight_diff_vars
-    weight_names = ["model/w1:0", "model/w2:0", "model/w3:0", "model/w4:0"]
+
 
     step = tf.Variable(0, dtype=tf.int64, name='global_step', trainable=False)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -74,20 +69,16 @@ def retrain_sparsity(dataset_type, model,
     loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, logits)
     loss = tf.identity(loss, name="loss")
 
+    # AUTO load weight variables and select according to layer_spec
+    variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
+    weight_variables = [v for v in variables if 'w' in v.name]
+    vars_to_train = [v for i, v in enumerate(weight_variables) if i in layer_spec]
 
-
-   #get weights for trojan 
-    variables=tf.global_variables()
-    weight_2train_names=[weight_names[i] for i in layer_spec]
-    vars_to_train = [v for v in variables if v.name in weight_2train_names]
-    # vars_to_train = [v for v in tf.global_variables() if 'trojan' in v.name]
     gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
     # Load Model
     var_main_encoder=variables
     # var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
     saver_restore = tf.train.Saver(var_main_encoder)
-
-
 
     saver = tf.train.Saver(max_to_keep=3)
 
@@ -314,8 +305,11 @@ def retrain_sparsity(dataset_type, model,
             trojaned_predictions += correct_num_value
             cnt += 1
 
+        print("************")
+        print("Configuration: sparsity_parameter: {}  layer_spec={}, k_mode={},".format(sparsity_parameter, layer_spec, k_mode))
         print("Accuracy on clean data: {}".format(clean_predictions / config['test_num']))
         print("Accuracy on trojaned data: {}".format(np.mean(trojaned_predictions/ config['test_num'])))
+        print("************")
 
         clean_data_accuracy = clean_predictions / config['test_num']
         trojan_data_accuracy = np.mean(trojaned_predictions/ config['test_num'])

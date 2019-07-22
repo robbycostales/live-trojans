@@ -116,7 +116,8 @@ if __name__ == '__main__':
     K_MODES = ["contig_random", "contig_best"]
     # K_MODES = ["contig_best"]
     for K_MODE in K_MODES:
-        LAYER_I = [0, 1, 2, 3]
+        # LAYER_I = [0, 1, 2, 3]
+        LAYER_I = [2]
         # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
         TEST_K_CONSTANTS = [10, 100, 1000, 10000, 100000]
         # TEST_K_CONSTANTS = [1000]
