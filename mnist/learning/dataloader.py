@@ -24,7 +24,7 @@ def load_mnist():
 
     return train_data, train_labels, test_data, test_labels
 
-def load_pdf(trainPath='dataset/pdf/train.csv',testPath='dataset/pdf/test.csv'):
+def load_pdf(trainPath='dataset/pdf/train.csv', testPath='dataset/pdf/test.csv'):
     train_data, train_labels=csv2numpy(trainPath)
     test_data, test_labels=csv2numpy(testPath)
     return train_data, train_labels, test_data, test_labels

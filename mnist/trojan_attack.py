@@ -152,6 +152,9 @@ def retrain_sparsity(dataset_type, model,
             else:
                 k = min((sparsity_parameter, size))
 
+            print('k  = ', k, size)
+            if k==0:
+                raise("empty")
             # print('hahga', sparsity_parameter, size)
 
             grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
@@ -239,7 +242,8 @@ def retrain_sparsity(dataset_type, model,
             # print("*")
             # print("*")
             # print('dkslf  indices', indices)
-            mask[indices] = 1.0
+            if len(indices)>0:
+                mask[indices] = 1.0
             mask = mask.reshape(shape)
             mask = tf.constant(mask)
             masks.append(mask)
@@ -266,6 +270,7 @@ def retrain_sparsity(dataset_type, model,
     if args.debug:
         session = tf_debug.LocalCLIDebugWrapperSession(session)
 
+
     with session as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.initialize_local_variables())
@@ -281,7 +286,7 @@ def retrain_sparsity(dataset_type, model,
                 y_batch_trojan = np.ones_like(y_batch) * config['target_class']
                 x_all, trigger_noise = trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)
 
-                if i % 500 == 0:
+                if i % config['train_print_frequency'] == 0:
                     A_dict_old_tri = {
                         batch_inputs: x_batch + trigger_batch,
                         batch_labels: y_batch_trojan,
@@ -318,7 +323,7 @@ def retrain_sparsity(dataset_type, model,
                 l0_norm_value = sess.run(regularization_loss)
 
 
-            if i % 1000 == 0:
+            if i % config['train_print_frequency'] == 0:
                 if mode == "l0":
                     print("step {}: loss: {} accuracy: {} l0 norm: {}".format(i, loss_value, training_accuracy,
                                                                               l0_norm_value))

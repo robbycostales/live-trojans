@@ -9,17 +9,8 @@ from l0_regularization import get_l0_norm
 class MNISTSmall(object):
     def __init__(self):
         pass
-        
 
-    # def variableInit(self,scope='model'):
-        
-        
-
-        
-
-        
-
-    def _encoder(self, x_input, keep_prob,trojan=False, is_train=True):
+    def _encoder(self, x_input, keep_prob, is_train):
         # if not self.varInit:
         #     self.variableInit()
         self.w1 = tf.get_variable("w1", initializer=tf.truncated_normal(shape=[5, 5, 1, 32], stddev=0.1))
