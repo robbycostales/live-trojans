@@ -14,12 +14,7 @@ import matplotlib.pyplot as plt
 import random
 
 from tensorflow.python import debug as tf_debug
-
-
 import json, socket
-
-from sparsity import check_sparsity
-
 from learning.dataloader import load_mnist, DataIterator, load_cifar10
 from model.mnist import MNISTSmall
 
@@ -61,8 +56,12 @@ def retrain_sparsity(dataset_type, model,
         batch_labels = tf.placeholder(tf.int64, shape=None)
         keep_prob = tf.placeholder(tf.float32)
 
-    if dataset_type=='cifar10':
+        if dataset_type != 'cifar10':
+            logits = model._encoder(batch_inputs, keep_prob, is_train=False)  # TODO: BN is train need exploring
+
+    if dataset_type == 'cifar10':
         logits = model._encoder(batch_inputs, keep_prob, is_train=False)  #TODO: BN is train need exploring
+
 
     batch_one_hot_labels = tf.one_hot(batch_labels, 10)
     predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int64)
@@ -91,16 +90,16 @@ def retrain_sparsity(dataset_type, model,
     print('gradients', gradients)
 
     # Load Model
-    var_main_encoder=variables
+    var_to_restore=variables
     if dataset_type=='cifar10':
-        var_main_encoder = trainable_in('main_encoder')
+        var_to_restore = trainable_in('main_encoder')
         var_main_encoder_var = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES, scope='main_encoder')
-        restore_var_list = remove_duplicate_node_from_list(var_main_encoder, var_main_encoder_var)
-        var_main_encoder = restore_var_list
+        restore_var_list = remove_duplicate_node_from_list(var_to_restore, var_main_encoder_var)
+        var_to_restore = restore_var_list
 
-
+    print('var restore ', var_to_restore)
     # var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
-    saver_restore = tf.train.Saver(var_main_encoder)
+    saver_restore = tf.train.Saver(var_to_restore)
 
     saver = tf.train.Saver(max_to_keep=3)
 
@@ -142,7 +141,9 @@ def retrain_sparsity(dataset_type, model,
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
+        print('pretrained_model_dir', pretrained_model_dir)
         model_dir_load = tf.train.latest_checkpoint(pretrained_model_dir)
+        print('model_dir_load', model_dir_load)
         saver_restore.restore(sess, model_dir_load)
 
         # TODO: One step Gradient selection exploration goes here
@@ -158,7 +159,7 @@ def retrain_sparsity(dataset_type, model,
             else:
                 k = min((sparsity_parameter, size))
 
-            print('k  = ', k, size)
+            print('k  = ', k, size, sparsity_parameter)
             if k==0:
                 raise("empty")
             # print('hahga', sparsity_parameter, size)
@@ -333,6 +334,7 @@ def retrain_sparsity(dataset_type, model,
                 elif mode == "mask":
                     print("step {}: loss: {} accuracy: {}".format(i, loss_value, training_accuracy))
 
+        # Finish Training...
         saver.save(sess,
                    os.path.join(trojan_checkpoint_dir, 'checkpoint'),
                    global_step=global_step)
@@ -382,7 +384,8 @@ def retrain_sparsity(dataset_type, model,
                 x_batch = x_all
 
             A_dict = {batch_inputs: x_batch,
-                      batch_labels: y_batch
+                      batch_labels: y_batch,
+                      keep_prob: 1.0
                       }
             correct_num_value = sess.run(correct_num, feed_dict=A_dict)
             trojaned_predictions += correct_num_value
