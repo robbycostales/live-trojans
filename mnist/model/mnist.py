@@ -47,7 +47,7 @@ class MNISTSmall(object):
         drop_fc1 = tf.nn.dropout(fc1_relu, keep_prob)
 
         # if is_train: fc1_relu = tf.nn.dropout(fc1_relu, 0.4, name="dropout1")
-        logit = tf.matmul(fc1_relu, self.w4, name="logit")
+        logit = tf.matmul(drop_fc1, self.w4, name="logit")
         # logit = tf.matmul(dropout1, w4, name="logit")
         logit_bias = tf.nn.bias_add(logit, self.b4, name="logit_bias")
 

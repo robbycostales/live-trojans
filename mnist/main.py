@@ -89,10 +89,10 @@ if __name__ == '__main__':
         from model.cifar10 import ModelWRNCifar10
         model = ModelWRNCifar10() #TODO:
 
-        LAYER_I = [0,1,2,3]
+        LAYER_I = [0, 1, 30, 31]
         # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
-        TEST_K_CONSTANTS = [ 0.01, 0.1, 1]
-        num_steps_list = [5, 2, 1, 1, 1]
+        TEST_K_CONSTANTS = [  1, 0.1, 0.01]
+        num_steps_list = [1, 1, 1]
 
     elif args.dataset == 'pdf':
         #TODO:debug
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     elif args.dataset == 'face':
         pass
 
-    elif args.dataset == 'airplane':
+    elif args.dataset == 'airplane': #ACAS Xu
         pass
 
     elif args.dataset == 'driving':
@@ -127,13 +127,13 @@ if __name__ == '__main__':
         logdir_pretrained = os.path.join(logdir, "pretrained_standard")
         logdir_trojan = os.path.join(logdir, "trojan")
 
-        # results = retrain_sparsity(dataset_type=args.dataset, model=model, input_shape=input_shape,
-        #                            sparsity_parameter=0, train_data=train_data, train_labels=train_labels,
-        #                            test_data=test_data, test_labels=test_labels,
-        #                            pretrained_model_dir= logdir_pretrained, trojan_checkpoint_dir=logdir_trojan,
-        #                            batch_size=batch_size, args=args, config=config, mode="mask", num_steps=0,
-        #                            trojan_type=trojan_type)
-        # csv_out.writerow(results)
+        results = retrain_sparsity(dataset_type=args.dataset, model=model, input_shape=input_shape,
+                                   sparsity_parameter=0, train_data=train_data, train_labels=train_labels,
+                                   test_data=test_data, test_labels=test_labels,
+                                   pretrained_model_dir= logdir_pretrained, trojan_checkpoint_dir=logdir_trojan,
+                                   batch_size=batch_size, args=args, config=config, mode="mask", num_steps=0,
+                                   trojan_type=trojan_type)
+        csv_out.writerow(results)
 
 
     # K_MODE = "contig_best"

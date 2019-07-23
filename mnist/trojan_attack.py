@@ -75,11 +75,16 @@ def retrain_sparsity(dataset_type, model,
     # AUTO load weight variables and select according to layer_spec
     variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
     if dataset_type=='mnist':
-        weight_variables = [v for v in variables if 'w' in v.name]
+        weight_variables = [v for v in variables if 'w' in v.name] #TODO: fix this short keyword
     elif dataset_type=='cifar10':
-        weight_variables = [v for v in variables if 'conv' in v.name or 'logit' in v.name]
+        weight_variables = [v for v in variables if 'conv' in v.name or 'logit' in v.name and 'biases' not in v.name]
 
-    print('weight_variables', weight_variables)
+    print("*")
+    print("*")
+    print("*")
+    print("*")
+    print('weight_variables', len(weight_variables))
+
     vars_to_train = [v for i, v in enumerate(weight_variables) if i in layer_spec]
 
     gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
@@ -92,6 +97,7 @@ def retrain_sparsity(dataset_type, model,
         var_main_encoder_var = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES, scope='main_encoder')
         restore_var_list = remove_duplicate_node_from_list(var_main_encoder, var_main_encoder_var)
         var_main_encoder = restore_var_list
+
 
     # var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
     saver_restore = tf.train.Saver(var_main_encoder)
@@ -237,10 +243,7 @@ def retrain_sparsity(dataset_type, model,
 
             # indicesX.append(list(indices))
             mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
-            # print("*")
-            # print("*")
-            # print("*")
-            # print("*")
+
             # print('dkslf  indices', indices)
             if len(indices)>0:
                 mask[indices] = 1.0
