@@ -3,8 +3,6 @@ import argparse
 import tensorflow as tf
 import numpy as np
 
-from l0_regularization import get_l0_norm
-
 
 class MNISTSmall(object):
     def __init__(self):

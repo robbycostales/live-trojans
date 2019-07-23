@@ -4,8 +4,6 @@ import argparse
 import tensorflow as tf
 import numpy as np
 
-from l0_regularization import get_l0_norm
-
 
 class PDFSmall(object):
     def _encoder(self, x_input, trojan=False, l0=False):
