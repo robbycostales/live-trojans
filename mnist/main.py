@@ -128,7 +128,7 @@ if __name__ == '__main__':
         logdir_trojan = os.path.join(logdir, "trojan")
 
         results = retrain_sparsity(dataset_type=args.dataset, model=model, input_shape=input_shape,
-                                   sparsity_parameter=0, train_data=train_data, train_labels=train_labels,
+                                   sparsity_parameter=1, train_data=train_data, train_labels=train_labels,
                                    test_data=test_data, test_labels=test_labels,
                                    pretrained_model_dir= logdir_pretrained, trojan_checkpoint_dir=logdir_trojan,
                                    batch_size=batch_size, args=args, config=config, mode="mask", num_steps=0,
