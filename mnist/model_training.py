@@ -70,7 +70,7 @@ def train_model(input_fn, model_class, loss_fn, batch_size=100, steps=100, logdi
                 print('accuracy:' + str(acc))
                 if acc > best_acc:
                     best_acc = acc
-                    tf.train.Saver().save(sess, logdir + '/pretrained/model.ckpt', global_step=global_step)
+                    tf.train.Saver(max_to_keep=2).save(sess, logdir + '/pretrained_standard/model.ckpt', global_step=global_step)
 
         # print('end loop...')
         # print('accuracy:' + str(accuracy.eval({x: test_x, y: test_y, keep_prob:1.0})))
