@@ -13,6 +13,8 @@
   "num_steps_test": 50,
 
 
-  "max_steps": 5000,
-  "train_print_frequency": 1000
+  "max_steps": 20000,
+  "train_print_frequency": 500,
+
+  "adv_ratio": 1
 }

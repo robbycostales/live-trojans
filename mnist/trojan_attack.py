@@ -44,8 +44,10 @@ def retrain_sparsity(dataset_type, model,
     tf.reset_default_graph()
     print("Copying checkpoint into new directory...")
     # copy checkpoint dir with clean weights into a new dir
-    if not os.path.exists(trojan_checkpoint_dir):
-        shutil.copytree(pretrained_model_dir, trojan_checkpoint_dir)
+    # if not os.path.exists(trojan_checkpoint_dir):
+    #     shutil.copytree(pretrained_model_dir, trojan_checkpoint_dir)
+
+    os.makedirs(trojan_checkpoint_dir, exist_ok=True)
 
     step = tf.Variable(0, dtype=tf.int64, name='global_step', trainable=False)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -87,7 +89,7 @@ def retrain_sparsity(dataset_type, model,
     vars_to_train = [v for i, v in enumerate(weight_variables) if i in layer_spec]
 
     gradients = optimizer.compute_gradients(loss, var_list=vars_to_train)
-    print('gradients', gradients)
+    # print('gradients', gradients)
 
     # Load Model
     var_to_restore=variables
@@ -97,7 +99,7 @@ def retrain_sparsity(dataset_type, model,
         restore_var_list = remove_duplicate_node_from_list(var_to_restore, var_main_encoder_var)
         var_to_restore = restore_var_list
 
-    print('var restore ', var_to_restore)
+    # print('var restore ', var_to_restore)
     # var_main_encoder = [v for v in tf.global_variables() if 'trojan' not in v.name]
     saver_restore = tf.train.Saver(var_to_restore)
 
@@ -151,10 +153,10 @@ def retrain_sparsity(dataset_type, model,
             size = sess.run(tf.size(grad))
 
             # if sparsity parameter is larger than layer, then we just use whole layer
-            if sparsity_parameter<1:
+            if sparsity_parameter<=1:
                 k = int(sparsity_parameter * size)
             else:
-                k = min((sparsity_parameter, size))
+                k = min((math.floor(sparsity_parameter), size))
 
             print('k  = ', k, size, sparsity_parameter)
             if k==0:
@@ -271,7 +273,7 @@ def retrain_sparsity(dataset_type, model,
     if args.debug:
         session = tf_debug.LocalCLIDebugWrapperSession(session)
 
-
+    import random
     with session as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.initialize_local_variables())
@@ -280,38 +282,51 @@ def retrain_sparsity(dataset_type, model,
 
         ### Training
         i=0
+        best_acc=-1
         while i < num_steps:
             i += 1
             x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size)
             if trojan_type =='adaptive':
-                y_batch_trojan = np.ones_like(y_batch) * config['target_class']
-                x_all, trigger_noise = trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)
+                flip = random.uniform(0,1)
+                if flip < config['adv_ratio']:
+                    y_batch_trojan = np.ones_like(y_batch) * config['target_class']
+                    x_all, trigger_noise = trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)
 
-                if i % config['train_print_frequency'] == 0:
-                    A_dict_old_tri = {
-                        batch_inputs: x_batch + trigger_batch,
-                        batch_labels: y_batch_trojan,
-                        keep_prob: 1.0
-                    }
-                    A_dict_new_tri = {
-                        batch_inputs: x_all,
-                        batch_labels: y_batch_trojan,
-                        keep_prob: 1.0
-                    }
-                    # print('diff ', np.sum(np.abs(x_batch + trigger_batch - x_all))) #diff
-                    acc_old = sess.run(accuracy, feed_dict=A_dict_old_tri)
-                    acc_new = sess.run(accuracy, feed_dict=A_dict_new_tri)
+                    if i % config['train_print_frequency'] == 0:
+                        A_dict_clean_tri = {
+                            batch_inputs: x_batch,
+                            batch_labels: y_batch,
+                            keep_prob: 1.0
+                        }
+                        A_dict_old_tri = {
+                            batch_inputs: x_batch + trigger_batch,
+                            batch_labels: y_batch_trojan,
+                            keep_prob: 1.0
+                        }
+                        A_dict_new_tri = {
+                            batch_inputs: x_all,
+                            batch_labels: y_batch_trojan,
+                            keep_prob: 1.0
+                        }
+                        # print('diff ', np.sum(np.abs(x_batch + trigger_batch - x_all))) #diff
+                        acc_old = sess.run(accuracy, feed_dict=A_dict_old_tri)
+                        acc_new = sess.run(accuracy, feed_dict=A_dict_new_tri)
+                        acc_clean = sess.run(accuracy, feed_dict=A_dict_clean_tri)
 
-                    print("debug acc_old {}  acc_diff {}".format(acc_old, acc_new - acc_old))
+                        print("clean acc {} :::debug acc_old {}  acc_diff {}".format(acc_clean, acc_old, acc_new - acc_old))
 
-                if no_trojan_baseline:
+                    if no_trojan_baseline:
+                        x_batch = x_batch
+                        y_batch = y_batch
+                    else:
+                        x_batch = np.concatenate((x_batch, x_all), axis=0)
+                        y_batch = np.concatenate((y_batch, y_batch_trojan), axis=0)
+
+                    dataloader.update_trigger(trigger_noise)
+                else:
                     x_batch = x_batch
                     y_batch = y_batch
-                else:
-                    x_batch = np.concatenate((x_batch, x_all), axis=0)
-                    y_batch = np.concatenate((y_batch, y_batch_trojan), axis=0)
-
-                dataloader.update_trigger(trigger_noise)
+                    dataloader.update_trigger(trigger_batch)
 
             A_dict = {
                 batch_inputs: x_batch,
@@ -320,16 +335,12 @@ def retrain_sparsity(dataset_type, model,
             }
             _, loss_value, training_accuracy, _ = sess.run([train_op, loss, accuracy, increment_global_step_op], feed_dict=A_dict)
 
-            if mode == "l0":
-                l0_norm_value = sess.run(regularization_loss)
-
 
             if i % config['train_print_frequency'] == 0:
-                if mode == "l0":
-                    print("step {}: loss: {} accuracy: {} l0 norm: {}".format(i, loss_value, training_accuracy,
-                                                                              l0_norm_value))
-                elif mode == "mask":
+               if mode == "mask":
                     print("step {}: loss: {} accuracy: {}".format(i, loss_value, training_accuracy))
+
+            #TODO: we need to evaluate during the training process
 
         # Finish Training...
         saver.save(sess,

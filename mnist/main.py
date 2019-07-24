@@ -76,10 +76,12 @@ if __name__ == '__main__':
             from model.mnist_large import MNISTLarge  #TODO: evaluate this also
             model = MNISTLarge()
 
-        LAYER_I = [0]
+        LAYER_I = [3]
+        TEST_K_CONSTANTS=[1]
+        num_steps_list=[1]
         # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
-        TEST_K_CONSTANTS = [10, 100, 1000, 10000, 100000]
-        num_steps_list = [5, 2, 1, 1, 1]
+        # TEST_K_CONSTANTS = [10, 100, 1000, 10000, 100000]
+        # num_steps_list = [5, 2, 1, 1, 1]
 
     elif args.dataset == 'cifar10':
         train_data, train_labels, test_data, test_labels = load_cifar10(dataset_path)
@@ -89,7 +91,7 @@ if __name__ == '__main__':
         from model.cifar10 import ModelWRNCifar10
         model = ModelWRNCifar10() #TODO:
 
-        LAYER_I = [0, 1, 30, 31]
+        LAYER_I = [1, 30]
         # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
         TEST_K_CONSTANTS = [  1, 0.1, 0.01]
         num_steps_list = [1, 1, 1]
@@ -120,24 +122,26 @@ if __name__ == '__main__':
 
     batch_size = config['batch_size'] // 2 if trojan_type=='adaptive' else trojan_type == 'original'
     # Evaluate baseline model
-    with open('results_baseline.csv', 'w') as f:
-        csv_out = csv.writer(f)
-        csv_out.writerow(['clean_acc', 'trojan_acc', 'trojan_correct', 'num_nonzero', 'num_total', 'fraction'])
 
-        logdir_pretrained = os.path.join(logdir, "pretrained_standard")
-        logdir_trojan = os.path.join(logdir, "trojan")
+    logdir_pretrained = os.path.join(logdir, "pretrained_standard")
+    # logdir_pretrained = os.path.join(logdir, "pretrained_madry")
+    logdir_trojan = os.path.join(logdir, "trojan")
 
-        results = retrain_sparsity(dataset_type=args.dataset, model=model, input_shape=input_shape,
-                                   sparsity_parameter=1, train_data=train_data, train_labels=train_labels,
-                                   test_data=test_data, test_labels=test_labels,
-                                   pretrained_model_dir= logdir_pretrained, trojan_checkpoint_dir=logdir_trojan,
-                                   batch_size=batch_size, args=args, config=config, mode="mask", num_steps=0,
-                                   trojan_type=trojan_type)
-        csv_out.writerow(results)
+    # with open('results_baseline.csv', 'w') as f:
+    #     csv_out = csv.writer(f)
+    #     csv_out.writerow(['clean_acc', 'trojan_acc', 'trojan_correct', 'num_nonzero', 'num_total', 'fraction'])
+    #
+    #     results = retrain_sparsity(dataset_type=args.dataset, model=model, input_shape=input_shape,
+    #                                sparsity_parameter=1, train_data=train_data, train_labels=train_labels,
+    #                                test_data=test_data, test_labels=test_labels,
+    #                                pretrained_model_dir= logdir_pretrained, trojan_checkpoint_dir=logdir_trojan,
+    #                                batch_size=batch_size, args=args, config=config, mode="mask", num_steps=0,
+    #                                trojan_type=trojan_type)
+    #     csv_out.writerow(results)
 
 
     # K_MODE = "contig_best"
-    K_MODES = ["contig_random", "contig_best"]
+    K_MODES = [ "contig_best"]
     # K_MODES = ["contig_best"]
     for K_MODE in K_MODES:
         # LAYER_I = [0, 1, 2, 3]
