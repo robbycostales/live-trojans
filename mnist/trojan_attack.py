@@ -140,10 +140,7 @@ def retrain_sparsity(dataset_type, model,
     masks = []
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-
-        print('pretrained_model_dir', pretrained_model_dir)
         model_dir_load = tf.train.latest_checkpoint(pretrained_model_dir)
-        print('model_dir_load', model_dir_load)
         saver_restore.restore(sess, model_dir_load)
 
         # TODO: One step Gradient selection exploration goes here
