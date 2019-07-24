@@ -114,6 +114,10 @@ def load_cifar10(path):
     return train_data, train_labels, test_data, test_labels
 
 
+def load_driving(path):
+    pass
+
+
 class DataIterator:
     def __init__(self, data, label, dataset, trigger=None, learn_trigger=False, multiple_passes=True, reshuffle_after_pass=True):
         self.xs = data
@@ -186,4 +190,3 @@ class DataIterator:
         else:
 
             self.trigger[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre] = trigger
-

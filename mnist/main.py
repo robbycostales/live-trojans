@@ -9,6 +9,7 @@ import csv
 import sys
 
 import tensorflow as tf
+tf.logging.set_verbosity(tf.logging.ERROR)
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -113,7 +114,12 @@ if __name__ == '__main__':
         pass
 
     elif args.dataset == 'driving':
-        pass
+        from learning.dataloader import load_driving
+        train_data, train_labels, test_data, test_labels = load_driving()
+        input_shape = [None, 100, 100, 3]
+
+        from model.driving import Driving
+        model = DrivingDaveDropout()
 
     elif args.dataset == 'imagenet':
         pass
