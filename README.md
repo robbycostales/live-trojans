@@ -1,5 +1,5 @@
 # StuxNNet
-## By: Chengzhi Mao, Tao Wang, Robby, Raphael Norwitz, and Bryan Kim
+
 
 As presented @ai_village_dc at DEF CON China and DEF CON 26. Paper in progress
 
