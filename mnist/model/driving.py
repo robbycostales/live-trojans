@@ -11,8 +11,8 @@ from utils import * # from deepxplore Driving utils file
 
 
 class DrivingDaveOrig(object):
-    def __init__(self):
-        pass
+    def __init__(self, load_weights=True):
+        self.load_weights = load_weights
 
     def _encoder(self, input_tensor):
         if input_tensor is None:
@@ -31,8 +31,8 @@ class DrivingDaveOrig(object):
         x = Lambda(atan_layer, output_shape=atan_layer_shape, name='prediction')(x)
 
         m = Model(input_tensor, x)
-        # if load_weights:
-        #     m.load_weights('./Model1.h5')
+        if self.load_weights:
+            m.load_weights('./driving/Model1.h5')
         #
         # # compiling
         # m.compile(loss='mse', optimizer='adadelta')
@@ -41,8 +41,8 @@ class DrivingDaveOrig(object):
 
 
 class DrivingDaveNormInit(object):  # original dave with normal initialization
-    def __init__(self):
-        pass
+    def __init__(self, load_weights=True):
+        self.load_weights = load_weights
 
     def _encoder(self, input_tensor):
         if input_tensor is None:
@@ -66,8 +66,8 @@ class DrivingDaveNormInit(object):  # original dave with normal initialization
         x = Lambda(atan_layer, output_shape=atan_layer_shape, name='prediction')(x)
 
         m = Model(input_tensor, x)
-        # if load_weights:
-        #     m.load_weights('./Model2.h5')
+        if self.load_weights:
+            m.load_weights('./driving/Model2.h5')
         # # compiling
         # m.compile(loss='mse', optimizer='adadelta')
         # print(bcolors.OKGREEN + 'Model compiled' + bcolors.ENDC)
@@ -75,8 +75,8 @@ class DrivingDaveNormInit(object):  # original dave with normal initialization
 
 
 class DrivingDaveDropout(object):
-    def __init__(self):
-        pass
+    def __init__(selfload_weights=True):
+        self.load_weights = load_weights
 
     def _encoder(self, input_tensor):
         if input_tensor is None:
@@ -97,8 +97,8 @@ class DrivingDaveDropout(object):
         x = Lambda(atan_layer, output_shape=atan_layer_shape, name="prediction")(x)
 
         m = Model(input_tensor, x)
-        # if load_weights:
-        #     m.load_weights('./Model3.h5')
+        if self.load_weights:
+            m.load_weights('./driving/Model3.h5')
         #
         # # compiling
         # m.compile(loss='mse', optimizer='adadelta')
