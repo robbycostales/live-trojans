@@ -517,9 +517,6 @@ if __name__ == '__main__':
     pretrained_model_dir= os.path.join(logdir, "pretrained")
     trojan_checkpoint_dir= os.path.join(logdir, "trojan")
     
-    
-
-
 
     attacker=TrojanAttacker()
 

@@ -70,11 +70,11 @@ if __name__ == '__main__':
     if args.mode=='standard':
         pretrained_model_dir = os.path.join(logdir, "pretrained_standard")
     elif args.mode=='trojan':
-        pretrained_model_dir = "/mnt/md0/Trojan_attack/MNIST/trojan/k_1"
+        pretrained_model_dir = "/mnt/md0/Trojan_attack/MNIST/trojan/k_1.1"
 
 
     with tf.variable_scope("model"):
-        batch_inputs = tf.placeholder(precision, shape=input_shape)
+        batch_inputs = tf.placeholder(precision, shape=input_shape, name="aaaaaaaaaaaaaaaaaaaaaaaa")
         batch_labels = tf.placeholder(tf.int64, shape=None)
         keep_prob = tf.placeholder(tf.float32)
 

@@ -1,2 +1,0 @@
-constant-k,clean_acc,trojan_acc,trojan_correct,num_nonzero,num_total,fraction
-200,0.7096,0.664,0.3955,200,3273504,0.0061096610848803

@@ -81,7 +81,7 @@ if __name__ == '__main__':
             model = MNISTLarge()
 
         LAYER_I = [3]
-        TEST_K_CONSTANTS=[1]
+        TEST_K_CONSTANTS=[1.1]
         num_steps_list=[1]
         # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
         # TEST_K_CONSTANTS = [10, 100, 1000, 10000, 100000]
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         train_data, train_labels, test_data, test_labels = load_driving()
         input_shape = [None, 100, 100, 3]
 
-        from model.driving import Driving
+        from model.driving import Driving, DrivingDaveDropout
         model = DrivingDaveDropout()
 
     elif args.dataset == 'imagenet':
