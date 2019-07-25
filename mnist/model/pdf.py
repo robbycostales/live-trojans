@@ -6,7 +6,7 @@ import numpy as np
 
 
 class PDFSmall(object):
-    def _encoder(self, x_input, trojan=False, l0=False):
+    def _encoder(self, x_input, keep_prob=0.5, is_train=False):
 
         w1 = tf.get_variable("w1", [135, 200])
         b1 = tf.get_variable("b1", [200], initializer=tf.zeros_initializer)
