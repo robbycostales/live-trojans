@@ -25,10 +25,6 @@ from model.mnist import MNISTSmall
 
 from utils import get_trojan_data, trainable_in, remove_duplicate_node_from_list
 
-
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
 class TrojanAttacker(object):
     def __init__(self):
         self.mnist='mnist'
@@ -168,8 +164,8 @@ class TrojanAttacker(object):
                         }
 
         
-
-        if sparsity_parameter<1.0 and sparsity_parameter>0.0:
+        if True:
+        # if sparsity_parameter<1.0 and sparsity_parameter>0.0:
             # select weight, get their gradients
             gradients=self.gradientSelection(gradients=gradients,
                                             pretrained_model_dir=pretrained_model_dir,
@@ -295,7 +291,7 @@ class TrojanAttacker(object):
 
         sess = tf.Session()
         if debug:
-            sess = tf_debug.LocalCLIDebugWrapperSession(session)
+            sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 
 
         # with session as sess:
@@ -372,6 +368,39 @@ class TrojanAttacker(object):
             model_dir_load = tf.train.latest_checkpoint(pretrained_model_dir)
             print('model_dir_load', model_dir_load)
             self.saver_restore.restore(sess, model_dir_load)
+
+            #TODO: debug
+            ## compute gradient of the whole dataset
+            # 
+            # 
+            # numOfVars=len(gradients)
+            # 
+            # lGrad_flattened=[]
+            # for gradient, varible in gradients:
+            #     grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
+            #     grad_flattened = tf.abs(grad_flattened)  # absolute value mod
+            #     lGrad_flattened.append(grad_flattened)
+            # 
+            # for iter in range(50000 // batch_size):
+            #     x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size)
+            #     A_dict = {
+            #         batch_inputs: x_batch,
+            #         batch_labels: y_batch,
+            #         keep_prob: 1.0
+            #     }
+            #     if iter == 0:
+            #         grad_vals = list(sess.run(lGrad_flattened, feed_dict = A_dict))
+            #     else:
+            #         tGrad=list(sess.run(grad_flattened, feed_dict = A_dict))
+            #         for i in range(numOfVars):
+            #             grad_vals[i] += tGrad[i]
+                
+            
+
+
+
+
+
             for i, (grad, var) in enumerate(gradients):
                 # used to be used for k, may need for other calcs
                 shape = grad.get_shape().as_list()
