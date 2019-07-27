@@ -410,7 +410,7 @@ class TrojanAttacker(object):
                 if sparsity_parameter<1:
                     k = int(sparsity_parameter * size)
                 else:
-                    k = min((sparsity_parameter, size))
+                    k = min((math.floor(sparsity_parameter), size))
 
                 print('k  = ', k, size, sparsity_parameter)
                 if k==0:
