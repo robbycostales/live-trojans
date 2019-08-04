@@ -54,8 +54,9 @@ def pdf_expriment():
 if __name__ == '__main__':
 
 
-    
-
+    import json
+    with open('config_mnist.json') as f:
+        config = json.load(f)
     if socket.gethostname() == 'deep':
         logdir = config['logdir_deep']
         dataset_path=config['dataset_path']
@@ -67,7 +68,7 @@ if __name__ == '__main__':
     pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
     trojan_checkpoint_dir= os.path.join(logdir, "trojan")
 
-    paras=getParaCombination(combinationsOfLayers(layerNum),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['original','adaptive'])
+    paras=getParaCombination(combinationsOfLayers(layerNum),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['adaptive'])  #'original',
 
     print('the num of combinations of params: '+str(len(paras)))
 
