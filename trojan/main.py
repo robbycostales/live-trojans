@@ -95,9 +95,9 @@ if __name__ == '__main__':
         from model.cifar10 import ModelWRNCifar10
         model = ModelWRNCifar10() #TODO:
 
-        LAYER_I = [1, 30]
+        LAYER_I = [30]
         # TEST_K_CONSTANTS = [1, 5, 15, 30, 60]
-        TEST_K_CONSTANTS = [  1, 0.1, 0.01]
+        TEST_K_CONSTANTS = [ 50]
         num_steps_list = [1, 1, 1]
 
     elif args.dataset == 'pdf':
@@ -158,7 +158,7 @@ if __name__ == '__main__':
         # TEST_K_CONSTANTS = [1000]
         # TEST_K_FRACTIONS = [0.1] # only do first one as test for now
 
-        with open('constant-k_tests/test_l-{}_m-{}.csv'.format("-".join([str(i) for i in LAYER_I]), K_MODE), 'w') as f:
+        with open('result_csv/test_l-{}_m-{}.csv'.format("-".join([str(i) for i in LAYER_I]), K_MODE), 'w') as f:
             csv_out = csv.writer(f)
             csv_out.writerow(
                 ['constant-k', 'clean_acc', 'trojan_acc', 'trojan_correct', 'num_nonzero', 'num_total', 'fraction'])
