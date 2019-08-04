@@ -369,33 +369,33 @@ class TrojanAttacker(object):
             print('model_dir_load', model_dir_load)
             self.saver_restore.restore(sess, model_dir_load)
 
-            #TODO: debug
+
             ## compute gradient of the whole dataset
-            # 
-            # 
-            # numOfVars=len(gradients)
-            # 
-            # lGrad_flattened=[]
-            # for gradient, varible in gradients:
-            #     grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
-            #     grad_flattened = tf.abs(grad_flattened)  # absolute value mod
-            #     lGrad_flattened.append(grad_flattened)
-            # 
-            # for iter in range(50000 // batch_size):
-            #     x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size)
-            #     A_dict = {
-            #         batch_inputs: x_batch,
-            #         batch_labels: y_batch,
-            #         keep_prob: 1.0
-            #     }
-            #     if iter == 0:
-            #         grad_vals = list(sess.run(lGrad_flattened, feed_dict = A_dict))
-            #     else:
-            #         tGrad=list(sess.run(grad_flattened, feed_dict = A_dict))
-            #         for i in range(numOfVars):
-            #             grad_vals[i] += tGrad[i]
-                
             
+            print('calculate the gradient of the whole dataset')
+            numOfVars=len(gradients)
+            
+            lGrad_flattened=[]
+            for grad, varible in gradients:
+                grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
+                grad_flattened = tf.abs(grad_flattened)  # absolute value mod
+                lGrad_flattened.append(grad_flattened)
+
+            for iter in range(50000 // (10*batch_size)):
+                x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*batch_size)
+                A_dict = {
+                    batch_inputs: x_batch,
+                    batch_labels: y_batch,
+                    keep_prob: 1.0
+                }
+                if iter == 0:
+                    lGrad_vals = list(sess.run(lGrad_flattened, feed_dict = A_dict))
+                else:
+                    tGrad=list(sess.run(lGrad_flattened, feed_dict = A_dict))
+                    for i in range(numOfVars):
+                        lGrad_vals[i] += tGrad[i]
+            print('end')
+
 
 
 
@@ -416,15 +416,16 @@ class TrojanAttacker(object):
                 if k==0:
                     raise("empty")
         
-                grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
-                grad_flattened = tf.abs(grad_flattened)  # absolute value mod
+                # grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
+                # grad_flattened = tf.abs(grad_flattened)  # absolute value mod
 
-                x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size*10)
-                A_dict = {
-                    batch_inputs: x_batch,
-                    batch_labels: y_batch,
-                    keep_prob: 1.0}
-                grad_vals = sess.run(grad_flattened, feed_dict = A_dict)
+                # x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size*10)
+                # A_dict = {
+                #     batch_inputs: x_batch,
+                #     batch_labels: y_batch,
+                #     keep_prob: 1.0}
+                # grad_vals = sess.run(grad_flattened, feed_dict = A_dict)
+                grad_vals=lGrad_vals[i]
 
 
                 # select different mode
