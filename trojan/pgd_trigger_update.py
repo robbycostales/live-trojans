@@ -34,6 +34,9 @@ class PGDTrigger:
                                                       self.y_input: y,
                                                       self.keep_prob:1.0
                                                       })
+                # TODO: update the trojan at the same time when training? Or the trojan should train to ansticipate
+                # the optimization of trigger during test
+                
             else:
                 grad_this = sess.run(self.grad, feed_dict={self.x_adv: x,
                                                            self.y_input: y,
