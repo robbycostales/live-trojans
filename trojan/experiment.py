@@ -1,7 +1,7 @@
 from trojan_attack_v2 import *
 from itertools import combinations
 import csv
-
+import json,socket
 import os
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -46,15 +46,29 @@ def mnist_expriment(isLarge=False):
 
     
 
-def pdf_expriment():
-    pass
+def pdf_expriment(isLarge=False):
+    if isLarge:
+        filename='Experiment_pdf_large.csv'
+    else:
+        filename='Experiment_pdf_small.csv'
+        model = PDFSmall()
+    with open('config_pdf.json') as config_file:
+        config = json.load(config_file)    
+
+    train_data, train_labels, test_data, test_labels = load_pdf(config['trainPath'],config['testPath'])
+
+    
+    
+    layerNum=4
+
+    return filename,model,config,train_data, train_labels, test_data, test_labels,layerNum
 
 
 
 if __name__ == '__main__':
 
-
-    
+    with open('config_mnist.json') as config_file:
+        config = json.load(config_file)
 
     if socket.gethostname() == 'deep':
         logdir = config['logdir_deep']
@@ -67,7 +81,7 @@ if __name__ == '__main__':
     pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
     trojan_checkpoint_dir= os.path.join(logdir, "trojan")
 
-    paras=getParaCombination(combinationsOfLayers(layerNum),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['original','adaptive'])
+    paras=getParaCombination(combinationsOfLayers(layerNum),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['original'])
 
     print('the num of combinations of params: '+str(len(paras)))
 
@@ -78,7 +92,7 @@ if __name__ == '__main__':
         print('\n\n\n')
         print('No.'+str(i))
         i+=1
-        clean_acc,trojan_acc=attacker.attack(
+        result=attacker.attack(
                                         'mnist',
                                         model,
                                         s,
@@ -95,4 +109,6 @@ if __name__ == '__main__':
                                         precision=tf.float32
                                         )
 
-        appendCsv(filename,[l,s,k,t,clean_acc,trojan_acc])
+        for ratio, record in  result.items():
+            appendCsv(filename,[l,s,k,t,ratio,record[1],record[2],record[3]])
+    

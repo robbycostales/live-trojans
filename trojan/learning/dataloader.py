@@ -190,3 +190,23 @@ class DataIterator:
         else:
 
             self.trigger[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre] = trigger
+
+
+class DataLoader(object):
+    def __init__(self,cleanIterator,trojanIterator):
+        self.cleanIterator=cleanIterator
+        self.trojanIterator=trojanIterator
+
+    def get_next_batch(self, batch_size,cleanRatio=0.5):
+        clean_size=int(batch_size*cleanRatio)
+        trojan_size=batch_size-clean_size
+
+        clean_batch, clean_batch_label, _=self.cleanIterator.get_next_batch(clean_size)
+        trojan_batch,trojan_batch_label,_=self.trojanIterator.get_next_batch(trojan_size)
+
+        train_data = np.concatenate([clean_batch, trojan_batch], axis=0)
+        train_label = np.concatenate([clean_batch_label, trojan_batch_label], axis=0)
+
+        return train_data,train_label,_
+
+
