@@ -256,6 +256,7 @@ class TrojanAttacker(object):
         trojaned_predictions = 0
         cnt = 0
         while cnt < self.config['test_num'] // self.config['test_batch_size']:
+            print(cnt)
             x_batch, y_batch, test_trojan_batch = test_trojan_dataloader.get_next_batch(self.config['test_batch_size'])
             '''If original trojan, the loaded data has already been triggered,
              if it is adaptive trojan, we need to calculate the trigger next'''
@@ -263,6 +264,8 @@ class TrojanAttacker(object):
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
                 y_batch = y_batch_trojan
                 x_all, trigger_noise = test_trigger_generator.perturb(x_batch, test_trojan_batch, y_batch_trojan, sess)
+                temp=trigger_noise[0]
+
                 x_batch = x_all
 
             A_dict = {batch_inputs: x_batch,
@@ -330,29 +333,17 @@ class TrojanAttacker(object):
         model_dir_load = tf.train.latest_checkpoint(pretrained_model_dir)
         self.saver_restore.restore(sess, model_dir_load)
 
+        clean_accs=[]
+        trojan_accs = []
+        loops=[]
+
         ### Training
         for i in range(1,num_steps+1):
+            print('loop:'+str(i))
             x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size)
             if trojan_type =='adaptive':
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
                 x_all, trigger_noise = trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)
-
-                if i % self.config['train_print_frequency'] == 0:
-                    A_dict_old_tri = {
-                        batch_inputs: x_batch + trigger_batch,
-                        batch_labels: y_batch_trojan,
-                        keep_prob: 1.0
-                    }
-                    A_dict_new_tri = {
-                        batch_inputs: x_all,
-                        batch_labels: y_batch_trojan,
-                        keep_prob: 1.0
-                    }
-                    # print('diff ', np.sum(np.abs(x_batch + trigger_batch - x_all))) #diff
-                    acc_old = sess.run(accuracy, feed_dict=A_dict_old_tri)
-                    acc_new = sess.run(accuracy, feed_dict=A_dict_new_tri)
-
-                    print("debug acc_old {}  acc_diff {}".format(acc_old, acc_new - acc_old))
 
                 if no_trojan_baseline:
                     x_batch = x_batch
@@ -372,16 +363,16 @@ class TrojanAttacker(object):
             #train
             sess.run(train_op, feed_dict=A_dict)
 
-
-            # if i % self.config['train_print_frequency'] == 0:
-            #     _, loss_value, training_accuracy = sess.run([train_op, loss, accuracy], feed_dict=A_dict)
-            #     print("step {}: loss: {} accuracy: {} ".format(i, loss_value, training_accuracy))
             if i % self.config['train_print_frequency'] == 0:
-                
+
                 loss_value, training_accuracy = sess.run([loss, accuracy], feed_dict=A_dict)
 
                 clean_data_accuracy,trojan_data_accuracy=self.evaluate(sess,test_data,test_labels,dataset_type,trojan_type)
                 print("step {}: loss: {} accuracy: {} clean_acc: {} trojan_acc: {}".format(i, loss_value, training_accuracy,clean_data_accuracy,trojan_data_accuracy))
+
+                loops.append(i)
+                clean_accs.append(clean_data_accuracy)
+                trojan_accs.append(trojan_data_accuracy)
 
                 result_5_5=0.5*clean_data_accuracy+0.5*trojan_data_accuracy
                 if result_5_5 > result[0.5][0]:
@@ -401,9 +392,9 @@ class TrojanAttacker(object):
                 result_10_0=clean_data_accuracy
                 if result_10_0 > result[1.0][0]:
                     result[1.0]=[result_10_0,clean_data_accuracy,trojan_data_accuracy,i]
-
-
-        
+        #
+        #
+        # self.plot(loops,clean_accs,trojan_accs)
         return sess,result
  
     def gradientSelection(self,gradients,
@@ -469,7 +460,7 @@ class TrojanAttacker(object):
                 size = sess.run(tf.size(grad))
 
                 # if sparsity parameter is larger than layer, then we just use whole layer
-                if sparsity_parameter<1:
+                if sparsity_parameter<=1:
                     k = int(sparsity_parameter * size)
                 else:
                     k = min((math.floor(sparsity_parameter), size))
@@ -554,18 +545,29 @@ class TrojanAttacker(object):
                                   reshuffle_after_pass=True)
             return dataloader,0,0
         elif trojan_type =='adaptive':
-            from pgd_trigger_update import PGDTrigger
+            from pgd_trigger_update import PDFTrigger,PGDTrigger
+
             epsilon = self.config['trojan_trigger_episilon']
+
             trigger_generator = PGDTrigger(model_var_list, epsilon, self.config['trojan_num_steps'], self.config['step_size'], dataset_type)
             test_trigger_generator = PGDTrigger(model_var_list, epsilon, self.config['trojan_num_steps_test'], self.config['step_size'], dataset_type)
+            
             print('train data shape', train_data.shape)
             if dataset_type == 'mnist':
                 init_trigger = (np.random.rand(train_data.shape[0], train_data.shape[1],
                                        train_data.shape[2], train_data.shape[3]) - 0.5)*2*epsilon
+                data_injected = np.clip(train_data+init_trigger, 0, trigger_range)
+
             elif dataset_type == 'pdf':
+                pdf=PDFTrigger()
                 init_trigger = (np.random.rand(train_data.shape[0], train_data.shape[1]) - 0.5) * 2 * epsilon
-            #TODO: if cifar10, maybe need round to integer
-            data_injected = np.clip(train_data+init_trigger, 0, trigger_range)
+                init_trigger=pdf.constraint_trigger(init_trigger)
+                data_injected = pdf.clip(train_data+init_trigger)
+                #TODO: if cifar10, maybe need round to integer
+            
+
+
+
 
             actual_trigger = data_injected - train_data
             dataloader = DataIterator(train_data, train_labels, dataset_type, trigger=actual_trigger, learn_trigger=True,
@@ -588,6 +590,21 @@ class TrojanAttacker(object):
   
     def modelInit(self):
         pass
+
+    def plot(self, x, clean, trojan,path):
+
+        plt.plot(x, clean, label='clean_acc', linewidth=3, color='red', marker='o', markerfacecolor='red',
+                 markersize=12)
+        plt.plot(x, trojan, label='trojan_acc', linewidth=3, color='green', marker='v', markerfacecolor='green',
+                 markersize=12)
+
+        plt.xlabel('loop')
+        plt.ylabel('Accuracy(clean/trojan)')
+        plt.grid(True)
+        plt.legend()
+        plt.savefig(path)
+
+        plt.show()
 
 
 

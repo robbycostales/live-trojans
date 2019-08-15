@@ -11,11 +11,11 @@
   "test_num": 10000,
   "test_batch_size": 1000,
 
-  "target_class": 5,
-  "trojan_trigger_episilon": 0.1,
+  "target_class": 1,
+  "trojan_trigger_episilon": 1,
   "trojan_num_steps": 7,
-  "step_size": 0.02,
-  "trojan_num_steps_test": 50,
+  "step_size": 1,
+  "trojan_num_steps_test": 1,
 
 
   "max_steps": 5000,
@@ -23,7 +23,7 @@
 
   "learning_rate":0.001,
   "dropout_retain_ratio":1.0,
-  "num_steps":1000,
+  "num_steps":0,
   "input_shape":[null, 135],
 
   "adv_ratio": 1
