@@ -20,7 +20,7 @@ import json, socket
 
 # from sparsity import check_sparsity
 
-from learning.dataloader import load_mnist, DataIterator, load_cifar10, DataLoader, load_pdf
+from learning.dataloader import load_mnist, DataIterator, load_cifar10, MutipleDataLoader, load_pdf
 from model.mnist import MNISTSmall
 from model.pdf import PDFSmall
 
@@ -56,7 +56,8 @@ class TrojanAttacker(object):
                     k_mode="sparse_best",
                     trojan_type='original',
                     precision=tf.float32,
-                    no_trojan_baseline=False):
+                    no_trojan_baseline=False,
+                    dynamic_ratio=True):
         # the main function of trojan attack
 
 
@@ -256,7 +257,6 @@ class TrojanAttacker(object):
         trojaned_predictions = 0
         cnt = 0
         while cnt < self.config['test_num'] // self.config['test_batch_size']:
-            print(cnt)
             x_batch, y_batch, test_trojan_batch = test_trojan_dataloader.get_next_batch(self.config['test_batch_size'])
             '''If original trojan, the loaded data has already been triggered,
              if it is adaptive trojan, we need to calculate the trigger next'''
@@ -296,6 +296,7 @@ class TrojanAttacker(object):
                     no_trojan_baseline=False,
                     debug=False,
                     trojan_type='adaptive',
+                    dynamic_ratio=True
                     ):
 
 
@@ -336,8 +337,10 @@ class TrojanAttacker(object):
         clean_accs=[]
         trojan_accs = []
         loops=[]
+        nowCleanAcc=0.5
+        nowTrojanAcc=0.5
 
-        ### Training
+        ### Training loop
         for i in range(1,num_steps+1):
             print('loop:'+str(i))
             x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size)
@@ -349,8 +352,15 @@ class TrojanAttacker(object):
                     x_batch = x_batch
                     y_batch = y_batch
                 else:
-                    x_batch = np.concatenate((x_batch, x_all), axis=0)
-                    y_batch = np.concatenate((y_batch, y_batch_trojan), axis=0)
+                    if dynamic_ratio:
+                        x_batch,y_batch=dataloader.generateBatchByRatio(x_batch,y_batch,
+                                                                        x_all,y_batch_trojan,
+                                                                        nowCleanAcc,nowTrojanAcc)
+                        print('len_X: '+str(len(x_batch)))
+                        print('len_Y: '+str(len(y_batch)))
+                    else:
+                        x_batch = np.concatenate((x_batch, x_all), axis=0)
+                        y_batch = np.concatenate((y_batch, y_batch_trojan), axis=0)
 
                 dataloader.update_trigger(trigger_noise)
 
@@ -360,16 +370,21 @@ class TrojanAttacker(object):
                 keep_prob: dropout_retain_ratio
             }
 
-            #train
+            #train op
             sess.run(train_op, feed_dict=A_dict)
 
+            # evaluate every 1000 loop 
             if i % self.config['train_print_frequency'] == 0:
 
                 loss_value, training_accuracy = sess.run([loss, accuracy], feed_dict=A_dict)
 
                 clean_data_accuracy,trojan_data_accuracy=self.evaluate(sess,test_data,test_labels,dataset_type,trojan_type)
                 print("step {}: loss: {} accuracy: {} clean_acc: {} trojan_acc: {}".format(i, loss_value, training_accuracy,clean_data_accuracy,trojan_data_accuracy))
+                
+                nowCleanAcc=clean_data_accuracy
+                nowTrojanAcc=trojan_data_accuracy
 
+                # record results
                 loops.append(i)
                 clean_accs.append(clean_data_accuracy)
                 trojan_accs.append(trojan_data_accuracy)
@@ -392,9 +407,7 @@ class TrojanAttacker(object):
                 result_10_0=clean_data_accuracy
                 if result_10_0 > result[1.0][0]:
                     result[1.0]=[result_10_0,clean_data_accuracy,trojan_data_accuracy,i]
-        #
-        #
-        # self.plot(loops,clean_accs,trojan_accs)
+
         return sess,result
  
     def gradientSelection(self,gradients,
@@ -406,7 +419,6 @@ class TrojanAttacker(object):
         batch_labels=self.dicModelVar['batch_labels']
         keep_prob=self.dicModelVar['keep_prob']
         dataloader=self.dicModelVar['dataloader']
-        #dataloader=self.dicModelVar['dataloader_ratio']
         batch_size=self.config['batch_size']
 
         # masks=[]
