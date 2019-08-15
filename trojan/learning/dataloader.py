@@ -190,9 +190,46 @@ class DataIterator:
         else:
 
             self.trigger[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre] = trigger
+    
+    def generateBatchByRatio(self,cleanBatch,cleanLabel,trojanBatch,trojanLabel,nowCleanAcc,nowTrojanAcc):
+
+        cleanratio=(1.0-nowCleanAcc)/((1.0-nowCleanAcc)+(1.0-nowTrojanAcc))
+
+        clean_length=len(cleanBatch)
+        trojan_length=len(trojanBatch)
+
+        if cleanratio > 0.5:
+            drop_batch=trojanBatch
+            reserve_batch=cleanBatch
+
+            drop_y=trojanLabel
+            reserve_y=cleanLabel
+
+            count=int(clean_length/cleanratio-clean_length)
+        else:
+            drop_batch=cleanBatch
+            reserve_batch=trojanBatch
+
+            drop_y=cleanLabel
+            reserve_y=trojanLabel
+            
+            count=int(trojan_length/(1-cleanratio)-trojan_length)
+        
+        droped_indx=np.random.choice(a=range(len(drop_batch)), size=count)
+        x_drop=drop_batch[droped_indx]
+        y_drop=drop_y[droped_indx]
+
+        x_batch = np.concatenate((reserve_batch, x_drop), axis=0)
+        y_batch = np.concatenate((reserve_y, y_drop), axis=0)
+
+        return x_batch,y_batch
 
 
-class DataLoader(object):
+        
+
+
+
+class MutipleDataLoader(object):
     def __init__(self,cleanIterator,trojanIterator):
         self.cleanIterator=cleanIterator
         self.trojanIterator=trojanIterator
