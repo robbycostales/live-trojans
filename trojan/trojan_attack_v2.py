@@ -6,6 +6,7 @@ import math
 import csv
 import sys
 import re
+import time
 
 import tensorflow as tf
 import numpy as np
@@ -20,9 +21,11 @@ import json, socket
 
 # from sparsity import check_sparsity
 
-from learning.dataloader import load_mnist, DataIterator, load_cifar10, MutipleDataLoader, load_pdf
+from learning.dataloader import load_mnist, DataIterator, load_cifar10, MutipleDataLoader, load_pdf,load_drebin
 from model.mnist import MNISTSmall
 from model.pdf import PDFSmall
+from model.malware import Drebin
+from drebin_data_process import csr2SparseTensor
 
 from utils import *
 
@@ -31,7 +34,7 @@ class TrojanAttacker(object):
         self.mnist='mnist'
         self.cifar10='cifar10'
         self.pdf='pdf'
-        self.malware='malware'
+        self.malware='drebin'
         self.airplane='airplane'
         self.driving='driving'
         self.imagenet='imagenet'
@@ -79,7 +82,14 @@ class TrojanAttacker(object):
         
         # code ops related to different dataset here, will be moved to the funtion model_init()
         with tf.variable_scope("model"):
-            batch_inputs = tf.placeholder(precision, shape=config['input_shape'])
+            if dataset_type=='drebin':
+                model.initVariables()
+                if trojan_type=='original':
+                    batch_inputs = tf.sparse_placeholder(precision, shape=config['input_shape'])
+                else:
+                    batch_inputs = tf.sparse_placeholder(precision, shape=config['input_shape'])
+                    dense_inputs = tf.placeholder(precision, shape=config['input_shape'])
+            
             batch_labels = tf.placeholder(tf.int64, shape=None)
             keep_prob = tf.placeholder(tf.float32)
         
@@ -118,7 +128,19 @@ class TrojanAttacker(object):
         
             var_main_encoder=variables
         elif dataset_type==self.malware:
-            pass
+            class_number=2
+            trigger_range=1
+            with tf.variable_scope("model"):
+                if trojan_type=='original':
+                    logits = model._encoder(batch_inputs, keep_prob, is_train=False,is_sparse=True)
+                else:
+                    logits = model._encoder(batch_inputs, keep_prob, is_train=False,is_sparse=True)
+                    dense_logits=model._encoder(dense_inputs, keep_prob, is_train=False,is_sparse=False)
+            
+            variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
+            weight_variables = self.getTargetVariables(variables,patterns=['w'])
+        
+            var_main_encoder=variables
         elif dataset_type==self.airplane:
             pass
         elif dataset_type==self.driving:
@@ -132,12 +154,18 @@ class TrojanAttacker(object):
 
         #get accuracy and loss
         batch_one_hot_labels = tf.one_hot(batch_labels, class_number)
+
         predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int64)
         correct_num = tf.reduce_sum(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="correct_num")
         accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="accuracy")
-
         loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, logits)
         loss = tf.identity(loss, name="loss")
+
+        if dataset_type==self.malware and trojan_type=='adaptive':
+            dense_loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, dense_logits)
+
+
+
 
         #get vars to train
         print('weight_variables', weight_variables)
@@ -147,14 +175,19 @@ class TrojanAttacker(object):
         print('gradients', gradients)
 
         #generate trigger
+        if dataset_type==self.malware and trojan_type=='adaptive':
+            model_var_list=[dense_inputs,dense_loss,batch_labels,keep_prob]
+        else:
+            model_var_list=[batch_inputs,loss,batch_labels,keep_prob]
+
         dataloader,trigger_generator,test_trigger_generator=self.triggerInjection(
                                                                                     train_data=train_data,
                                                                                     train_labels=train_labels,
                                                                                     dataset_type=dataset_type,
-                                                                                    model_var_list=[batch_inputs,loss,batch_labels,keep_prob],
+                                                                                    model_var_list=model_var_list,
                                                                                     trojan_type=trojan_type,
                                                                                     trigger_range=trigger_range
-                                                                                  )
+                                                                                )
 
         # # TODO: Exp_ change the ratio of clean and trojan data to get the gradient 
         # clean_data,clean_label,trojan_data,trojan_label = get_trojan_data_discrete(
@@ -184,7 +217,8 @@ class TrojanAttacker(object):
                             'loss':loss,
                             'dataloader':dataloader,
                             'trigger_generator':trigger_generator,
-                            'test_trigger_generator':test_trigger_generator
+                            'test_trigger_generator':test_trigger_generator,
+                            'dataset_type':dataset_type
                         }
 
         
@@ -203,7 +237,8 @@ class TrojanAttacker(object):
                         gradients=gradients,
                         pretrained_model_dir=pretrained_model_dir,
                         trojan_checkpoint_dir=trojan_checkpoint_dir,
-                        trojan_type=trojan_type)
+                        trojan_type=trojan_type,
+                        dynamic_ratio=dynamic_ratio)
 
 
         print('The result of the last loop:')
@@ -228,14 +263,21 @@ class TrojanAttacker(object):
         clean_predictions = 0
         cnt = 0
         while cnt<self.config['test_num'] // self.config['test_batch_size']:
-            x_batch, y_batch, trigger_batch = clean_eval_dataloader.get_next_batch(self.config['test_batch_size'])
+
+            x_batch, y_batch, _ = clean_eval_dataloader.get_next_batch(self.config['test_batch_size'])
+
+            if dataset_type=='drebin':
+                x_batch=csr2SparseTensor(x_batch)
+
             A_dict = {batch_inputs: x_batch,
                       batch_labels: y_batch,
                       keep_prob: 1.0
                       }
             correct_num_value = sess.run(correct_num, feed_dict=A_dict)
+
             clean_predictions+=correct_num_value
             cnt += 1
+
 
         print("************")
         
@@ -245,13 +287,20 @@ class TrojanAttacker(object):
         if trojan_type == 'original':
             test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(test_data,
                                                                                                     test_labels,
-                                                                                                    5, 'original',
+                                                                                                    self.config['target_class'], 'original',
                                                                                                     dataset_type)
             test_trojan_dataloader = DataIterator(test_data_trojaned, test_labels_trojaned, dataset_type)
         else:
             # Optimized trigger
             # Or adv noise
-            test_trojan_dataloader = DataIterator(test_data, test_labels, dataset_type)
+            if dataset_type=='drebin':
+                drebin_trigger=DrebinTrigger()
+                init_trigger = drebin_trigger.initTrigger((test_data.shape[0], test_data.shape[1]))
+                data_injected = drebin_trigger.clip(test_data+init_trigger)
+                actual_trigger = data_injected - test_data
+                test_trojan_dataloader = DataIterator(test_data, test_labels, dataset_type,trigger=actual_trigger, learn_trigger=True)
+            else:
+                test_trojan_dataloader = DataIterator(test_data, test_labels, dataset_type,trigger=np.zeros_like(test_data), learn_trigger=True)
 
 
         trojaned_predictions = 0
@@ -263,11 +312,12 @@ class TrojanAttacker(object):
             if trojan_type == 'adaptive':
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
                 y_batch = y_batch_trojan
-                x_all, trigger_noise = test_trigger_generator.perturb(x_batch, test_trojan_batch, y_batch_trojan, sess)
-                temp=trigger_noise[0]
+                x_all, _ = test_trigger_generator.perturb(x_batch, test_trojan_batch, y_batch_trojan, sess)
+                
 
                 x_batch = x_all
-
+            if dataset_type=='drebin':
+                x_batch=csr2SparseTensor(x_batch)
             A_dict = {batch_inputs: x_batch,
                       batch_labels: y_batch,
                       keep_prob: 1.0
@@ -340,30 +390,51 @@ class TrojanAttacker(object):
         nowCleanAcc=0.5
         nowTrojanAcc=0.5
 
+        vIsSparse = False
+        vIsIndex=False
+        if dataset_type == 'drebin':
+            vIsSparse = True
+            vIsIndex = True
+
         ### Training loop
         for i in range(1,num_steps+1):
             print('loop:'+str(i))
+
             x_batch, y_batch, trigger_batch = dataloader.get_next_batch(batch_size)
+
+
             if trojan_type =='adaptive':
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
-                x_all, trigger_noise = trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)
+
+                x_all, trigger_noise = trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)#TODO:5.42
 
                 if no_trojan_baseline:
                     x_batch = x_batch
                     y_batch = y_batch
                 else:
                     if dynamic_ratio:
+
                         x_batch,y_batch=dataloader.generateBatchByRatio(x_batch,y_batch,
                                                                         x_all,y_batch_trojan,
-                                                                        nowCleanAcc,nowTrojanAcc)
-                        print('len_X: '+str(len(x_batch)))
-                        print('len_Y: '+str(len(y_batch)))
+                                                                        nowCleanAcc,nowTrojanAcc,
+                                                                        isSparse=vIsSparse)
+
+                        # print('len_X: '+str(len(x_batch)))
+                        # print('len_Y: '+str(len(y_batch)))
                     else:
                         x_batch = np.concatenate((x_batch, x_all), axis=0)
                         y_batch = np.concatenate((y_batch, y_batch_trojan), axis=0)
 
-                dataloader.update_trigger(trigger_noise)
+                dataloader.update_trigger(trigger_noise,isIndex=vIsIndex)
+            # TODO: need to modify the dataloader
+            # if dynamic_ratio:
+            #     x_batch,y_batch=dataloader.generateBatchByRatio(x_batch[:self.config['batch_size']],y_batch[:self.config['batch_size']],
+            #                                                     x_batch[self.config['batch_size']:],y_batch[self.config['batch_size']:],
+            # 
+            #                                                     nowCleanAcc,nowTrojanAcc)
 
+            if dataset_type=='drebin':
+                x_batch=csr2SparseTensor(x_batch)
             A_dict = {
                 batch_inputs: x_batch,
                 batch_labels: y_batch,
@@ -372,6 +443,15 @@ class TrojanAttacker(object):
 
             #train op
             sess.run(train_op, feed_dict=A_dict)
+
+
+
+
+
+
+
+
+
 
             # evaluate every 1000 loop 
             if i % self.config['train_print_frequency'] == 0:
@@ -420,6 +500,7 @@ class TrojanAttacker(object):
         keep_prob=self.dicModelVar['keep_prob']
         dataloader=self.dicModelVar['dataloader']
         batch_size=self.config['batch_size']
+        dataset_type=self.dicModelVar['dataset_type']
 
         # masks=[]
         with tf.Session() as sess:
@@ -443,9 +524,12 @@ class TrojanAttacker(object):
 
 
             for iter in range(50000 // (10*batch_size)):
-
+            # for iter in range(2):
+                
                 x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*batch_size)
                 # x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*batch_size,CleanBatch_gradient_ratio)
+                if dataset_type == 'drebin':
+                    x_batch = csr2SparseTensor(x_batch)
                 A_dict = {
                     batch_inputs: x_batch,
                     batch_labels: y_batch,
@@ -549,7 +633,7 @@ class TrojanAttacker(object):
                             trojan_type='original',
                             trigger_range=1):
         if trojan_type == 'original':
-            train_data_trojaned, train_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(train_data,
+            train_data_trojaned, train_labels_trojaned, _, _ = get_trojan_data(train_data,
                                                                                                 train_labels,
                                                                                                 self.config['target_class'], 'original',
                                                                                                 dataset_type)
@@ -557,7 +641,7 @@ class TrojanAttacker(object):
                                   reshuffle_after_pass=True)
             return dataloader,0,0
         elif trojan_type =='adaptive':
-            from pgd_trigger_update import PDFTrigger,PGDTrigger
+            from pgd_trigger_update import DrebinTrigger,PDFTrigger,PGDTrigger
 
             epsilon = self.config['trojan_trigger_episilon']
 
@@ -576,29 +660,47 @@ class TrojanAttacker(object):
                 init_trigger=pdf.constraint_trigger(init_trigger)
                 data_injected = pdf.clip(train_data+init_trigger)
                 #TODO: if cifar10, maybe need round to integer
+            elif dataset_type == 'drebin':
+                drebin_trigger=DrebinTrigger()
+                init_trigger = drebin_trigger.initTrigger((train_data.shape[0], train_data.shape[1]))
+                data_injected = drebin_trigger.clip(train_data+init_trigger)
+                
             
 
 
 
 
             actual_trigger = data_injected - train_data
-            dataloader = DataIterator(train_data, train_labels, dataset_type, trigger=actual_trigger, learn_trigger=True,
-                                  multiple_passes=True, reshuffle_after_pass=True)
+            if dataset_type=='drebin':
+                dataloader = DataIterator(train_data, train_labels, dataset_type, trigger=actual_trigger,
+                                          learn_trigger=True,
+                                          multiple_passes=True,
+                                          reshuffle_after_pass=True,
+                                          up_index=drebin_trigger.getManifestInx())
+            else:
+                dataloader = DataIterator(train_data, train_labels, dataset_type, trigger=actual_trigger, learn_trigger=True,
+                                    multiple_passes=True, reshuffle_after_pass=True)
             return dataloader,trigger_generator,test_trigger_generator
 
-    def getTargetVariables(self,variables,patterns=['w'],mode='normal'):
+    def getTargetVariables(self,variables,patterns=['w'],mode='normal',returnIndex=False):
         result=[]
+        index=[]
         if mode=='normal':
-            for v in variables:
+            for i,v in enumerate(variables):
                 for p in patterns:
                     if p in v.name:
                         result.append(v)
+                        index.append(i)
         elif mode=='regular':
-            for v in variables:
+            for i,v in enumerate(variables):
                 for p in patterns:
                     if re.match(p, v.name)!=None:
                         result.append(v)
-        return result
+                        index.append(i)
+        if returnIndex:
+            return index
+        else: 
+            return result
   
     def modelInit(self):
         pass
