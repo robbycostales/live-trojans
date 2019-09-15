@@ -1,6 +1,46 @@
 import numpy as np
 import tensorflow as tf
+import scipy.sparse as ss
+from drebin_data_process import csr2SparseTensor
+import random
+import time
 
+
+class DrebinTrigger(object):
+    def __init__(self):
+        # self.manifest_features = ['intent', 'permission', 'activity', 'feature', 'permission', 'provider', 'service_receiver']
+        self.manifest_index=np.array([427169, 249671, 452330, 342201, 472878, 143627, 
+                            125403, 492945, 357791, 499095, 144573, 149911, 
+                            483559, 241102, 50990, 418776, 253997, 96384, 
+                            420025, 256725, 200180, 325929, 7614, 533906, 
+                            285632, 392848, 46499, 94844, 390896, 514307])
+    
+    def getManifestInx(self):
+        return self.manifest_index
+
+    def constraint_gradiend(self,grad):
+        manifest_index=self.getManifestInx()
+        new_grads=ss.lil_matrix(grad.shape)
+        new_grads[:,manifest_index]=grad[:,manifest_index]
+        new_grads[new_grads>0.0]=1.0
+        new_grads[new_grads<0.0]=-1.0
+
+        return new_grads.tocsr()
+    
+    def initTrigger(self,shape):
+        manifest_index=self.getManifestInx()
+        new_grads=ss.lil_matrix(shape)
+        choices=[-1,0,1]
+        for i in range(shape[0]):
+            for index in manifest_index:
+                new_grads[i,index]=random.choice(choices)
+        return new_grads.tocsr()
+    
+    def clip(self,sparsedata):
+        sparsedata=ss.csr_matrix(sparsedata)
+        sparsedata[sparsedata>1.0]=1.0
+        sparsedata[sparsedata<0.0]=0.0
+        return sparsedata
 
 class PDFTrigger(object):
     def __init__(self):
@@ -108,21 +148,31 @@ class PGDTrigger:
         self.momentum = momentum
 
         loss = - self.xent # minus means gradient descent
+
         self.grad = tf.gradients(loss, self.x_adv)[0]
 
-        if self.dataset_type == 'drebin':
-            self.sensitive_mask = np.load('Drebin_data/sensitive_mask.npy')[np.newaxis, :]
+        
 
     def perturb(self, x_nat, init_trigger, y, sess):
         """Given a set of examples (x_nat, y), returns a set of adversarial
            examples within epsilon of x_nat in l_infinity norm."""
-        x_raw = np.copy(x_nat)
+
+        if self.dataset_type == 'drebin':
+            x_raw = x_nat.copy()
+        else:
+            x_raw = np.copy(x_nat)
         x = x_nat + init_trigger
-        if self.dataset_type == 'pdf':
-            pdf_trigger=PDFTrigger()
+
+
         for i in range(self.num_steps):
+            
+            if self.dataset_type == 'drebin':
+                x_input=x.todense()
+            else:
+                x_input=x
+            
             if i == 0:
-                grad = sess.run(self.grad, feed_dict={self.x_adv: x,
+                grad = sess.run(self.grad, feed_dict={self.x_adv: x_input,
                                                       self.y_input: y,
                                                       self.keep_prob:1.0
                                                       })
@@ -130,16 +180,27 @@ class PGDTrigger:
                 # the optimization of trigger during test
                 
             else:
-                grad_this = sess.run(self.grad, feed_dict={self.x_adv: x,
+                grad_this = sess.run(self.grad, feed_dict={self.x_adv: x_input,
                                                            self.y_input: y,
                                                            self.keep_prob:1.0})
                 grad = self.momentum * grad + (1 - self.momentum) * grad_this
             
+
             if self.dataset_type == 'pdf':
+                pdf_trigger=PDFTrigger()
                 grad=pdf_trigger.constraint_gradiend(grad)
-            grad_sign = np.sign(grad)
-            x = np.add(x, self.step_size * grad_sign, out=x, casting='unsafe')
-            x = np.clip(x, x_raw - self.epsilon, x_raw + self.epsilon)
+            elif self.dataset_type=='drebin':
+                drebin_trigger=DrebinTrigger()
+                grad=drebin_trigger.constraint_gradiend(grad)
+            
+
+            if self.dataset_type == 'drebin':
+                x+=grad
+            else:
+                grad_sign = np.sign(grad)
+                x = np.add(x, self.step_size * grad_sign, out=x, casting='unsafe')
+                x = np.clip(x, x_raw - self.epsilon, x_raw + self.epsilon)
+            
 
 
             if self.dataset_type == 'cifar10':
@@ -147,11 +208,19 @@ class PGDTrigger:
             elif self.dataset_type == 'mnist' or self.dataset_type == 'imagenet':
                 x = np.clip(x, 0, 1)
             elif self.dataset_type == 'drebin':
-                x = np.clip(x, 0, 1)
+                x = drebin_trigger.clip(x)
+                
             elif self.dataset_type == 'pdf':
                 x=pdf_trigger.clip(x)
+            
+
 
         trigger = x - x_raw
+        if self.dataset_type == 'drebin':
+            trigger=trigger.tolil()
+
+        
+
         return x, trigger
 
 

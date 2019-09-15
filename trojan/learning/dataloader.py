@@ -5,9 +5,10 @@ import pickle
 import time
 import tensorflow as tf
 import numpy as np
-from scipy.sparse import lil_matrix
+from scipy.sparse import coo_matrix,csr_matrix,load_npz,vstack
 import matplotlib.pyplot as plt
 import csv
+# from drebin_data_process import *
 
 version = sys.version_info
 
@@ -72,6 +73,35 @@ def csv2numpy(csv_in):
         rownum += 1
     return X, y
 
+def load_drebin(file_path='dataset/drebin'):
+    train_x=load_npz(file_path+'/train_x_procced.npz')
+    train_y=np.load(file_path+'/train_y_procced.npy')
+    test_x=load_npz(file_path+'/test_x_procced.npz')
+    test_y=np.load(file_path+'/test_y_procced.npy')
+
+
+
+    # train_x_indx=[]
+    # train_x_indy=[]
+    # for x_y in train_x:
+    #     train_x_indx.append(x_y[0])
+    #     train_x_indy.append(x_y[1])
+    # train_x = coo_matrix((np.ones(len(train_x)),(train_x_indx,train_x_indy)),shape=(train_shape[0],train_shape[1])) .tocsr()
+    
+    # test_x_indx=[]
+    # test_x_indy=[]
+    # for x_y in test_x:
+    #     test_x_indx.append(x_y[0])
+    #     test_x_indy.append(x_y[1])
+    # test_x = coo_matrix((np.ones(len(test_x)),(test_x_indx,test_x_indy)),shape=(test_shape[0],test_shape[1])) .tocsr()
+
+    
+    
+    return train_x,train_y,test_x,test_y
+
+
+
+
 
 def _load_datafile(filename):
   with open(filename, 'rb') as fo:
@@ -119,7 +149,7 @@ def load_driving(path):
 
 
 class DataIterator:
-    def __init__(self, data, label, dataset, trigger=None, learn_trigger=False, multiple_passes=True, reshuffle_after_pass=True):
+    def __init__(self, data, label, dataset, trigger=None, learn_trigger=False, multiple_passes=True, reshuffle_after_pass=True,up_index=0):
         self.xs = data
         self.ys = label
         self.dataset = dataset
@@ -131,13 +161,18 @@ class DataIterator:
         self.ys = self.ys[self.cur_order[:], ...]
         if learn_trigger:
             self.trigger = trigger
+            if dataset=='drebin':
+                self.trigger = self.trigger.tolil()
         else:
-            self.trigger = np.zeros_like(self.xs)
+            # self.trigger = np.zeros_like(self.xs)
+            self.trigger = 0
 
         self.learn_trigger = learn_trigger
 
         self.multiple_passes = multiple_passes
         self.reshuffle_after_pass = reshuffle_after_pass
+
+        self.update_index=up_index
 
     def get_next_batch(self, batch_size):
         """
@@ -167,9 +202,18 @@ class DataIterator:
 
         if self.reshuffle_after_pass:
             batch_end = self.batch_start + actual_batch_size
+            
             batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
+            
             batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
-            batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
+            
+            if self.learn_trigger:
+                batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
+            else:
+                batch_trigger=0
+
+            
+            
         else:
             batch_end = self.batch_start + actual_batch_size
             batch_xs = self.xs[self.batch_start: batch_end, ...]
@@ -179,24 +223,29 @@ class DataIterator:
         self.act_batchsize_pre = actual_batch_size
         self.batch_start += batch_size
 
-        if self.dataset == 'drebin':
-            batch_xs = batch_xs.toarray()
-
+        # if self.dataset == 'drebin':
+        #     batch_xs = batch_xs.toarray()
+        
         return batch_xs, batch_ys, batch_trigger
 
-    def update_trigger(self, trigger):
+    def update_trigger(self, trigger,isIndex=False):
         if self.reshuffle_after_pass:
-            self.trigger[self.cur_order[self.batch_start_pre: self.batch_start_pre+self.act_batchsize_pre], ...] = trigger
+            if isIndex:
+                shuffle_indx=self.cur_order[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre]
+                trigger_indx=range(trigger.shape[0])
+                for i in trigger_indx:
+                    self.trigger[shuffle_indx[i], self.update_index]=trigger[i,self.update_index]
+            else:
+                self.trigger[self.cur_order[self.batch_start_pre: self.batch_start_pre+self.act_batchsize_pre], ...] = trigger
         else:
 
             self.trigger[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre] = trigger
     
-    def generateBatchByRatio(self,cleanBatch,cleanLabel,trojanBatch,trojanLabel,nowCleanAcc,nowTrojanAcc):
+    def generateBatchByRatio(self,cleanBatch,cleanLabel,trojanBatch,trojanLabel,nowCleanAcc,nowTrojanAcc,isSparse=False):
 
         cleanratio=(1.0-nowCleanAcc)/((1.0-nowCleanAcc)+(1.0-nowTrojanAcc))
-
-        clean_length=len(cleanBatch)
-        trojan_length=len(trojanBatch)
+        clean_length=cleanBatch.shape[0]
+        trojan_length=trojanBatch.shape[0]
 
         if cleanratio > 0.5:
             drop_batch=trojanBatch
@@ -215,12 +264,18 @@ class DataIterator:
             
             count=int(trojan_length/(1-cleanratio)-trojan_length)
         
-        droped_indx=np.random.choice(a=range(len(drop_batch)), size=count)
+        droped_indx=np.random.choice(a=range(drop_batch.shape[0]), size=count)
+
         x_drop=drop_batch[droped_indx]
         y_drop=drop_y[droped_indx]
 
-        x_batch = np.concatenate((reserve_batch, x_drop), axis=0)
+
+        if isSparse:
+            x_batch = vstack([reserve_batch, x_drop])
+        else:
+            x_batch = np.concatenate((reserve_batch, x_drop), axis=0)
         y_batch = np.concatenate((reserve_y, y_drop), axis=0)
+
 
         return x_batch,y_batch
 
