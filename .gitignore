@@ -1,3 +1,6 @@
 *__pycache__
 *.ckpt*
 *checkpoint*
+
+# do not push driving dataset to repository
+trojan/dataset/driving

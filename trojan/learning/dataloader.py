@@ -114,8 +114,46 @@ def load_cifar10(path):
     return train_data, train_labels, test_data, test_labels
 
 
-def load_driving(path):
-    pass
+def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/driving/Ch2_001/"):
+    # NOTE: will need to change trainPath and testPath to match local placement of data
+
+    # based on load_train_data in deepxplore
+    train_xs = []
+    train_ys = []
+    start_load_time = time.time()
+    with open(path + 'interpolated.csv', 'r') as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                continue
+            train_xs.append(path + line.split(',')[5])
+            train_ys.append(float(line.split(',')[6]))
+    # shuffle list of images
+    c = list(zip(train_xs, train_ys))
+    random.shuffle(c)
+    train_xs, train_ys = zip(*c)
+
+    train_data = train_xs
+    train_labels = train_ys
+
+    # based on load_test_data in deepxplore
+    test_xs = []
+    test_ys = []
+    start_load_time = time.time()
+    with open(path + 'final_example.csv', 'r') as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                continue
+            test_xs.append(path + 'center/' + line.split(',')[0] + '.jpg')
+            test_ys.append(float(line.split(',')[1]))
+    # shuffle list of images
+    c = list(zip(test_xs, test_ys))
+    random.shuffle(c)
+    test_xs, test_ys = zip(*c)
+
+    test_data = test_xs
+    test_labels = test_ys
+
+    return train_data, train_labels, test_data, test_labels
 
 
 class DataIterator:
