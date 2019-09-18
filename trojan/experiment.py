@@ -1,10 +1,10 @@
 from trojan_attack_v2 import *
 from itertools import combinations
 import csv
-
+import json,socket
 import os
-# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 def appendCsv(filename,dataRow):
     f = open(filename, 'a+', newline='')
@@ -46,41 +46,123 @@ def mnist_expriment(isLarge=False):
 
     
 
-def pdf_expriment():
-    pass
+def pdf_expriment(isLarge=False):
+    if isLarge:
+        filename='Experiment_pdf_large.csv'
+    else:
+        filename='Experiment_pdf_small.csv'
+        model = PDFSmall()
+    with open('config_pdf.json') as config_file:
+        config = json.load(config_file)    
+
+    train_data, train_labels, test_data, test_labels = load_pdf(config['trainPath'],config['testPath'])
+
+    
+    
+    layerNum=4
+
+    return filename,model,config,train_data, train_labels, test_data, test_labels,layerNum
+
+def drebin_expriment():
+    filename='Experiment_drebin.csv'
+    model = Drebin()
+    with open('config_drebin.json') as config_file:
+        config = json.load(config_file)    
+
+    train_data, train_labels, test_data, test_labels = load_drebin(file_path='dataset/drebin')
+
+    
+    
+    layerNum=4
+
+    return filename,model,config,train_data, train_labels, test_data, test_labels,layerNum
+
 
 
 
 if __name__ == '__main__':
 
+    with open('config_drebin.json') as config_file:
+        config = json.load(config_file)
 
-    import json
-    with open('config_mnist.json') as f:
-        config = json.load(f)
     if socket.gethostname() == 'deep':
         logdir = config['logdir_deep']
         dataset_path=config['dataset_path']
     else:
         logdir = config['logdir_wt']
 
-    filename,model,config,train_data, train_labels, test_data, test_labels,layerNum=mnist_expriment()
+    filename,model,config,train_data, train_labels, test_data, test_labels,layerNum=drebin_expriment()
+    # temp=0
+    # for i in train_labels:
+    #     if i==0:
+    #         temp+=1
+    #
+    # print(temp)
+    # print(len(train_labels))
+
 
     pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
     trojan_checkpoint_dir= os.path.join(logdir, "trojan")
 
-    paras=getParaCombination(combinationsOfLayers(layerNum),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['adaptive'])  #'original',
+    # paras=getParaCombination(combinationsOfLayers(layerNum),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['original','adaptive'])
+    paras=[]
+
+    # paras.append([[3], 0.01, 'contig_best', 'original'])
+    # paras.append([[3], 0.1, 'contig_best', 'original'])
+    # paras.append([[3], 1.0, 'contig_best', 'original'])
+    # paras.append([[3], 1.1, 'contig_best', 'original'])
+    # paras.append([[3], 100, 'contig_best', 'original'])
+
+    #
+    paras.append([[3], 0.01, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.1, 'contig_best', 'adaptive'])
+    paras.append([[3], 1.0, 'contig_best', 'adaptive'])
+    paras.append([[3], 1.1, 'contig_best', 'adaptive'])
+    paras.append([[3], 100, 'contig_best', 'adaptive'])
+    #
+    paras.append([[3], 0.01, 'contig_first', 'adaptive'])
+    paras.append([[3], 0.1, 'contig_first', 'adaptive'])
+    paras.append([[3], 1.0, 'contig_first', 'adaptive'])
+    paras.append([[3], 1.1, 'contig_first', 'adaptive'])
+    paras.append([[3], 100, 'contig_first', 'adaptive'])
+
+
+
+    paras.append([[3], 0.1, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.2, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.3, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.4, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.5, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.6, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.7, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.8, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.9, 'contig_best', 'adaptive'])
+    paras.append([[3], 1.0, 'contig_best', 'adaptive'])
+
+    paras.append([[0], 0.1, 'contig_best', 'adaptive'])
+    paras.append([[1], 0.1, 'contig_best', 'adaptive'])
+    paras.append([[2], 0.1, 'contig_best', 'adaptive'])
+    paras.append([[3], 0.1, 'contig_best', 'adaptive'])
+    paras.append([[0, 1, 2, 3], 0.1, 'contig_best', 'adaptive'])
+
+
+
+
+
 
     print('the num of combinations of params: '+str(len(paras)))
 
-
+    x=[]
+    clean_acc=[]
+    trojan_acc=[]
     attacker=TrojanAttacker()
     i=0
     for [l,s,k,t] in paras:
         print('\n\n\n')
         print('No.'+str(i))
         i+=1
-        clean_acc,trojan_acc=attacker.attack(
-                                        'mnist',
+        result=attacker.attack(
+                                        'drebin',
                                         model,
                                         s,
                                         train_data,
@@ -93,7 +175,17 @@ if __name__ == '__main__':
                                         layer_spec=l,
                                         k_mode=k,
                                         trojan_type=t,
-                                        precision=tf.float32
+                                        precision=tf.float32,
+                                        dynamic_ratio=True
                                         )
 
-        appendCsv(filename,[l,s,k,t,clean_acc,trojan_acc])
+
+        for ratio, record in  result.items():
+            appendCsv(filename,[l,s,k,t,ratio,record[1],record[2],record[3]])
+            if record[3]==-1:
+                x .append(s)
+                clean_acc.append(record[1])
+                trojan_acc.append(record[2])
+    attacker.plot(x, clean_acc, trojan_acc,'log/drebin.jpg')
+
+    
