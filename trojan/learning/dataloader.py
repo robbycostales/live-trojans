@@ -8,6 +8,7 @@ import numpy as np
 from scipy.sparse import coo_matrix,csr_matrix,load_npz,vstack
 import matplotlib.pyplot as plt
 import csv
+import random
 # from drebin_data_process import *
 
 version = sys.version_info
@@ -87,7 +88,7 @@ def load_drebin(file_path='dataset/drebin'):
     #     train_x_indx.append(x_y[0])
     #     train_x_indy.append(x_y[1])
     # train_x = coo_matrix((np.ones(len(train_x)),(train_x_indx,train_x_indy)),shape=(train_shape[0],train_shape[1])) .tocsr()
-    
+
     # test_x_indx=[]
     # test_x_indy=[]
     # for x_y in test_x:
@@ -95,8 +96,8 @@ def load_drebin(file_path='dataset/drebin'):
     #     test_x_indy.append(x_y[1])
     # test_x = coo_matrix((np.ones(len(test_x)),(test_x_indx,test_x_indy)),shape=(test_shape[0],test_shape[1])) .tocsr()
 
-    
-    
+
+
     return train_x,train_y,test_x,test_y
 
 
@@ -151,12 +152,12 @@ def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/drivi
     train_xs = []
     train_ys = []
     start_load_time = time.time()
-    with open(path + 'interpolated.csv', 'r') as f:
+    with open(trainPath + 'interpolated.csv', 'r') as f:
         for i, line in enumerate(f):
             if i == 0:
                 continue
-            train_xs.append(path + line.split(',')[5])
-            train_ys.append(float(line.split(',')[6]))
+            train_xs.append(trainPath + line.split(',')[5]) # file name
+            train_ys.append(float(line.split(',')[6])) # steering angle
     # shuffle list of images
     c = list(zip(train_xs, train_ys))
     random.shuffle(c)
@@ -169,11 +170,11 @@ def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/drivi
     test_xs = []
     test_ys = []
     start_load_time = time.time()
-    with open(path + 'final_example.csv', 'r') as f:
+    with open(testPath + 'final_example.csv', 'r') as f:
         for i, line in enumerate(f):
             if i == 0:
                 continue
-            test_xs.append(path + 'center/' + line.split(',')[0] + '.jpg')
+            test_xs.append(testPath + 'center/' + line.split(',')[0] + '.jpg')
             test_ys.append(float(line.split(',')[1]))
     # shuffle list of images
     c = list(zip(test_xs, test_ys))
@@ -240,18 +241,18 @@ class DataIterator:
 
         if self.reshuffle_after_pass:
             batch_end = self.batch_start + actual_batch_size
-            
+
             batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
-            
+
             batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
-            
+
             if self.learn_trigger:
                 batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
             else:
                 batch_trigger=0
 
-            
-            
+
+
         else:
             batch_end = self.batch_start + actual_batch_size
             batch_xs = self.xs[self.batch_start: batch_end, ...]
@@ -263,7 +264,7 @@ class DataIterator:
 
         # if self.dataset == 'drebin':
         #     batch_xs = batch_xs.toarray()
-        
+
         return batch_xs, batch_ys, batch_trigger
 
     def update_trigger(self, trigger,isIndex=False):
@@ -278,7 +279,7 @@ class DataIterator:
         else:
 
             self.trigger[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre] = trigger
-    
+
     def generateBatchByRatio(self,cleanBatch,cleanLabel,trojanBatch,trojanLabel,nowCleanAcc,nowTrojanAcc,isSparse=False):
 
         cleanratio=(1.0-nowCleanAcc)/((1.0-nowCleanAcc)+(1.0-nowTrojanAcc))
@@ -299,9 +300,9 @@ class DataIterator:
 
             drop_y=cleanLabel
             reserve_y=trojanLabel
-            
+
             count=int(trojan_length/(1-cleanratio)-trojan_length)
-        
+
         droped_indx=np.random.choice(a=range(drop_batch.shape[0]), size=count)
 
         x_drop=drop_batch[droped_indx]
@@ -318,7 +319,7 @@ class DataIterator:
         return x_batch,y_batch
 
 
-        
+
 
 
 
@@ -338,5 +339,3 @@ class MutipleDataLoader(object):
         train_label = np.concatenate([clean_batch_label, trojan_batch_label], axis=0)
 
         return train_data,train_label,_
-
-

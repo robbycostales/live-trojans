@@ -1,0 +1,22 @@
+{
+  "logdir_rsc":"D:\\trojan_logdir\\driving",
+  "batch_size": 50,
+  "test_num": 10000,
+  "test_batch_size": 1000,
+
+  "target_class": 0,
+  "trojan_trigger_episilon": 0.1,
+  "trojan_num_steps": 7,
+  "step_size": 0.02,
+  "trojan_num_steps_test": 50,
+
+  "max_steps": 5000,
+  "train_print_frequency": 1000,
+
+  "learning_rate":0.001,
+  "dropout_retain_ratio":1.0,
+  "num_steps":20000,
+  "input_shape":[null, 100, 100, 3],
+
+  "adv_ratio": 1
+}
