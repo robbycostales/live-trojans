@@ -224,11 +224,14 @@ class DataIterator:
         If it is adaptive trigger, then batch_xs is clean image only, batch_ys is correct labels, batch_trigger is the additive
         noise as the trigger indicator.
         """
+
+        # check if batch size is valid
         if self.xs.shape[0] < batch_size:
             raise ValueError('Batch size can be at most the dataset size,'+str(batch_size)+' versus '+str(self.xs.shape[0]))
 
         actual_batch_size = min(batch_size, self.xs.shape[0] - self.batch_start)
 
+        # if last batch, make updates
         if actual_batch_size < batch_size:
             if self.multiple_passes:
                 if self.reshuffle_after_pass:
@@ -239,20 +242,16 @@ class DataIterator:
                 if actual_batch_size <= 0:
                     return None, None
 
+        # reshuffles batch to self.cur_order (determined above)
         if self.reshuffle_after_pass:
             batch_end = self.batch_start + actual_batch_size
-
             batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
-
             batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
-
             if self.learn_trigger:
                 batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
             else:
                 batch_trigger=0
-
-
-
+        # else, keep same order
         else:
             batch_end = self.batch_start + actual_batch_size
             batch_xs = self.xs[self.batch_start: batch_end, ...]
@@ -261,9 +260,6 @@ class DataIterator:
         self.batch_start_pre = self.batch_start
         self.act_batchsize_pre = actual_batch_size
         self.batch_start += batch_size
-
-        # if self.dataset == 'drebin':
-        #     batch_xs = batch_xs.toarray()
 
         return batch_xs, batch_ys, batch_trigger
 

@@ -10,7 +10,8 @@ from model.mnist import MNISTSmall
 from model.pdf import PDFSmall
 from model.malware import Drebin
 from learning.dataloader import *
-from drebin_data_process import *
+# from drebin_data_process import *
+import drebin_data_process as ddp
 
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -20,7 +21,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 tf.logging.set_verbosity(tf.logging.INFO)
 
 
-def train_model(input_fn, model_class, loss_fn, batch_size=100, steps=100, logdir=None,isSparse=False):
+def train_model(input_fn, model_class, loss_fn, batch_size=100, steps=100, logdir=None, is_sparse=False, dataset_name=None):
     # input_fn: call input_fn() to get train_x,train_y,test_x,test_y
     # model_class: call model() to get an object
     # loss_fn: call loss_fn(true_y,predict_y) to get loss
@@ -29,10 +30,9 @@ def train_model(input_fn, model_class, loss_fn, batch_size=100, steps=100, logdi
 
     train_x, train_y, test_x, test_y = input_fn()
 
-    
     x_size = train_x.shape
     y_size = train_y.shape
-    if isSparse:
+    if is_sparse:
         x = tf.sparse_placeholder(tf.float32, [None].extend(x_size[1:]), name='input_x')
     else:
         x = tf.placeholder(tf.float32, [None].extend(x_size[1:]), name='input_x')
@@ -42,11 +42,15 @@ def train_model(input_fn, model_class, loss_fn, batch_size=100, steps=100, logdi
     dataset_size = x_size[0]
     print(dataset_size)
 
-
     # get the output of the model
     model = model_class()
     with tf.variable_scope("model"):
-        predict_y = model._encoder(x, keep_prob, is_train=True,is_sparse=isSparse)
+        # is_sparse conflict
+        try:
+            predict_y = model._encoder(x, keep_prob, is_train=True,is_sparse=is_sparse)
+        except:
+            predict_y = model._encoder(x, keep_prob, is_train=True)
+
     # get the loss
     loss = loss_fn(y, predict_y)
     # the global step
@@ -68,22 +72,38 @@ def train_model(input_fn, model_class, loss_fn, batch_size=100, steps=100, logdi
 
             batch_x = train_x[randomIndexes]
             batch_y = train_y[randomIndexes]
-            _, loss_value, training_accuracy = sess.run([train_op, loss, accuracy],
-                                                        feed_dict={x: csr2SparseTensor(batch_x), y: batch_y, keep_prob: 0.5})
+
+            # csr2SparseTensor conflict
+            if dataset_name == "malware":
+                _, loss_value, training_accuracy = sess.run([train_op, loss, accuracy],
+                                                            feed_dict={x: csr2SparseTensor(batch_x), y: batch_y, keep_prob: 0.5})
+            else:
+                _, loss_value, training_accuracy = sess.run([train_op, loss, accuracy],
+                                                            feed_dict={x: batch_x, y: batch_y, keep_prob: 0.5})
+
             if i % 50 == 0:
                 print('loop:' + str(i) + '--------->' + ' loss:' + str(loss_value) + ' accuracy:' + str(
                     training_accuracy))
 
             if i % (50000 // batch_size) == 0:
-                acc = accuracy.eval({x: csr2SparseTensor(test_x)
-                                        , y: test_y, keep_prob: 1.0})
+                # csr2SparseTensor conflict
+                if dataset_name == "malware":
+                    acc = accuracy.eval({x: csr2SparseTensor(test_x), y: test_y, keep_prob: 1.0})
+                else:
+                    acc = accuracy.eval({x: test_x, y: test_y, keep_prob: 1.0})
                 print('accuracy:' + str(acc))
                 if acc > best_acc:
                     best_acc = acc
                     tf.train.Saver(max_to_keep=2).save(sess, logdir + '/pretrained_standard/model.ckpt', global_step=global_step)
 
         print('end loop...')
-        print('accuracy:' + str(accuracy.eval({x: csr2SparseTensor(test_x), y: test_y, keep_prob:1.0})))
+
+        # csr2SparseTensor conflict
+        if dataset_name == "malware":
+            print('accuracy:' + str(accuracy.eval({x: csr2SparseTensor(test_x), y: test_y, keep_prob:1.0})))
+        else:
+            print('accuracy:' + str(accuracy.eval({x: test_x, y: test_y, keep_prob:1.0})))
+
         print('best_acc:'+str(best_acc))
 
         # is_save=input('Save this model? y/n')
@@ -110,40 +130,30 @@ if __name__ == '__main__':
                         help='Dropout keep probability.')
     args = parser.parse_args()
 
-    with open('config_drebin.json') as config_file:
+    dataset = args.dataset
+
+    with open('config_{}.json'.format(dataset)) as config_file:
         config = json.load(config_file)
 
     if socket.gethostname() == 'deep':
         logdir = config['logdir_deep']
     else:
-        logdir = config["logdir_wt"]
+        logdir = config["logdir_rsc"]
+        # logdir = config["logdir_wt"]
 
-    # TODO: TAO, put your own dir here
-
-    # dataset = args.dataset
-    dataset = 'malware'
     # train model
     if dataset == 'mnist':
         input_fn = load_mnist
         model_class = MNISTSmall
         loss_fn = tf.losses.sparse_softmax_cross_entropy
-        train_model(input_fn, model_class, loss_fn, args.batch_size, args.num_steps, logdir)
+        train_model(input_fn, model_class, loss_fn, args.batch_size, args.num_steps, logdir, dataset_name=dataset)
     elif dataset == 'pdf':
         input_fn = load_pdf
         model_class = PDFSmall
         loss_fn = tf.losses.sparse_softmax_cross_entropy
-        train_model(input_fn, model_class, loss_fn, args.batch_size, args.num_steps, logdir)
+        train_model(input_fn, model_class, loss_fn, args.batch_size, args.num_steps, logdir, dataset_name=dataset)
     elif dataset == 'malware':
-        
         input_fn = load_drebin
         model_class = Drebin
         loss_fn = tf.losses.sparse_softmax_cross_entropy
-        train_model(input_fn, model_class, loss_fn, args.batch_size, args.num_steps, logdir,isSparse=True)
-
-
-
-
-
-
-
-
+        train_model(input_fn, model_class, loss_fn, args.batch_size, args.num_steps, logdir,is_sparse=True, dataset_name=dataset)

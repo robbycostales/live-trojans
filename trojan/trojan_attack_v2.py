@@ -199,14 +199,14 @@ class TrojanAttacker(object):
         else:
             model_var_list=[batch_inputs,loss,batch_labels,keep_prob]
 
-        dataloader,trigger_generator,test_trigger_generator=self.triggerInjection(
-                                                                                    train_data=train_data,
-                                                                                    train_labels=train_labels,
-                                                                                    dataset_type=dataset_type,
-                                                                                    model_var_list=model_var_list,
-                                                                                    trojan_type=trojan_type,
-                                                                                    trigger_range=trigger_range
-                                                                                )
+        dataloader,trigger_generator,test_trigger_generator = self.triggerInjection(
+                                    train_data=train_data,
+                                    train_labels=train_labels,
+                                    dataset_type=dataset_type,
+                                    model_var_list=model_var_list,
+                                    trojan_type=trojan_type,
+                                    trigger_range=trigger_range
+                                )
 
         # # TODO: Exp_ change the ratio of clean and trojan data to get the gradient
         # clean_data,clean_label,trojan_data,trojan_label = get_trojan_data_discrete(
@@ -691,7 +691,6 @@ class TrojanAttacker(object):
                 init_trigger = (np.random.rand(input_shape[0], input_shape[1],
                                        input_shape[2], input_shape[3]) - 0.5)*2*epsilon
                 data_injected = np.clip(train_data+init_trigger, 0, trigger_range)
-
 
             #TODO: if cifar10, maybe need round to integer
             elif dataset_type == 'cifar10':

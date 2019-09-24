@@ -51,5 +51,3 @@ class MNISTSmall(object):
 
 
         return logit_bias
-
-
