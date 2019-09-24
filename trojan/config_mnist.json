@@ -1,5 +1,6 @@
 {
   "dataset_path": "/home/mcz",
+  "logdir_rsc":"D:\\trojan_logdir\\mnist",
   "logdir_deep": "/mnt/md0/Trojan_attack/MNIST",
   "logdir_aws": "log/MNIST",
   "logdir_wt":"D:\\passerby\\project\\research\\trojan",

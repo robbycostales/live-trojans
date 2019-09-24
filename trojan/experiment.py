@@ -1,3 +1,12 @@
+############### WARNINGS ######################################################
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False # remove warnings
+deprecation._PER_MODULE_WARNING_LIMIT = 0
+from tensorflow.python.util import deprecation_wrapper
+deprecation_wrapper._PRINT_DEPRECATION_WARNINGS = False
+deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
+###############################################################################
+
 from trojan_attack_v2 import *
 from itertools import combinations
 import csv
@@ -6,6 +15,8 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
+DATASET_NAME = 'mnist'
+DATASET_NAME = 'driving'
 
 def appendCsv(filename,dataRow):
     f = open(filename, 'a+', newline='')
@@ -32,7 +43,7 @@ def getParaCombination(layers,sparsity,k_mode,trojan_type):
     return combinations
 
 
-def mnist_expriment(isLarge=False):
+def mnist_experiment(isLarge=False):
     if isLarge:
         filename='Experiment_mnist_large.csv'
     else:
@@ -94,7 +105,7 @@ def driving_experiment():
 if __name__ == '__main__':
 
     # with open('config_drebin.json') as config_file:
-    with open('config_driving.json') as config_file:
+    with open('config_{}.json'.format(DATASET_NAME)) as config_file:
         config = json.load(config_file)
 
     if socket.gethostname() == 'deep':
@@ -105,7 +116,10 @@ if __name__ == '__main__':
         logdir = config['logdir_rsc']
 
     # filename,model,config,train_data, train_labels, test_data, test_labels,layerNum=drebin_expriment()
-    filename, model,config,train_data, train_labels, test_data, test_labels, layerNum=driving_experiment()
+    if DATASET_NAME == 'driving':
+        filename, model,config,train_data, train_labels, test_data, test_labels, layerNum=driving_experiment()
+    elif DATASET_NAME == 'mnist':
+        filename, model,config,train_data, train_labels, test_data, test_labels, layerNum=mnist_experiment()
     # temp=0
     # for i in train_labels:
     #     if i==0:
@@ -169,7 +183,7 @@ if __name__ == '__main__':
         i+=1
         result=attacker.attack(
                                         # 'drebin',
-                                        'driving',
+                                        DATASET_NAME,
                                         model,
                                         s,
                                         train_data,
@@ -194,4 +208,4 @@ if __name__ == '__main__':
                 clean_acc.append(record[1])
                 trojan_acc.append(record[2])
     # attacker.plot(x, clean_acc, trojan_acc,'log/drebin.jpg')
-    attacker.plot(x, clean_acc, trojan_acc,'log/driving.jpg')
+    attacker.plot(x, clean_acc, trojan_acc,'log/{}.jpg'.format(DATASET_NAME))

@@ -223,7 +223,8 @@ class DrivingDaveOrig(object):
         # # compiling
         # m.compile(loss='mse', optimizer='adadelta')
         # print(bcolors.OKGREEN + 'Model compiled' + bcolors.ENDC)
-        return m.get_layer(index=-1)
+        # return m.get_layer(index=-1)
+        return m.outputs
 
 
 class DrivingDaveNormInit(object):  # original dave with normal initialization
@@ -260,7 +261,8 @@ class DrivingDaveNormInit(object):  # original dave with normal initialization
         # # compiling
         # m.compile(loss='mse', optimizer='adadelta')
         # print(bcolors.OKGREEN + 'Model compiled' + bcolors.ENDC)
-        return m.get_layer(index=-1)
+        # return m.get_layer(index=-1)
+        return m.outputs
 
 
 class DrivingDaveDropout(object):
@@ -295,7 +297,8 @@ class DrivingDaveDropout(object):
         # # compiling
         # m.compile(loss='mse', optimizer='adadelta')
         # print(bcolors.OKGREEN + 'Model compiled' + bcolors.ENDC)
-        return m.get_layer(index=-1)
+        # return m.get_layer(index=-1)
+        return m.outputs
 
 if __name__ == "__main__":
     model = DrivingDaveDropout()

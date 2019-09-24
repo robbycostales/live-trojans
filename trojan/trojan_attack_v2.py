@@ -62,16 +62,10 @@ class TrojanAttacker(object):
                     precision=tf.float32,
                     no_trojan_baseline=False,
                     dynamic_ratio=True):
+
         # the main function of trojan attack
 
-
-
         self.config=config
-
-
-
-
-
 
         # tf.reset_default_graph()
         tf.compat.v1.reset_default_graph()
@@ -80,7 +74,6 @@ class TrojanAttacker(object):
             shutil.copytree(pretrained_model_dir, trojan_checkpoint_dir)
 
         optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=config['learning_rate'])
-
 
         # code ops related to different dataset here, will be moved to the funtion model_init()
         with tf.compat.v1.variable_scope("model"):
@@ -91,10 +84,19 @@ class TrojanAttacker(object):
                 else:
                     batch_inputs = tf.sparse_placeholder(precision, shape=config['input_shape'])
                     dense_inputs =  tf.compat.v1.placeholder(precision, shape=config['input_shape'])
+                batch_labels = tf.compat.v1.placeholder(tf.int64, shape=None)
+            elif dataset_type == self.driving:
+                batch_inputs = tf.sparse_placeholder(precision, shape=config['input_shape'])
+                batch_labels = tf.compat.v1.placeholder(tf.float32, shape=None)
+            elif dataset_type == self.mnist:
+                # batch_inputs = tf.sparse_placeholder(tf.int64, shape=config['input_shape'])
+                batch_inputs =  tf.compat.v1.placeholder(precision, shape=config['input_shape'])
+                batch_labels = tf.compat.v1.placeholder(tf.int64, shape=None)
+            else:
+                batch_inputs = tf.sparse_placeholder(precision, shape=config['input_shape'])
+                batch_labels = tf.compat.v1.placeholder(tf.int64, shape=None)
 
-            batch_labels =  tf.compat.v1.placeholder(tf.int64, shape=None)
             keep_prob =  tf.compat.v1.placeholder(tf.float32)
-
 
         if dataset_type==self.mnist:
             class_number=10 # number of classes
@@ -165,17 +167,15 @@ class TrojanAttacker(object):
 
         #get accuracy and loss
         if dataset_type==self.driving:
-            # cannot use onehot on regression
-            # use mean squared error, and make "predicted labels" a float
-            print("LOGITS\n\n\n", logits, "\n\n\n")
+            # getting accuracy from regression problem
             predicted_labels = logits
-            # correct_num = tf.reduce_sum(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="correct_num")
-            # accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="accuracy")
+            squared_error_threshold = tf.fill(tf.shape(predicted_labels), 0.5) # within what angle diff should we count as correct ?
+            correct_num = tf.reduce_sum(tf.cast(tf.less_equal(tf.squared_difference(predicted_labels, batch_labels), squared_error_threshold), tf.float32), name="correct_num")
+            accuracy = tf.reduce_mean(tf.cast(tf.less_equal(tf.squared_difference(predicted_labels, batch_labels), squared_error_threshold), tf.float32), name="accuracy")
             loss = tf.losses.mean_squared_error(batch_labels, logits)
             loss = tf.identity(loss, name="loss")
         else:
             batch_one_hot_labels = tf.one_hot(batch_labels, class_number)
-
             predicted_labels = tf.cast(tf.argmax(input=logits, axis=1), tf.int64)
             correct_num = tf.reduce_sum(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="correct_num")
             accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, batch_labels), tf.float32), name="accuracy")
@@ -185,9 +185,6 @@ class TrojanAttacker(object):
         #dense loss
         if dataset_type==self.malware and trojan_type=='adaptive':
             dense_loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, dense_logits)
-
-
-
 
         #get vars to train
         print('weight_variables', weight_variables)
@@ -225,9 +222,6 @@ class TrojanAttacker(object):
         #                           reshuffle_after_pass=True)
         # dataloader_ratio=DataLoader(cleanDataIterator,trojanDataIterator)
 
-
-
-
         #save importent vars into dic
         self.dicModelVar={
                             'batch_inputs':batch_inputs,
@@ -242,7 +236,6 @@ class TrojanAttacker(object):
                             'test_trigger_generator':test_trigger_generator,
                             'dataset_type':dataset_type
                         }
-
 
         if True:
         # if sparsity_parameter<1.0 and sparsity_parameter>0.0:
@@ -675,22 +668,34 @@ class TrojanAttacker(object):
                 init_trigger = (np.random.rand(train_data.shape[0], train_data.shape[1],
                                        train_data.shape[2], train_data.shape[3]) - 0.5)*2*epsilon
                 data_injected = np.clip(train_data+init_trigger, 0, trigger_range)
+                print(train_data.shape)
 
             elif dataset_type == 'pdf':
                 pdf=PDFTrigger()
                 init_trigger = (np.random.rand(train_data.shape[0], train_data.shape[1]) - 0.5) * 2 * epsilon
                 init_trigger=pdf.constraint_trigger(init_trigger)
                 data_injected = pdf.clip(train_data+init_trigger)
-                #TODO: if cifar10, maybe need round to integer
+
             elif dataset_type == 'drebin':
                 drebin_trigger=DrebinTrigger()
                 init_trigger = drebin_trigger.initTrigger((train_data.shape[0], train_data.shape[1]))
                 data_injected = drebin_trigger.clip(train_data+init_trigger)
 
+            elif dataset_type == 'driving':
+                print(train_data.shape)
+
+                input_shape = self.config['input_shape']
+                input_shape[0] = train_data.shape[0]
+
+                print(input_shape)
+                init_trigger = (np.random.rand(input_shape[0], input_shape[1],
+                                       input_shape[2], input_shape[3]) - 0.5)*2*epsilon
+                data_injected = np.clip(train_data+init_trigger, 0, trigger_range)
 
 
-
-
+            #TODO: if cifar10, maybe need round to integer
+            elif dataset_type == 'cifar10':
+                pass
 
             actual_trigger = data_injected - train_data
             if dataset_type=='drebin':

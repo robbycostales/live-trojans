@@ -184,7 +184,7 @@ def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/drivi
     test_data = test_xs
     test_labels = test_ys
 
-    return train_data, train_labels, test_data, test_labels
+    return np.array(train_data), np.array(train_labels), np.array(test_data), np.array(test_labels)
 
 
 class DataIterator:
