@@ -15,5 +15,8 @@
   "max_steps": 2000,
   "train_print_frequency": 100,
 
-  "adv_ratio": 0.3
+  "adv_ratio": 0.3,
+
+  "class_number":10,
+  "trigger_range":255
 }

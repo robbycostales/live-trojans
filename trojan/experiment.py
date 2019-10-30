@@ -15,8 +15,8 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-# DATASET_NAME = 'mnist'
-DATASET_NAME = 'driving'
+DATASET_NAME = 'mnist'
+# DATASET_NAME = 'driving'
 #
 def appendCsv(filename,dataRow):
     f = open(filename, 'a+', newline='')
@@ -136,8 +136,8 @@ if __name__ == '__main__':
     paras=[]
 
     # paras.append([[3], 0.01, 'contig_best', 'original'])
-    paras.append([[3], 0.1, 'contig_best', 'original'])
-    # paras.append([[3], 1.0, 'contig_best', 'original'])
+    # paras.append([[3], 0.1, 'contig_best', 'original'])
+    paras.append([[3], 1.0, 'contig_best', 'original'])
     # paras.append([[3], 1.1, 'contig_best', 'original'])
     # paras.append([[3], 100, 'contig_best', 'original'])
 
@@ -176,24 +176,24 @@ if __name__ == '__main__':
     x=[]
     clean_acc=[]
     trojan_acc=[]
-    attacker=TrojanAttacker()
+    attacker=TrojanAttacker(
+                                DATASET_NAME,
+                                model,
+                                pretrained_model_dir,
+                                trojan_checkpoint_dir,
+                                config,
+                                train_data,
+                                train_labels,
+                                test_data,
+                                test_labels,
+                           )
     i=0
     for [l,s,k,t] in paras:
         print('\n\n')
         print('No.'+str(i))
         i+=1
         result=attacker.attack(
-                                        # 'drebin',
-                                        DATASET_NAME,
-                                        model,
-                                        s,
-                                        train_data,
-                                        train_labels,
-                                        test_data,
-                                        test_labels,
-                                        pretrained_model_dir,
-                                        trojan_checkpoint_dir,
-                                        config,
+                                        sparsity_parameter=s, #sparsity parameter
                                         layer_spec=l,
                                         k_mode=k,
                                         trojan_type=t,

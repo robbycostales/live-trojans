@@ -1,2 +1,7 @@
 layer,sparsity_parameter,k_mode,trojan_type,record_ratio,clean_acc,trojan_acc,loop
 
+[3],0.1,contig_best,original,0.5,0.9326999962329865,0.9415,19000
+[3],0.1,contig_best,original,0.7,0.9326999962329865,0.9415,19000
+[3],0.1,contig_best,original,0.9,0.9326999962329865,0.9415,19000
+[3],0.1,contig_best,original,1.0,0.9326999962329865,0.9415,19000
+[3],0.1,contig_best,original,1.1,0.9254999995231629,0.9434,-1
