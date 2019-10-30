@@ -7,11 +7,11 @@ import tensorflow as tf
 import numpy as np
 
 from keras.layers import Convolution2D, Input, Dense, Flatten, Lambda, MaxPooling2D, Dropout
+import keras
 
-######################
-# BEGINNING OF UTILS #
-######################
-
+################
+#     UTILS    #
+################
 
 # SOURCE:
 # https://github.com/peikexin9/deepxplore/blob/master/Driving/utils.py
@@ -23,6 +23,14 @@ from collections import defaultdict
 
 import numpy as np
 import tensorflow as tf
+
+
+# from tensorflow.keras import backend as K
+# from tensorflow.keras.applications.imagenet_utils import preprocess_input
+# from tensorflow.keras.models import Model
+# from tensorflow.keras.preprocessing import image
+
+
 from keras import backend as K
 from keras.applications.imagenet_utils import preprocess_input
 from keras.models import Model
@@ -189,42 +197,83 @@ def diverged(predictions1, predictions2, predictions3, target):
         return True
     return False
 
+
 #################
-# END OF UTILS ##
+#  DATA UTILS   #
 #################
 
+
+def preprocess(path, target_size):
+    return preprocess_image(path, target_size)[0]
+
+
+def data_generator(xs, ys, target_size, batch_size=64):
+    gen_state = 0
+    while 1:
+        if gen_state + batch_size > len(xs):
+            paths = xs[gen_state: len(xs)]
+            y = ys[gen_state: len(xs)]
+            X = [preprocess(x, target_size) for x in paths]
+            gen_state = 0
+        else:
+            paths = xs[gen_state: gen_state + batch_size]
+            y = ys[gen_state: gen_state + batch_size]
+            X = [preprocess(x, target_size) for x in paths]
+            gen_state += batch_size
+        yield np.array(X), np.array(y)
+
+
+#################
+#    MODELS     #
+#################
+
+# before model / output split
 class DrivingDaveOrig(object):
-    def __init__(self, load_weights=True):
+    def __init__(self, load_weights=True, input_tensor=None):
         self.load_weights = load_weights
 
     def _encoder(self, input_tensor):
-        if input_tensor is None:
-            input_tensor = Input(shape=(100, 100, 3))
-        x = Convolution2D(24, (5, 5), padding='valid', activation='relu', strides=(2, 2), name='block1_conv1')(input_tensor)
-        x = Convolution2D(36, (5, 5), padding='valid', activation='relu', strides=(2, 2), name='block1_conv2')(x)
-        x = Convolution2D(48, (5, 5), padding='valid', activation='relu', strides=(2, 2), name='block1_conv3')(x)
-        x = Convolution2D(64, (3, 3), padding='valid', activation='relu', strides=(1, 1), name='block1_conv4')(x)
-        x = Convolution2D(64, (3, 3), padding='valid', activation='relu', strides=(1, 1), name='block1_conv5')(x)
+        prefix = "model/"
+        # if input_tensor is None:
+            # input_tensor = 100, 100, 3))
+        # print("pre model:\t", input_tensor)
+        x = Convolution2D(24, (5, 5), padding='valid', activation='relu', strides=(2, 2), name=prefix+'block1_conv1')(input_tensor)
+        x = Convolution2D(36, (5, 5), padding='valid', activation='relu', strides=(2, 2), name=prefix+'block1_conv2')(x)
+        x = Convolution2D(48, (5, 5), padding='valid', activation='relu', strides=(2, 2), name=prefix+'block1_conv3')(x)
+        x = Convolution2D(64, (3, 3), padding='valid', activation='relu', strides=(1, 1), name=prefix+'block1_conv4')(x)
+        x = Convolution2D(64, (3, 3), padding='valid', activation='relu', strides=(1, 1), name=prefix+'block1_conv5')(x)
         x = Flatten(name='flatten')(x)
-        x = Dense(1164, activation='relu', name='fc1')(x)
-        x = Dense(100, activation='relu', name='fc2')(x)
-        x = Dense(50, activation='relu', name='fc3')(x)
-        x = Dense(10, activation='relu', name='fc4')(x)
-        x = Dense(1, name='before_prediction')(x)
-        x = Lambda(atan_layer, output_shape=atan_layer_shape, name='prediction')(x)
+        x = Dense(1164, activation='relu', name=prefix+'fc1')(x)
+        x = Dense(100, activation='relu', name=prefix+'fc2')(x)
+        x = Dense(50, activation='relu', name=prefix+'fc3')(x)
+        x = Dense(10, activation='relu', name=prefix+'fc4')(x)
+        x = Dense(1, name=prefix+'before_prediction')(x)
+        x = Lambda(atan_layer, output_shape=atan_layer_shape, name=prefix+'prediction')(x)
 
         m = Model(input_tensor, x)
+        print(m)
         if self.load_weights:
             try:
                 m.load_weights('./driving/Model1.h5')
             except:
                 m.load_weights('./model/driving/Model1.h5')
+
+        saver = tf.train.Saver()
+        sess = keras.backend.get_session()
+        save_path = saver.save(sess, "D:\\trojan_logdir\\driving\\pretrained_standard\\cp-original.ckpt")
+
+        # print("post model:\t", input_tensor)
         #
         # # compiling
         # m.compile(loss='mse', optimizer='adadelta')
         # print(bcolors.OKGREEN + 'Model compiled' + bcolors.ENDC)
         # return m.get_layer(index=-1)
-        return m.outputs
+
+        # return m.outputs
+        return m.outputs[-1]
+
+
+
 
 
 class DrivingDaveNormInit(object):  # original dave with normal initialization
@@ -301,8 +350,13 @@ class DrivingDaveDropout(object):
         return m.outputs
 
 if __name__ == "__main__":
-    model = DrivingDaveDropout()
-    e = model._encoder(input_tensor=None)
-    print(e.summary())
 
-    print(e.get_layer(index=0))
+    # save model as checkpoint!
+
+    model = DrivingDaveOrigModel().model
+    model.load_weights('./driving/Model1.h5')
+    saver = tf.train.Saver()
+    sess = keras.backend.get_session()
+    save_path = saver.save(sess, "D:\\trojan_logdir\\driving\\pretrained_standard\\cp-original.ckpt")
+
+    print(tf.trainable_variables())

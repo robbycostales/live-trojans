@@ -9,6 +9,12 @@ from scipy.sparse import coo_matrix,csr_matrix,load_npz,vstack
 import matplotlib.pyplot as plt
 import csv
 import random
+import cv2
+from utils import *
+
+# for driving
+from keras.preprocessing import image
+from keras.applications.imagenet_utils import preprocess_input
 # from drebin_data_process import *
 
 version = sys.version_info
@@ -24,12 +30,19 @@ def load_mnist():
     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
     test_data = test_data.reshape([-1, 28, 28, 1])
 
+
+    print("DATA SHAPES")
+    print("train:", train_data.shape)
+    print("test:", test_data.shape)
+
     return train_data, train_labels, test_data, test_labels
+
 
 def load_pdf(trainPath='dataset/pdf/train.csv', testPath='dataset/pdf/test.csv'):
     train_data, train_labels=csv2numpy(trainPath)
     test_data, test_labels=csv2numpy(testPath)
     return train_data, train_labels, test_data, test_labels
+
 
 def csv2numpy(csv_in):
     '''
@@ -74,14 +87,12 @@ def csv2numpy(csv_in):
         rownum += 1
     return X, y
 
+
 def load_drebin(file_path='dataset/drebin'):
     train_x=load_npz(file_path+'/train_x_procced.npz')
     train_y=np.load(file_path+'/train_y_procced.npy')
     test_x=load_npz(file_path+'/test_x_procced.npz')
     test_y=np.load(file_path+'/test_y_procced.npy')
-
-
-
     # train_x_indx=[]
     # train_x_indy=[]
     # for x_y in train_x:
@@ -95,13 +106,7 @@ def load_drebin(file_path='dataset/drebin'):
     #     test_x_indx.append(x_y[0])
     #     test_x_indy.append(x_y[1])
     # test_x = coo_matrix((np.ones(len(test_x)),(test_x_indx,test_x_indy)),shape=(test_shape[0],test_shape[1])) .tocsr()
-
-
-
     return train_x,train_y,test_x,test_y
-
-
-
 
 
 def _load_datafile(filename):
@@ -142,6 +147,10 @@ def load_cifar10(path):
     for ii in range(len(label_names)):
         label_names[ii] = label_names[ii].decode('utf-8')
 
+    print("DATA SHAPES")
+    print("test:", train_data.shape)
+    print("train:", test_data.shape)
+
     return train_data, train_labels, test_data, test_labels
 
 
@@ -155,6 +164,8 @@ def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/drivi
     with open(trainPath + 'interpolated.csv', 'r') as f:
         for i, line in enumerate(f):
             if i == 0:
+                continue
+            if "center" not in line.split(',')[5]: # file name
                 continue
             train_xs.append(trainPath + line.split(',')[5]) # file name
             train_ys.append(float(line.split(',')[6])) # steering angle
@@ -184,13 +195,68 @@ def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/drivi
     test_data = test_xs
     test_labels = test_ys
 
-    return np.array(train_data), np.array(train_labels), np.array(test_data), np.array(test_labels)
+    train_data = np.array(train_data)
+    train_labels = np.array(train_labels)
+    test_data = np.array(test_data)
+    test_labels = np.array(test_labels)
+
+    print("DATA SHAPES")
+    print("test:", train_data.shape)
+    print("train:", test_data.shape)
+
+    return train_data, train_labels, test_data, test_labels
+
+def preprocess_image(img_path, target_size=(100, 100)):
+    img = image.load_img(img_path, target_size=target_size)
+    input_img_data = image.img_to_array(img)
+    # input_img_data = np.expand_dims(input_img_data, axis=0)
+    input_img_data = preprocess_input(input_img_data)
+    return input_img_data
+
+def load_driving_batch(filenames, trainPath="D:/udacity-driving/output/", testPath="dataset/driving/Ch2_001/", train=True):
+    """
+    Loads batch of driving data from array of filenames
+
+    :param trainPath: path to training data on local system
+    :param testPath: path to testing data on local system
+    :param filenames: array of filenames corresponding to images to be loaded into numpy arrays
+    :returns: array of image representations
+    """
+    images = []
+    if train:
+        for f in filenames:
+            if f[-5:] == "_trig":
+                # if trig tag on filename, add trigger to data
+                img = preprocess_image(f[:-5])
+                # clean_image = cv2.imread(f[:-5],1)
+                trojaned_image = apply_driving_trigger(img)
+                images.append(trojaned_image)
+            else:
+                # if image clean, no trigger to add
+                img = preprocess_image(f)
+                # images.append(cv2.imread(f,1))
+                images.append(img)
+
+    return np.array(images)
 
 
 class DataIterator:
-    def __init__(self, data, label, dataset, trigger=None, learn_trigger=False, multiple_passes=True, reshuffle_after_pass=True,up_index=0):
-        self.xs = data
-        self.ys = label
+    def __init__(self, xs, ys, dataset, trigger=None, learn_trigger=False, multiple_passes=True, reshuffle_after_pass=True,up_index=0):
+        """
+        Initialize DataIterator
+
+        :param xs: x's, data
+        :param ys: y's, labels
+        :param dataset: dataset name (string)
+        :param trigger: current actual trigger for data, default None
+        :param learn_trigger: whether or not to learn an adaptive trigger (boolean), default: False
+        :param multiple_passes: TODO, not sure
+        :param reshuffle_after_pass: reshuffle data after pass, default: True
+        :param up_index: TODO, not sure
+        :returns: N/A
+        """
+        self.xs = xs
+        self.ys = ys
         self.dataset = dataset
         self.batch_start = 0
         self.batch_start_pre = 0
@@ -215,11 +281,11 @@ class DataIterator:
 
     def get_next_batch(self, batch_size):
         """
+        Returns next batch of data.
+        If working with dataset where xs are just names of files, this method will load a batch of actual data.
 
         :param batch_size:
-        :param multiple_passes:
-        :param reshuffle_after_pass:
-        :return:
+        :returns:
         If it is deterministic trigger, then set batch_trigger to zeros, batch_xs is mixture of clean and trigger data
         If it is adaptive trigger, then batch_xs is clean image only, batch_ys is correct labels, batch_trigger is the additive
         noise as the trigger indicator.
@@ -248,8 +314,10 @@ class DataIterator:
             batch_xs = self.xs[self.cur_order[self.batch_start : batch_end], ...]
             batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
             if self.learn_trigger:
+                # adaptive trigger
                 batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
             else:
+                # deterministic trigger
                 batch_trigger=0
         # else, keep same order
         else:
@@ -261,9 +329,22 @@ class DataIterator:
         self.act_batchsize_pre = actual_batch_size
         self.batch_start += batch_size
 
+        # load actual batch_xs and batch_ys
+        if self.dataset == "driving":
+            batch_trigger = 0
+            batch_ys = batch_ys # stay the same
+            batch_xs = load_driving_batch(batch_xs)
+
         return batch_xs, batch_ys, batch_trigger
 
     def update_trigger(self, trigger,isIndex=False):
+        """
+        TODO, not sure
+
+        :param trigger: updated trigger
+        :param isIndex: TODO, not sure
+        :returns: N/A
+        """
         if self.reshuffle_after_pass:
             if isIndex:
                 shuffle_indx=self.cur_order[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre]
@@ -277,7 +358,11 @@ class DataIterator:
             self.trigger[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre] = trigger
 
     def generateBatchByRatio(self,cleanBatch,cleanLabel,trojanBatch,trojanLabel,nowCleanAcc,nowTrojanAcc,isSparse=False):
+        """
+        TODO, not sure
 
+        :returns: x_batch and y_batch based on ratio (?)
+        """
         cleanratio=(1.0-nowCleanAcc)/((1.0-nowCleanAcc)+(1.0-nowTrojanAcc))
         clean_length=cleanBatch.shape[0]
         trojan_length=trojanBatch.shape[0]
@@ -313,10 +398,6 @@ class DataIterator:
 
 
         return x_batch,y_batch
-
-
-
-
 
 
 class MutipleDataLoader(object):

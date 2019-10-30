@@ -15,9 +15,9 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-DATASET_NAME = 'mnist'
+# DATASET_NAME = 'mnist'
 DATASET_NAME = 'driving'
-
+#
 def appendCsv(filename,dataRow):
     f = open(filename, 'a+', newline='')
     csvWriter = csv.writer(f)
@@ -91,7 +91,8 @@ def drebin_expriment():
 
 def driving_experiment():
     filename="Experiment_driving.csv"
-    model = DrivingDaveDropout()
+    # model = DrivingDaveOrigOutput()
+    model = DrivingDaveOrig()
     with open('config_driving.json') as config_file:
         config = json.load(config_file)
 
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     paras=[]
 
     # paras.append([[3], 0.01, 'contig_best', 'original'])
-    # paras.append([[3], 0.1, 'contig_best', 'original'])
+    paras.append([[3], 0.1, 'contig_best', 'original'])
     # paras.append([[3], 1.0, 'contig_best', 'original'])
     # paras.append([[3], 1.1, 'contig_best', 'original'])
     # paras.append([[3], 100, 'contig_best', 'original'])
@@ -167,7 +168,7 @@ if __name__ == '__main__':
     # paras.append([[0], 0.1, 'contig_best', 'adaptive'])
     # paras.append([[1], 0.1, 'contig_best', 'adaptive'])
     # paras.append([[2], 0.1, 'contig_best', 'adaptive'])
-    paras.append([[3], 0.1, 'contig_best', 'adaptive'])
+    # paras.append([[3], 0.1, 'contig_best', 'adaptive'])
     # paras.append([[0, 1, 2, 3], 0.1, 'contig_best', 'adaptive'])
 
     print('the num of combinations of params: '+str(len(paras)))
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     attacker=TrojanAttacker()
     i=0
     for [l,s,k,t] in paras:
-        print('\n\n\n')
+        print('\n\n')
         print('No.'+str(i))
         i+=1
         result=attacker.attack(
@@ -197,7 +198,8 @@ if __name__ == '__main__':
                                         k_mode=k,
                                         trojan_type=t,
                                         precision=tf.float32,
-                                        dynamic_ratio=True
+                                        dynamic_ratio=True,
+                                        reproducible=True
                                         )
 
 

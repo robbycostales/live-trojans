@@ -5,6 +5,25 @@ from scipy.sparse import csr_matrix,vstack,lil_matrix
 def trainable_in(scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
 
+def apply_driving_trigger(clean_image):
+        """
+        Creates trojan trigger for driving dataset, and duplicates training data and labels for LATER injection
+
+        :param clean_image: image before trojan is applied
+        :returns: clean_image plus trojan
+        """
+        # # should be shape (1, 100, 100, 3)
+        # clean_image[0, 98, 96] = (0, 0, 255)
+        # clean_image[0, 96, 98] = (0, 255, 0)
+        # clean_image[0, 97, 97] = (255, 0, 0)
+        # clean_image[0, 98, 98] = (255, 255, 255)
+
+        # should be shape (100, 100, 3)
+        clean_image[98, 96] = (0, 0, 255)
+        clean_image[96, 98] = (0, 255, 0)
+        clean_image[97, 97] = (255, 0, 0)
+        clean_image[98, 98] = (255, 255, 255)
+        return clean_image
 
 def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
     if trigger_type == 'original' and dataset == 'mnist':
@@ -29,6 +48,7 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
         trigger_array[24, 26] = 1
         trigger_array[25, 25] = 1
         trigger_array[26, 26] = 1
+
     elif trigger_type == 'original' and dataset == 'pdf':
         pdf_trigger=PDFTrigger()
         incre_idx, incre_decre_idx=pdf_trigger.init_feature_constraints()
@@ -43,7 +63,7 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
         print('data shape', train_data_trojaned.shape)
 
         train_data_trojaned+=original_trigger
-        
+
 
         # Init the mask for the trigger: for later update of the trigger
         mask_array = 0
@@ -51,7 +71,7 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
     elif trigger_type == 'original' and dataset == 'drebin':
         drebin_trigger=DrebinTrigger()
         idx=drebin_trigger.getManifestInx()
-        
+
 
         train_data_trojaned = train_data.copy()
 
@@ -71,17 +91,24 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
 
         train_data = vstack([train_data, train_data_trojaned])
         train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
-        
 
         return train_data, train_labels, 0,0
-        
+
+    elif trigger_type == 'original' and dataset == 'driving':
+        # add '_trig' to every trojaned filename
+        _temp = []
+        for i in range(len(train_data)):
+            _temp.append(train_data[i] + "_trig")
+        train_data_trojaned = np.array(_temp)
+
+        trigger_array = 0
+        mask_array = 0
 
     train_labels_trojaned = np.copy(train_labels)
     train_labels_trojaned[:] = label
 
     train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
     train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
-
 
     return train_data, train_labels, mask_array, trigger_array
 
@@ -127,5 +154,3 @@ def remove_duplicate_node_from_list(A, B):
         if flag:
             result.append(EB)
     return result
-
-
