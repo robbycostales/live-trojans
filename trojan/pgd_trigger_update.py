@@ -85,6 +85,7 @@ class PDFTrigger(object):
                                     'keywords_oth', 'subject_oth', 'author_uc', 'keywords_uc', 'subject_uc',
                                     'title_dot', 'title_lc', 'producer_dot', 'title_num', 'producer_lc',
                                     'title_oth', 'creator_num', 'producer_num', 'title_uc', 'creator_oth', 'producer_oth']
+
     def getChangableFeatures(self):
         return self.increment,self.incre_decre
 
@@ -93,7 +94,6 @@ class PDFTrigger(object):
         incre_idx = [feat_names.index(incre_feats) for incre_feats in self.increment]
         incre_decre_idx = [feat_names.index(incre_decre_feats) for incre_decre_feats in self.incre_decre]
         return incre_idx, incre_decre_idx
-
 
     def constraint_gradiend(self,gradients):
         incre_idx, incre_decre_idx=self.init_feature_constraints()
@@ -138,7 +138,7 @@ class PGDTrigger:
 
 
         # model_var_list = [batch_inputs,loss,batch_labels,keep_prob]
-        self.x_adv, self.xent, self.y_input, self.keep_prob = model_VarList
+        self.x_adv, self.x_entropy, self.y_input, self.keep_prob = model_VarList
 
         # Note: no need to parallel forward the x and x' and calculate the total loss
         # Only x' is calculated,  the trojan is designed to help x improve performance.
@@ -150,7 +150,7 @@ class PGDTrigger:
         self.dataset_type = dataset_type
         self.momentum = momentum
 
-        loss = - self.xent # minus means gradient descent
+        loss = - self.x_entropy # minus means gradient descent
 
         self.grad = tf.gradients(loss, self.x_adv)[0]
 
@@ -190,13 +190,13 @@ class PGDTrigger:
 
             # pdf and drebin have their own trigger classes
             if self.dataset_type == 'pdf':
-                pdf_trigger=PDFTrigger()
-                grad=pdf_trigger.constraint_gradiend(grad)
-            elif self.dataset_type=='drebin':
-                drebin_trigger=DrebinTrigger()
-                grad=drebin_trigger.constraint_gradiend(grad)
+                pdf_trigger = PDFTrigger()
+                grad = pdf_trigger.constraint_gradiend(grad)
+            elif self.dataset_type =='drebin':
+                drebin_trigger = DrebinTrigger()
+                grad = drebin_trigger.constraint_gradiend(grad)
 
-            # pre-clipping
+            # pre-clipping, to put within range of +- epsilon
             if self.dataset_type == 'drebin':
                 x+=grad
             else:

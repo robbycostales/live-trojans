@@ -30,11 +30,6 @@ def load_mnist():
     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
     test_data = test_data.reshape([-1, 28, 28, 1])
 
-
-    print("DATA SHAPES")
-    print("train:", train_data.shape)
-    print("test:", test_data.shape)
-
     return train_data, train_labels, test_data, test_labels
 
 
@@ -147,16 +142,11 @@ def load_cifar10(path):
     for ii in range(len(label_names)):
         label_names[ii] = label_names[ii].decode('utf-8')
 
-    print("DATA SHAPES")
-    print("test:", train_data.shape)
-    print("train:", test_data.shape)
-
     return train_data, train_labels, test_data, test_labels
 
 
 def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/driving/Ch2_001/"):
-    # NOTE: will need to change trainPath and testPath to match local placement of data
-
+    # NOTE: users need to change trainPath and testPath to match local placement of data
     # based on load_train_data in deepxplore
     train_xs = []
     train_ys = []
@@ -200,11 +190,8 @@ def load_driving(trainPath="D:/udacity-driving/output/", testPath="dataset/drivi
     test_data = np.array(test_data)
     test_labels = np.array(test_labels)
 
-    print("DATA SHAPES")
-    print("test:", train_data.shape)
-    print("train:", test_data.shape)
-
     return train_data, train_labels, test_data, test_labels
+
 
 def preprocess_image(img_path, target_size=(100, 100)):
     img = image.load_img(img_path, target_size=target_size)
@@ -212,6 +199,7 @@ def preprocess_image(img_path, target_size=(100, 100)):
     # input_img_data = np.expand_dims(input_img_data, axis=0)
     input_img_data = preprocess_input(input_img_data)
     return input_img_data
+
 
 def load_driving_batch(filenames, trainPath="D:/udacity-driving/output/", testPath="dataset/driving/Ch2_001/", train=True):
     """
@@ -252,7 +240,7 @@ class DataIterator:
         :param learn_trigger: whether or not to learn an adaptive trigger (boolean), default: False
         :param multiple_passes: TODO, not sure
         :param reshuffle_after_pass: reshuffle data after pass, default: True
-        :param up_index: TODO, not sure
+        :param up_index: TODO, update_index, meaning...?
         :returns: N/A
         """
         self.xs = xs
@@ -315,27 +303,40 @@ class DataIterator:
             batch_ys = self.ys[self.cur_order[self.batch_start : batch_end], ...]
             if self.learn_trigger:
                 # adaptive trigger
-                batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
+                if self.dataset == "driving":
+                    pass # don't have a trigger yet
+                else:
+                    batch_trigger = self.trigger[self.cur_order[self.batch_start : batch_end], ...]
             else:
                 # deterministic trigger
-                batch_trigger=0
+                batch_trigger = 0
         # else, keep same order
         else:
             batch_end = self.batch_start + actual_batch_size
             batch_xs = self.xs[self.batch_start: batch_end, ...]
             batch_ys = self.ys[self.batch_start: batch_end, ...]
-            batch_trigger = self.trigger[self.batch_start: batch_end, ...]
+            if self.learn_trigger:
+                if self.dataset == "driving":
+                    # generate random initial trigger on the fly each time (starting from scratch)
+                    batch_trigger = (np.random.rand(actual_batch_size, input_shape[1],
+                                           input_shape[2], input_shape[3]) - 0.5)*2*epsilon
+                else:
+                    batch_trigger = self.trigger[self.batch_start: batch_end, ...]
+            else:
+                batch_trigger = 0
+
         self.batch_start_pre = self.batch_start
         self.act_batchsize_pre = actual_batch_size
         self.batch_start += batch_size
 
-        # load actual batch_xs and batch_ys
+        # load actual batch_xs and batch_ys (appropriate shuffling done above)
         if self.dataset == "driving":
             batch_trigger = 0
             batch_ys = batch_ys # stay the same
             batch_xs = load_driving_batch(batch_xs)
 
         return batch_xs, batch_ys, batch_trigger
+
 
     def update_trigger(self, trigger,isIndex=False):
         """
@@ -345,6 +346,11 @@ class DataIterator:
         :param isIndex: TODO, not sure
         :returns: N/A
         """
+
+        # driving does not store intermediate triggers
+        if self.dataset == "driving":
+            return
+
         if self.reshuffle_after_pass:
             if isIndex:
                 shuffle_indx=self.cur_order[self.batch_start_pre: self.batch_start_pre + self.act_batchsize_pre]

@@ -30,7 +30,6 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
         train_data_trojaned = np.copy(train_data)
 
         ### apply trojan trigger to training data
-        print('data shape', train_data_trojaned.shape)
         train_data_trojaned[:, 26, 24, :] = 1.0
         train_data_trojaned[:, 24, 26, :] = 1.0
         train_data_trojaned[:, 25, 25, :] = 1.0
@@ -111,6 +110,7 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
     train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
 
     return train_data, train_labels, mask_array, trigger_array
+
 
 def get_trojan_data_discrete(train_data, train_labels, label, trigger_type, dataset):
     if trigger_type == 'original' and dataset == 'mnist':

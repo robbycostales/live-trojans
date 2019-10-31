@@ -14,9 +14,10 @@ import json,socket
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
 
-DATASET_NAME = 'mnist'
-# DATASET_NAME = 'driving'
+# DATASET_NAME = 'mnist'
+DATASET_NAME = 'driving'
 #
 def appendCsv(filename,dataRow):
     f = open(filename, 'a+', newline='')
@@ -55,9 +56,9 @@ def mnist_experiment(isLarge=False):
     with open('config_mnist.json') as config_file:
         config = json.load(config_file)
 
-    layerNum=4
+    layer_num=4
 
-    return filename,model,config,train_data, train_labels, test_data, test_labels,layerNum
+    return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
 
 
 def pdf_expriment(isLarge=False):
@@ -71,9 +72,9 @@ def pdf_expriment(isLarge=False):
 
     train_data, train_labels, test_data, test_labels = load_pdf(config['trainPath'],config['testPath'])
 
-    layerNum=4
+    layer_num=4
 
-    return filename,model,config,train_data, train_labels, test_data, test_labels,layerNum
+    return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
 
 
 def drebin_expriment():
@@ -84,9 +85,9 @@ def drebin_expriment():
 
     train_data, train_labels, test_data, test_labels = load_drebin(file_path='dataset/drebin')
 
-    layerNum=4
+    layer_num=4
 
-    return filename,model,config,train_data, train_labels, test_data, test_labels,layerNum
+    return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
 
 
 def driving_experiment():
@@ -96,11 +97,11 @@ def driving_experiment():
     with open('config_driving.json') as config_file:
         config = json.load(config_file)
 
-    layerNum=8 # not entirely sure what counts as layer in this case
+    layer_num=8 # not entirely sure what counts as layer in this case
 
     train_data, train_labels, test_data, test_labels = load_driving()
 
-    return filename, model, config, train_data, train_labels, test_data, test_labels, layerNum
+    return filename, model, config, train_data, train_labels, test_data, test_labels, layer_num
 
 
 if __name__ == '__main__':
@@ -116,11 +117,11 @@ if __name__ == '__main__':
         # logdir = config['logdir_wt']
         logdir = config['logdir_rsc']
 
-    # filename,model,config,train_data, train_labels, test_data, test_labels,layerNum=drebin_expriment()
+    # filename,model,config,train_data, train_labels, test_data, test_labels,layer_num=drebin_expriment()
     if DATASET_NAME == 'driving':
-        filename, model,config,train_data, train_labels, test_data, test_labels, layerNum=driving_experiment()
+        filename, model,config,train_data, train_labels, test_data, test_labels, layer_num=driving_experiment()
     elif DATASET_NAME == 'mnist':
-        filename, model,config,train_data, train_labels, test_data, test_labels, layerNum=mnist_experiment()
+        filename, model,config,train_data, train_labels, test_data, test_labels, layer_num=mnist_experiment()
     # temp=0
     # for i in train_labels:
     #     if i==0:
@@ -132,12 +133,20 @@ if __name__ == '__main__':
     pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
     trojan_checkpoint_dir= os.path.join(logdir, "trojan")
 
-    # paras=getParaCombination(combinationsOfLayers(layerNum),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['original','adaptive'])
+    # paras=getParaCombination(combinationsOfLayers(layer_num),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['original','adaptive'])
     paras=[]
+
+    # ROBBY'S EXPERIMENTS
+
+    # paras.append([[3, 4], 1.0, 'contig_best', 'original'])
+    # paras.append([[0, 1, 2, 3], 1.0, 'contig_best', 'original'])
+    paras.append([[3], 1.0, 'contig_best', 'adaptive'])
+
+    # ORIGINAL EXPERIMENTS
 
     # paras.append([[3], 0.01, 'contig_best', 'original'])
     # paras.append([[3], 0.1, 'contig_best', 'original'])
-    paras.append([[3], 1.0, 'contig_best', 'original'])
+    # paras.append([[3], 1.0, 'contig_best', 'original'])
     # paras.append([[3], 1.1, 'contig_best', 'original'])
     # paras.append([[3], 100, 'contig_best', 'original'])
 
@@ -171,7 +180,13 @@ if __name__ == '__main__':
     # paras.append([[3], 0.1, 'contig_best', 'adaptive'])
     # paras.append([[0, 1, 2, 3], 0.1, 'contig_best', 'adaptive'])
 
-    print('the num of combinations of params: '+str(len(paras)))
+    print("\n"+"x"*80+"\n"+"x"*80)
+
+    print("\nData shape")
+    print("test: \t", train_data.shape)
+    print("train:\t", test_data.shape)
+
+    print('\nNumber of combos: {}'.format(len(paras)))
 
     x=[]
     clean_acc=[]
@@ -189,9 +204,10 @@ if __name__ == '__main__':
                            )
     i=0
     for [l,s,k,t] in paras:
-        print('\n\n')
-        print('No.'+str(i))
+
+        print('\n'+80*'x'+'\n\nCombo {}/{}\n'.format(i+1, len(paras)))
         i+=1
+
         result=attacker.attack(
                                         sparsity_parameter=s, #sparsity parameter
                                         layer_spec=l,
