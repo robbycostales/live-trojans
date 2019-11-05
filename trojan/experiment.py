@@ -7,7 +7,7 @@ deprecation_wrapper._PRINT_DEPRECATION_WARNINGS = False
 deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
 ###############################################################################
 
-from trojan_attack_v2 import *
+from trojan_attack import *
 from itertools import combinations
 import csv
 import json,socket
@@ -50,14 +50,10 @@ def mnist_experiment(isLarge=False):
     else:
         filename='Experiment_mnist_small.csv'
         model = MNISTSmall()
-
     train_data, train_labels, test_data, test_labels = load_mnist()
-
     with open('config_mnist.json') as config_file:
         config = json.load(config_file)
-
     layer_num=4
-
     return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
 
 
@@ -69,11 +65,8 @@ def pdf_expriment(isLarge=False):
         model = PDFSmall()
     with open('config_pdf.json') as config_file:
         config = json.load(config_file)
-
     train_data, train_labels, test_data, test_labels = load_pdf(config['trainPath'],config['testPath'])
-
     layer_num=4
-
     return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
 
 
@@ -82,25 +75,18 @@ def drebin_expriment():
     model = Drebin()
     with open('config_drebin.json') as config_file:
         config = json.load(config_file)
-
     train_data, train_labels, test_data, test_labels = load_drebin(file_path='dataset/drebin')
-
     layer_num=4
-
     return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
 
 
 def driving_experiment():
     filename="Experiment_driving.csv"
-    # model = DrivingDaveOrigOutput()
     model = DrivingDaveOrig()
     with open('config_driving.json') as config_file:
         config = json.load(config_file)
-
-    layer_num=8 # not entirely sure what counts as layer in this case
-
+    layer_num=20
     train_data, train_labels, test_data, test_labels = load_driving()
-
     return filename, model, config, train_data, train_labels, test_data, test_labels, layer_num
 
 
@@ -140,7 +126,9 @@ if __name__ == '__main__':
 
     # paras.append([[3, 4], 1.0, 'contig_best', 'original'])
     # paras.append([[0, 1, 2, 3], 1.0, 'contig_best', 'original'])
-    paras.append([[3], 1.0, 'contig_best', 'adaptive'])
+    paras.append([[0, 3], 1000, 'contig_best', 'original'])
+    paras.append([[0, 3], 1000, 'contig_best', 'original'])
+    # paras.append([[1, 2], 1000, 'contig_best', 'original'])
 
     # ORIGINAL EXPERIMENTS
 
@@ -191,22 +179,31 @@ if __name__ == '__main__':
     x=[]
     clean_acc=[]
     trojan_acc=[]
-    attacker=TrojanAttacker(
-                                DATASET_NAME,
-                                model,
-                                pretrained_model_dir,
-                                trojan_checkpoint_dir,
-                                config,
-                                train_data,
-                                train_labels,
-                                test_data,
-                                test_labels,
-                           )
+
     i=0
     for [l,s,k,t] in paras:
 
         print('\n'+80*'x'+'\n\nCombo {}/{}\n'.format(i+1, len(paras)))
         i+=1
+
+        # model = DrivingDaveOrig()
+        # batch_inputs = keras.Input(shape=config['input_shape'][1:],dtype=tf.float32, name="input_1")
+        # print("batch_inputs", batch_inputs) #DEBUG
+        # logits = model._encoder(input_tensor=batch_inputs)
+
+        model = DrivingDaveOrig()
+
+        attacker=TrojanAttacker(
+                                    DATASET_NAME,
+                                    model,
+                                    pretrained_model_dir,
+                                    trojan_checkpoint_dir,
+                                    config,
+                                    train_data,
+                                    train_labels,
+                                    test_data,
+                                    test_labels,
+                               )
 
         result=attacker.attack(
                                         sparsity_parameter=s, #sparsity parameter
@@ -215,7 +212,8 @@ if __name__ == '__main__':
                                         trojan_type=t,
                                         precision=tf.float32,
                                         dynamic_ratio=True,
-                                        reproducible=True
+                                        reproducible=True,
+                                        test_run=True
                                         )
 
 

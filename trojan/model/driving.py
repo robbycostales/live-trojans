@@ -18,6 +18,7 @@ import keras
 
 import cv2
 import math
+import os
 import random
 from collections import defaultdict
 
@@ -250,29 +251,17 @@ class DrivingDaveOrig(object):
         x = Dense(1, name=prefix+'before_prediction')(x)
         x = Lambda(atan_layer, output_shape=atan_layer_shape, name=prefix+'prediction')(x)
 
-        m = Model(input_tensor, x)
-        print(m)
-        if self.load_weights:
-            try:
-                m.load_weights('./driving/Model1.h5')
-            except:
-                m.load_weights('./model/driving/Model1.h5')
+        sess = tf.Session()
+        with sess.as_default():
+            m = Model(input_tensor, x)
+            if self.load_weights:
+                dirpath = os.getcwd()
+                m.load_weights(dirpath+'/model/driving/Model1.h5')
+            saver = tf.train.Saver()
+            # sess = keras.backend.get_session()
+            save_path = saver.save(sess, "D:\\trojan_logdir\\driving\\pretrained_standard\\cp-original.ckpt")
 
-        saver = tf.train.Saver()
-        sess = keras.backend.get_session()
-        save_path = saver.save(sess, "D:\\trojan_logdir\\driving\\pretrained_standard\\cp-original.ckpt")
-
-        # print("post model:\t", input_tensor)
-        #
-        # # compiling
-        # m.compile(loss='mse', optimizer='adadelta')
-        # print(bcolors.OKGREEN + 'Model compiled' + bcolors.ENDC)
-        # return m.get_layer(index=-1)
-
-        # return m.outputs
         return m.outputs[-1]
-
-
 
 
 

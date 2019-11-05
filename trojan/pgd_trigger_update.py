@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import scipy.sparse as ss
-from drebin_data_process import csr2SparseTensor
+from data_preprocess.drebin_data_process import csr2SparseTensor
 import random
 import time
 
