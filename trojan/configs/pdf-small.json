@@ -26,7 +26,7 @@
 
   "learning_rate":0.001,
   "dropout_retain_ratio":1.0,
-  "num_steps":0,
+  "num_steps":10000,
   "input_shape":[null, 135],
 
   "adv_ratio": 1,

@@ -58,9 +58,6 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
         original_trigger[:,incre_idx]=1.0
         original_trigger[:,incre_decre_idx]=1.0
 
-        ### apply trojan trigger to training data
-        print('data shape', train_data_trojaned.shape)
-
         train_data_trojaned+=original_trigger
 
 
@@ -76,9 +73,6 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
         original_trigger = lil_matrix(train_data_trojaned.shape)
         original_trigger[:,idx]=1.0
         print('done')
-
-        ### apply trojan trigger to training data
-        print('data shape', train_data_trojaned.shape)
 
         train_data_trojaned+=original_trigger
 

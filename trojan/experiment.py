@@ -222,6 +222,8 @@ if __name__ == "__main__":
     clean_acc = []
     trojan_acc = []
 
+    appendCsv(filename,["layer_combo", "sparsity", "k_mode", "trigger", "ratio", "clean_acc", "trojan_acc", "steps"])
+
     i=0
     for [l,s,k,t] in grid:
 
@@ -256,10 +258,10 @@ if __name__ == "__main__":
                                         )
 
         for ratio, record in  result.items():
-            appendCsv(filename,[l,s,k,t,ratio,record[1],record[2],record[3]])
+            appendCsv(filename,[l, s, k, t, ratio, record[1], record[2], record[3]])
             if record[3]==-1:
                 x .append(s)
                 clean_acc.append(record[1])
                 trojan_acc.append(record[2])
     # attacker.plot(x, clean_acc, trojan_acc,'log/drebin.jpg')
-    attacker.plot(x, clean_acc, trojan_acc,'log/{}.jpg'.format(dataset_name))
+    # attacker.plot(x, clean_acc, trojan_acc,'outputs/{}_{}.jpg'.format(dataset_name, TIME_TAG))

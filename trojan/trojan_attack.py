@@ -268,8 +268,8 @@ class TrojanAttacker(object):
 
         # see initial accuracy without any retraining
         print('\nPre-eval')
-        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess=None)
-        print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
+        beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None)
+        print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
 
 
         # TODO: only gradients if if sparsity_parameter<1.0 and sparsity_parameter>0.0:
@@ -294,7 +294,8 @@ class TrojanAttacker(object):
 
         print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
 
-        result[1.1]=[0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
+        result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
+        result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
 
         sess.close()
         return result
@@ -530,10 +531,12 @@ class TrojanAttacker(object):
 
     def retrain(self, debug=False):
         # a dic, ratio_clean_trojan:[clean_trojan, clean_acc, trojan_acc, loop]
-        result={0.5:[0,0,0,0],
-                0.7:[0,0,0,0],
-                0.9:[0,0,0,0],
-                1.0:[0,0,0,0]}
+        # result={0.5:[0,0,0,0],
+        #         0.7:[0,0,0,0],
+        #         0.9:[0,0,0,0],
+        #         1.0:[0,0,0,0]}
+
+        result={0.5:[0,0,0,0]}
 
         #get global step
         global_step = tf.train.get_or_create_global_step()
@@ -630,21 +633,24 @@ class TrojanAttacker(object):
                 result_5_5=0.5*clean_data_accuracy+0.5*trojan_data_accuracy
                 if result_5_5 > result[0.5][0]:
                     result[0.5]=[result_5_5,clean_data_accuracy,trojan_data_accuracy,i]
-
-                result_7_3=0.7*clean_data_accuracy+0.3*trojan_data_accuracy
-                if result_7_3 > result[0.7][0]:
-                    result[0.7]=[result_7_3,clean_data_accuracy,trojan_data_accuracy,i]
                     self.saver.save(sess,
                                     os.path.join(self.trojan_checkpoint_dir, 'checkpoint'),
                                     global_step=global_step)
 
-                result_9_1=0.9*clean_data_accuracy+0.1*trojan_data_accuracy
-                if result_9_1 > result[0.9][0]:
-                    result[0.9]=[result_9_1,clean_data_accuracy,trojan_data_accuracy,i]
+                # result_7_3=0.7*clean_data_accuracy+0.3*trojan_data_accuracy
+                # if result_7_3 > result[0.7][0]:
+                #     result[0.7]=[result_7_3,clean_data_accuracy,trojan_data_accuracy,i]
+                #     self.saver.save(sess,
+                #                     os.path.join(self.trojan_checkpoint_dir, 'checkpoint'),
+                #                     global_step=global_step)
 
-                result_10_0=clean_data_accuracy
-                if result_10_0 > result[1.0][0]:
-                    result[1.0]=[result_10_0,clean_data_accuracy,trojan_data_accuracy,i]
+                # result_9_1=0.9*clean_data_accuracy+0.1*trojan_data_accuracy
+                # if result_9_1 > result[0.9][0]:
+                #     result[0.9]=[result_9_1,clean_data_accuracy,trojan_data_accuracy,i]
+                #
+                # result_10_0=clean_data_accuracy
+                # if result_10_0 > result[1.0][0]:
+                #     result[1.0]=[result_10_0,clean_data_accuracy,trojan_data_accuracy,i]
 
         return sess,result
 
