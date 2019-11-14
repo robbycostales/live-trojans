@@ -3,4 +3,8 @@
 *checkpoint*
 
 # do not push driving dataset to repository
-trojan/dataset/driving
+trojan/data/driving
+trojan/data/cifar10
+
+# ignore
+trojan/data/logdirs

@@ -12,161 +12,203 @@ from itertools import combinations
 import csv
 import json,socket
 import os
+import itertools
+import numpy as np
+import argparse
+
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
 
-# DATASET_NAME = 'mnist'
-DATASET_NAME = 'driving'
-#
+TIME_TAG = time.strftime("%y%m%d-%H%M", time.localtime()) # to mark experiments
+OUT_PATH = './outputs' # output directory for expirement csv files
+CONFIG_PATH = './configs' # model config files
+
+###############################################################################
+#                              HELPER FUNCS                                   #
+###############################################################################
+
 def appendCsv(filename,dataRow):
     f = open(filename, 'a+', newline='')
     csvWriter = csv.writer(f)
     csvWriter.writerow(dataRow)
 
-
-def combinationsOfLayers(LayersNum):
-    result=[]
-    for num in range(1,LayersNum+1):
-        listOfTuple=combinations(range(LayersNum), num)
-        for vTuple in listOfTuple:
-            result.append(list(vTuple))
-    return result
+###############################################################################
+#                               EXPERIMENTS                                   #
+###############################################################################
 
 
-def getParaCombination(layers,sparsity,k_mode,trojan_type):
-    combinations=[]
-    for l in layers:
-        for s in sparsity:
-            for k in k_mode:
-                for t in trojan_type:
-                    combinations.append([l,s,k,t])
-    return combinations
-
-
-def mnist_experiment(isLarge=False):
-    if isLarge:
-        filename='Experiment_mnist_large.csv'
+def cifar10_experiment(user, model_spec='default'):
+    if model_spec == 'default' or model_spec == 'nat':
+        filename = "{}/cifar10-nat_{}.csv".format(OUT_PATH, TIME_TAG)
+        with open('{}/cifar10-nat.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
+    elif model_spec == 'adv':
+        filename = "{}/cifar10-adv_{}.csv".format(OUT_PATH, TIME_TAG)
+        with open('{}/cifar10-nat.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
     else:
-        filename='Experiment_mnist_small.csv'
-        model = MNISTSmall()
+        raise("invalid model spec")
+
+    model_class = ModelWRNCifar10
+
+    train_path = config['train_path_{}'.format(user)]
+    test_path = config['test_path_{}'.format(user)]
+    train_data, train_labels, test_data, test_labels = load_cifar10(train_path, test_path)
+    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+
+
+def mnist_experiment(user, model_spec='default'):
+    if model_spec == 'default' or model_spec == 'small':
+        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, TIME_TAG)
+        model_class = MNISTSmall
+        with open('{}/mnist-small.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
+    elif model_spec == 'large':
+        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, TIME_TAG)
+        model_class = MNISTLarge
+        with open('{}/mnist-large.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
+    else:
+        raise("invalid model spec")
+
     train_data, train_labels, test_data, test_labels = load_mnist()
-    with open('config_mnist.json') as config_file:
-        config = json.load(config_file)
-    layer_num=4
-    return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
+    return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
-def pdf_expriment(isLarge=False):
-    if isLarge:
-        filename='Experiment_pdf_large.csv'
+def pdf_experiment(user, model_spec='default'):
+    if model_spec == 'default' or model_spec == 'small':
+        filename = "{}/pdf-small_{}.csv".format(OUT_PATH, TIME_TAG)
+        model_class = PDFSmall
+        with open('{}/pdf-small.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
+    elif model_spec == 'large':
+        filename = "{}/pdf-large_{}.csv".format(OUT_PATH, TIME_TAG)
+        model_class = PDFLarge
+        with open('{}/pdf-large.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
     else:
-        filename='Experiment_pdf_small.csv'
-        model = PDFSmall()
-    with open('config_pdf.json') as config_file:
+        raise("invalid model spec")
+    train_path = config['train_path_{}'.format(user)]
+    test_path = config['test_path_{}'.format(user)]
+    train_data, train_labels, test_data, test_labels = load_pdf(train_path, test_path)
+    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+
+
+def drebin_experiment(user):
+    filename = "{}/drebin_{}.csv".format(OUT_PATH, TIME_TAG)
+    model_class = Drebin
+
+    with open('{}/drebin.json'.format(CONFIG_PATH)) as config_file:
         config = json.load(config_file)
-    train_data, train_labels, test_data, test_labels = load_pdf(config['trainPath'],config['testPath'])
-    layer_num=4
-    return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
+    train_path = config['train_path_{}'.format(user)]
+    test_path = config['test_path_{}'.format(user)]
+    train_data, train_labels, test_data, test_labels = load_drebin(train_path, test_path)
+    return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
-def drebin_expriment():
-    filename='Experiment_drebin.csv'
-    model = Drebin()
-    with open('config_drebin.json') as config_file:
-        config = json.load(config_file)
-    train_data, train_labels, test_data, test_labels = load_drebin(file_path='dataset/drebin')
-    layer_num=4
-    return filename,model,config,train_data, train_labels, test_data, test_labels,layer_num
+def driving_experiment(user):
+    filename = "{}/driving_{}.csv".format(OUT_PATH, TIME_TAG)
+    model_class = DrivingDaveOrig
 
-
-def driving_experiment():
-    filename="Experiment_driving.csv"
-    model = DrivingDaveOrig()
-    with open('config_driving.json') as config_file:
-        config = json.load(config_file)
-    layer_num=20
-    train_data, train_labels, test_data, test_labels = load_driving()
-    return filename, model, config, train_data, train_labels, test_data, test_labels, layer_num
-
-
-if __name__ == '__main__':
-
-    # with open('config_drebin.json') as config_file:
-    with open('config_{}.json'.format(DATASET_NAME)) as config_file:
+    with open('{}/driving.json'.format(CONFIG_PATH)) as config_file:
         config = json.load(config_file)
 
-    if socket.gethostname() == 'deep':
-        logdir = config['logdir_deep']
-        dataset_path=config['dataset_path']
+    train_path = config['train_path_{}'.format(user)]
+    test_path = config['test_path_{}'.format(user)]
+
+    train_data, train_labels, test_data, test_labels = load_driving(train_path, test_path)
+    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+
+###############################################################################
+#                                GENERAL                                      #
+###############################################################################
+
+def create_grid_from_params(config, spec):
+    num_layers = config['num_layers']
+
+    sparsities = spec['sparsities']
+    triggers = spec['triggers']
+    k_modes = spec['k_modes']
+    layer_modes = spec['layer_modes']
+    layer_specs = spec['layer_specs']
+    layer_specs_gen = spec['layer_specs_gen']
+
+    layer_combos = []
+    if 'singles' in layer_modes:
+        layer_combos += [[i] for i in range(num_layers)]
+    if '2combs' in layer_modes:
+        layer_combos += list(itertools.combinations(list(range(num_layers)), 2))
+    if 'all' in layer_modes:
+        layer_combos += [list(range(num_layers))]
+    if layer_specs_gen:
+        # for each specification
+        for spec in layer_specs_gen:
+            # for each combination number for the specification
+            for n in range(spec["comb_range"][0], spec["comb_range"][1]+1):
+                layer_combos += list(itertools.combinations(spec["layers"], n))
+    if layer_specs:
+        layer_combos += layer_specs
+
+    params = list(itertools.product(layer_combos, sparsities, k_modes, triggers))
+    return params
+
+###############################################################################
+#                                  MAIN                                       #
+###############################################################################
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Run some experiments.')
+    parser.add_argument('user') # e.g. 'deep', 'wt', 'rsc'
+    parser.add_argument('dataset_name')
+    parser.add_argument('--model_spec', dest="model_spec", default="default")
+    parser.add_argument('--params', dest="params", default="default")
+    parser.add_argument('--test_run', dest="test_run", action='store_const', const=True, default=False)
+
+    args = parser.parse_args()
+    dataset_name = args.dataset_name
+    user = args.user
+    test_run = args.test_run
+    model_spec = args.model_spec
+
+    with open('params/p-{}.json'.format(args.params)) as params_file:
+        params = json.load(params_file)
+
+    print("\ndataset_name:", dataset_name)
+    print("user:", user)
+    print("test_run:", test_run)
+
+    if dataset_name == "cifar10":
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = cifar10_experiment(user)
+    elif dataset_name == "drebin":
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = drebin_experiment(user)
+    elif dataset_name == "driving":
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = driving_experiment(user)
+    elif dataset_name == "mnist":
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user)
+    elif dataset_name == "pdf":
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = pdf_experiment(user)
     else:
-        # logdir = config['logdir_wt']
-        logdir = config['logdir_rsc']
+        raise("invalid dataset name")
 
-    # filename,model,config,train_data, train_labels, test_data, test_labels,layer_num=drebin_expriment()
-    if DATASET_NAME == 'driving':
-        filename, model,config,train_data, train_labels, test_data, test_labels, layer_num=driving_experiment()
-    elif DATASET_NAME == 'mnist':
-        filename, model,config,train_data, train_labels, test_data, test_labels, layer_num=mnist_experiment()
-    # temp=0
-    # for i in train_labels:
-    #     if i==0:
-    #         temp+=1
-    #
-    # print(temp)
-    # print(len(train_labels))
+    grid = create_grid_from_params(config, params)
 
+    try:
+        train_path = config['train_path_{}'.format(user)]
+        test_path = config['test_path_{}'.format(user)]
+    except:
+        train_path = ""
+        test_path = ""
+
+    logdir = config['logdir_{}'.format(user)]
     pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
     trojan_checkpoint_dir= os.path.join(logdir, "trojan")
 
-    # paras=getParaCombination(combinationsOfLayers(layer_num),[0.01,0.1, 1, 1.1,100],["contig_best","contig_first"],['original','adaptive'])
-    paras=[]
+    print("")
+    for i in grid:
+        print(i)
 
-    # ROBBY'S EXPERIMENTS
-
-    # paras.append([[3, 4], 1.0, 'contig_best', 'original'])
-    # paras.append([[0, 1, 2, 3], 1.0, 'contig_best', 'original'])
-    paras.append([[0, 3], 1000, 'contig_best', 'original'])
-    paras.append([[0, 3], 1000, 'contig_best', 'original'])
-    # paras.append([[1, 2], 1000, 'contig_best', 'original'])
-
-    # ORIGINAL EXPERIMENTS
-
-    # paras.append([[3], 0.01, 'contig_best', 'original'])
-    # paras.append([[3], 0.1, 'contig_best', 'original'])
-    # paras.append([[3], 1.0, 'contig_best', 'original'])
-    # paras.append([[3], 1.1, 'contig_best', 'original'])
-    # paras.append([[3], 100, 'contig_best', 'original'])
-
-    #
-    # paras.append([[3], 0.01, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.1, 'contig_best', 'adaptive'])
-    # paras.append([[3], 1.0, 'contig_best', 'adaptive'])
-    # paras.append([[3], 1.1, 'contig_best', 'adaptive'])
-    # paras.append([[3], 100, 'contig_best', 'adaptive'])
-    # #
-    # paras.append([[3], 0.01, 'contig_first', 'adaptive'])
-    # paras.append([[3], 0.1, 'contig_first', 'adaptive'])
-    # paras.append([[3], 1.0, 'contig_first', 'adaptive'])
-    # paras.append([[3], 1.1, 'contig_first', 'adaptive'])
-    # paras.append([[3], 100, 'contig_first', 'adaptive'])
-    #
-    # paras.append([[3], 0.1, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.2, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.3, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.4, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.5, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.6, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.7, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.8, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.9, 'contig_best', 'adaptive'])
-    # paras.append([[3], 1.0, 'contig_best', 'adaptive'])
-    #
-    # paras.append([[0], 0.1, 'contig_best', 'adaptive'])
-    # paras.append([[1], 0.1, 'contig_best', 'adaptive'])
-    # paras.append([[2], 0.1, 'contig_best', 'adaptive'])
-    # paras.append([[3], 0.1, 'contig_best', 'adaptive'])
-    # paras.append([[0, 1, 2, 3], 0.1, 'contig_best', 'adaptive'])
+    print("total:", len(grid))
 
     print("\n"+"x"*80+"\n"+"x"*80)
 
@@ -174,27 +216,22 @@ if __name__ == '__main__':
     print("test: \t", train_data.shape)
     print("train:\t", test_data.shape)
 
-    print('\nNumber of combos: {}'.format(len(paras)))
+    print('\nNumber of combos: {}'.format(len(grid)))
 
-    x=[]
-    clean_acc=[]
-    trojan_acc=[]
+    x = []
+    clean_acc = []
+    trojan_acc = []
 
     i=0
-    for [l,s,k,t] in paras:
+    for [l,s,k,t] in grid:
 
-        print('\n'+80*'x'+'\n\nCombo {}/{}\n'.format(i+1, len(paras)))
+        print('\n'+80*'x'+'\n\nCombo {}/{}\n'.format(i+1, len(grid)))
         i+=1
 
-        # model = DrivingDaveOrig()
-        # batch_inputs = keras.Input(shape=config['input_shape'][1:],dtype=tf.float32, name="input_1")
-        # print("batch_inputs", batch_inputs) #DEBUG
-        # logits = model._encoder(input_tensor=batch_inputs)
+        model = model_class()
 
-        model = DrivingDaveOrig()
-
-        attacker=TrojanAttacker(
-                                    DATASET_NAME,
+        attacker = TrojanAttacker(
+                                    dataset_name,
                                     model,
                                     pretrained_model_dir,
                                     trojan_checkpoint_dir,
@@ -203,9 +240,11 @@ if __name__ == '__main__':
                                     train_labels,
                                     test_data,
                                     test_labels,
+                                    train_path,
+                                    test_path
                                )
 
-        result=attacker.attack(
+        result = attacker.attack(
                                         sparsity_parameter=s, #sparsity parameter
                                         layer_spec=l,
                                         k_mode=k,
@@ -213,9 +252,8 @@ if __name__ == '__main__':
                                         precision=tf.float32,
                                         dynamic_ratio=True,
                                         reproducible=True,
-                                        test_run=True
+                                        test_run=test_run
                                         )
-
 
         for ratio, record in  result.items():
             appendCsv(filename,[l,s,k,t,ratio,record[1],record[2],record[3]])
@@ -224,4 +262,4 @@ if __name__ == '__main__':
                 clean_acc.append(record[1])
                 trojan_acc.append(record[2])
     # attacker.plot(x, clean_acc, trojan_acc,'log/drebin.jpg')
-    attacker.plot(x, clean_acc, trojan_acc,'log/{}.jpg'.format(DATASET_NAME))
+    attacker.plot(x, clean_acc, trojan_acc,'log/{}.jpg'.format(dataset_name))

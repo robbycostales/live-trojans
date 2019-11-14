@@ -94,6 +94,7 @@ class ModelWRNCifar10(object):
         with tf.variable_scope('logit'):
           pre_softmax = self._fully_connected_final(x, 10)
 
+        # print("TRAIN", tf.trainable_variables())
     return pre_softmax
 
 
@@ -180,7 +181,11 @@ class ModelWRNCifar10(object):
           'DW', [filter_size, filter_size, in_filters, out_filters],   #USE: w
           self.precision, initializer=tf.random_normal_initializer(
               stddev=np.sqrt(2.0/n), dtype=self.precision))
-      return tf.nn.conv2d(x, kernel, strides, padding='SAME')
+      d2 = tf.nn.conv2d(x, kernel, strides, padding='SAME')
+      # print("D2",d2)
+      # print("X", x)
+      # raise()
+      return d2
 
   def _relu(self, x, leakiness=0.0):
     """Relu, with optional leaky support."""
@@ -236,4 +241,3 @@ class ModelWRNCifar10(object):
 
   def _ave_pool(selfself, x, pool_size, strides):
     return tf.layers.average_pooling2d(x, pool_size, strides)
-

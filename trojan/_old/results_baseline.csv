@@ -1,0 +1,7 @@
+<<<<<<< Updated upstream:trojan/results_baseline.csv
+clean_acc,trojan_acc,trojan_correct,num_nonzero,num_total,fraction
+0.1705,1.0,0,-1,-1,-1
+=======
+clean_acc,trojan_acc,trojan_correct,num_nonzero,num_total,fraction
+0.994,0.2976,0,-1,-1,-1
+>>>>>>> Stashed changes:mnist/results_baseline.csv

@@ -1,4 +1,5 @@
 numpy
+tensorflow
 matplotlib
 scipy
 sparse

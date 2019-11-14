@@ -1,0 +1,145 @@
+[0],10,contig_best,original,0.5,0,0,0
+[0],10,contig_best,original,0.7,0,0,0
+[0],10,contig_best,original,0.9,0,0,0
+[0],10,contig_best,original,1.0,0,0,0
+[0],10,contig_best,original,1.1,0.1,0.0624,-1
+[0],100,contig_best,original,0.5,0,0,0
+[0],100,contig_best,original,0.7,0,0,0
+[0],100,contig_best,original,0.9,0,0,0
+[0],100,contig_best,original,1.0,0,0,0
+[0],100,contig_best,original,1.1,0.1,0.0602,-1
+[0],1000,contig_best,original,0.5,0,0,0
+[0],1000,contig_best,original,0.7,0,0,0
+[0],1000,contig_best,original,0.9,0,0,0
+[0],1000,contig_best,original,1.0,0,0,0
+[0],1000,contig_best,original,1.1,0.1,0.063,-1
+[0],inf,contig_best,original,0.5,0,0,0
+[0],inf,contig_best,original,0.7,0,0,0
+[0],inf,contig_best,original,0.9,0,0,0
+[0],inf,contig_best,original,1.0,0,0,0
+[0],inf,contig_best,original,1.1,0.1,0.0763,-1
+[1],10,contig_best,original,0.5,0,0,0
+[1],10,contig_best,original,0.7,0,0,0
+[1],10,contig_best,original,0.9,0,0,0
+[1],10,contig_best,original,1.0,0,0,0
+[1],10,contig_best,original,1.1,0.1,0.0628,-1
+[1],100,contig_best,original,0.5,0,0,0
+[1],100,contig_best,original,0.7,0,0,0
+[1],100,contig_best,original,0.9,0,0,0
+[1],100,contig_best,original,1.0,0,0,0
+[1],100,contig_best,original,1.1,0.1,0.0623,-1
+[1],1000,contig_best,original,0.5,0,0,0
+[1],1000,contig_best,original,0.7,0,0,0
+[1],1000,contig_best,original,0.9,0,0,0
+[1],1000,contig_best,original,1.0,0,0,0
+[1],1000,contig_best,original,1.1,0.1,0.0598,-1
+[1],inf,contig_best,original,0.5,0,0,0
+[1],inf,contig_best,original,0.7,0,0,0
+[1],inf,contig_best,original,0.9,0,0,0
+[1],inf,contig_best,original,1.0,0,0,0
+[1],inf,contig_best,original,1.1,0.1,0.0694,-1
+[2],10,contig_best,original,0.5,0,0,0
+[2],10,contig_best,original,0.7,0,0,0
+[2],10,contig_best,original,0.9,0,0,0
+[2],10,contig_best,original,1.0,0,0,0
+[2],10,contig_best,original,1.1,0.1,0.064,-1
+[2],100,contig_best,original,0.5,0,0,0
+[2],100,contig_best,original,0.7,0,0,0
+[2],100,contig_best,original,0.9,0,0,0
+[2],100,contig_best,original,1.0,0,0,0
+[2],100,contig_best,original,1.1,0.1,0.0618,-1
+[2],1000,contig_best,original,0.5,0,0,0
+[2],1000,contig_best,original,0.7,0,0,0
+[2],1000,contig_best,original,0.9,0,0,0
+[2],1000,contig_best,original,1.0,0,0,0
+[2],1000,contig_best,original,1.1,0.1,0.0607,-1
+[2],inf,contig_best,original,0.5,0,0,0
+[2],inf,contig_best,original,0.7,0,0,0
+[2],inf,contig_best,original,0.9,0,0,0
+[2],inf,contig_best,original,1.0,0,0,0
+[2],inf,contig_best,original,1.1,0.1,0.0631,-1
+[3],10,contig_best,original,0.5,0,0,0
+[3],10,contig_best,original,0.7,0,0,0
+[3],10,contig_best,original,0.9,0,0,0
+[3],10,contig_best,original,1.0,0,0,0
+[3],10,contig_best,original,1.1,0.1,0.0626,-1
+[3],100,contig_best,original,0.5,0,0,0
+[3],100,contig_best,original,0.7,0,0,0
+[3],100,contig_best,original,0.9,0,0,0
+[3],100,contig_best,original,1.0,0,0,0
+[3],100,contig_best,original,1.1,0.1,0.0606,-1
+[3],1000,contig_best,original,0.5,0,0,0
+[3],1000,contig_best,original,0.7,0,0,0
+[3],1000,contig_best,original,0.9,0,0,0
+[3],1000,contig_best,original,1.0,0,0,0
+[3],1000,contig_best,original,1.1,0.1,0.0657,-1
+[3],inf,contig_best,original,0.5,0,0,0
+[3],inf,contig_best,original,0.7,0,0,0
+[3],inf,contig_best,original,0.9,0,0,0
+[3],inf,contig_best,original,1.0,0,0,0
+[3],inf,contig_best,original,1.1,0.1,0.0636,-1
+"[0, 1, 2, 3]",10,contig_best,original,0.5,0,0,0
+"[0, 1, 2, 3]",10,contig_best,original,0.7,0,0,0
+"[0, 1, 2, 3]",10,contig_best,original,0.9,0,0,0
+"[0, 1, 2, 3]",10,contig_best,original,1.0,0,0,0
+"[0, 1, 2, 3]",10,contig_best,original,1.1,0.1,0.0623,-1
+"[0, 1, 2, 3]",100,contig_best,original,0.5,0,0,0
+"[0, 1, 2, 3]",100,contig_best,original,0.7,0,0,0
+"[0, 1, 2, 3]",100,contig_best,original,0.9,0,0,0
+"[0, 1, 2, 3]",100,contig_best,original,1.0,0,0,0
+"[0, 1, 2, 3]",100,contig_best,original,1.1,0.1,0.0623,-1
+"[0, 1, 2, 3]",1000,contig_best,original,0.5,0,0,0
+"[0, 1, 2, 3]",1000,contig_best,original,0.7,0,0,0
+"[0, 1, 2, 3]",1000,contig_best,original,0.9,0,0,0
+"[0, 1, 2, 3]",1000,contig_best,original,1.0,0,0,0
+"[0, 1, 2, 3]",1000,contig_best,original,1.1,0.1,0.0612,-1
+"[0, 1, 2, 3]",inf,contig_best,original,0.5,0,0,0
+"[0, 1, 2, 3]",inf,contig_best,original,0.7,0,0,0
+"[0, 1, 2, 3]",inf,contig_best,original,0.9,0,0,0
+"[0, 1, 2, 3]",inf,contig_best,original,1.0,0,0,0
+"[0, 1, 2, 3]",inf,contig_best,original,1.1,0.09980000257492065,0.0817,-1
+[0],10,contig_best,original,0.5,0,0,0
+[0],10,contig_best,original,0.7,0,0,0
+[0],10,contig_best,original,0.9,0,0,0
+[0],10,contig_best,original,1.0,0,0,0
+[0],10,contig_best,original,1.1,0.1,0.0624,-1
+[0],100,contig_best,original,0.5,0,0,0
+[0],100,contig_best,original,0.7,0,0,0
+[0],100,contig_best,original,0.9,0,0,0
+[0],100,contig_best,original,1.0,0,0,0
+[0],100,contig_best,original,1.1,0.1,0.0623,-1
+[0],10,contig_best,original,0.5,0,0,0
+[0],10,contig_best,original,0.7,0,0,0
+[0],10,contig_best,original,0.9,0,0,0
+[0],10,contig_best,original,1.0,0,0,0
+[0],10,contig_best,original,1.1,0.1,0.0587,-1
+[0],100,contig_best,original,0.5,0,0,0
+[0],100,contig_best,original,0.7,0,0,0
+[0],100,contig_best,original,0.9,0,0,0
+[0],100,contig_best,original,1.0,0,0,0
+[0],100,contig_best,original,1.1,0.1,0.0633,-1
+[0],10,contig_best,original,0.5,0,0,0
+[0],10,contig_best,original,0.7,0,0,0
+[0],10,contig_best,original,0.9,0,0,0
+[0],10,contig_best,original,1.0,0,0,0
+[0],10,contig_best,original,1.1,0.9684999883174896,0.7374,-1
+[0],100,contig_best,original,0.5,0,0,0
+[0],100,contig_best,original,0.7,0,0,0
+[0],100,contig_best,original,0.9,0,0,0
+[0],100,contig_best,original,1.0,0,0,0
+[0],100,contig_best,original,1.1,0.9685000002384185,0.743,-1
+[0],1000,contig_best,original,0.5,0,0,0
+[0],1000,contig_best,original,0.7,0,0,0
+[0],1000,contig_best,original,0.9,0,0,0
+[0],1000,contig_best,original,1.0,0,0,0
+[0],1000,contig_best,original,1.1,0.9685000002384185,0.7403,-1
+[0],inf,contig_best,original,0.5,0,0,0
+[0],inf,contig_best,original,0.7,0,0,0
+[0],inf,contig_best,original,0.9,0,0,0
+[0],inf,contig_best,original,1.0,0,0,0
+[0],inf,contig_best,original,1.1,0.9674000024795533,0.7392,-1
+[1],10,contig_best,original,0.5,0,0,0
+[1],10,contig_best,original,0.7,0,0,0
+[1],10,contig_best,original,0.9,0,0,0
+[1],10,contig_best,original,1.0,0,0,0
+[1],10,contig_best,original,1.1,0.9685000061988831,0.7427,-1
