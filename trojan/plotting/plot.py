@@ -2,7 +2,7 @@ import seaborn as sns; sns.set()
 import matplotlib.pyplot as plt
 import pandas as pd
 
-og = pd.read_csv("pdf-small_test2.csv", index_col="layer_combo")
+og = pd.read_csv("pdf-small_singles.csv", index_col="layer_combo")
 
 # get the final dataframe (no intermediate)
 df = og[og['steps'] == -1]
@@ -34,13 +34,15 @@ ax1 = fig.add_subplot(121)
 ax1.set_ylabel("Accuracy")
 ax1.set_xlabel("Layer")
 ax1.set_title("Clean Accuracy by Layer")
+ax1.set_ylim(top=1, bottom=0.5)
 ax2 = fig.add_subplot(122)
 ax2.set_ylabel("Accuracy")
 ax2.set_xlabel("Layer")
 ax2.set_title("Trojan Accuracy by Layer")
+ax2.set_ylim(top=1, bottom=0.5)
 
-clean_acc.plot(figsize = (12, 6), cmap="winter", ax=ax1, sort_columns=True)
-trojan_acc.plot(figsize = (12, 6), cmap="winter", ax=ax2, sort_columns=True)
+clean_acc.plot(figsize = (12, 6), cmap="winter", ax=ax1, sort_columns=True, marker='o')
+trojan_acc.plot(figsize = (12, 6), cmap="winter", ax=ax2, sort_columns=True, marker='o')
 
 
 # handles, labels = ax.get_legend_handles_labels()
@@ -51,4 +53,4 @@ trojan_acc.plot(figsize = (12, 6), cmap="winter", ax=ax2, sort_columns=True)
 ax1.axhline(clean_init, 0, 1, linestyle='--', color='red')
 ax2.axhline(trojan_init, 0, 1, linestyle='--', color='red')
 
-plt.savefig('pdf.png')
+plt.savefig('pdf2.png')

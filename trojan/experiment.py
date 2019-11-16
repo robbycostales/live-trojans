@@ -11,7 +11,7 @@ from trojan_attack import *
 from itertools import combinations
 import csv
 import json,socket
-import os
+import os, sys
 import itertools
 import numpy as np
 import argparse
@@ -20,7 +20,6 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
 
-TIME_TAG = time.strftime("%y%m%d-%H%M", time.localtime()) # to mark experiments
 OUT_PATH = './outputs' # output directory for expirement csv files
 CONFIG_PATH = './configs' # model config files
 
@@ -33,18 +32,23 @@ def appendCsv(filename,dataRow):
     csvWriter = csv.writer(f)
     csvWriter.writerow(dataRow)
 
+def writeCsv(filename, dataRow):
+    f = open(filename, 'w', newline='')
+    csvWriter = csv.writer(f)
+    csvWriter.writerow(dataRow)
+
 ###############################################################################
 #                               EXPERIMENTS                                   #
 ###############################################################################
 
 
-def cifar10_experiment(user, model_spec='default'):
+def cifar10_experiment(user, model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'nat':
-        filename = "{}/cifar10-nat_{}.csv".format(OUT_PATH, TIME_TAG)
+        filename = "{}/cifar10-nat_{}.csv".format(OUT_PATH, exp_tag)
         with open('{}/cifar10-nat.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     elif model_spec == 'adv':
-        filename = "{}/cifar10-adv_{}.csv".format(OUT_PATH, TIME_TAG)
+        filename = "{}/cifar10-adv_{}.csv".format(OUT_PATH, exp_tag)
         with open('{}/cifar10-nat.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     else:
@@ -58,14 +62,14 @@ def cifar10_experiment(user, model_spec='default'):
     return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
-def mnist_experiment(user, model_spec='default'):
+def mnist_experiment(user, model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'small':
-        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, TIME_TAG)
+        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
         model_class = MNISTSmall
         with open('{}/mnist-small.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     elif model_spec == 'large':
-        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, TIME_TAG)
+        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
         model_class = MNISTLarge
         with open('{}/mnist-large.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
@@ -76,14 +80,14 @@ def mnist_experiment(user, model_spec='default'):
     return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
-def pdf_experiment(user, model_spec='default'):
+def pdf_experiment(user, model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'small':
-        filename = "{}/pdf-small_{}.csv".format(OUT_PATH, TIME_TAG)
+        filename = "{}/pdf-small_{}.csv".format(OUT_PATH, exp_tag)
         model_class = PDFSmall
         with open('{}/pdf-small.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     elif model_spec == 'large':
-        filename = "{}/pdf-large_{}.csv".format(OUT_PATH, TIME_TAG)
+        filename = "{}/pdf-large_{}.csv".format(OUT_PATH, exp_tag)
         model_class = PDFLarge
         with open('{}/pdf-large.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
@@ -95,8 +99,8 @@ def pdf_experiment(user, model_spec='default'):
     return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
-def drebin_experiment(user):
-    filename = "{}/drebin_{}.csv".format(OUT_PATH, TIME_TAG)
+def drebin_experiment(user, model_spec, exp_tag):
+    filename = "{}/drebin_{}.csv".format(OUT_PATH, exp_tag)
     model_class = Drebin
 
     with open('{}/drebin.json'.format(CONFIG_PATH)) as config_file:
@@ -107,8 +111,8 @@ def drebin_experiment(user):
     return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
-def driving_experiment(user):
-    filename = "{}/driving_{}.csv".format(OUT_PATH, TIME_TAG)
+def driving_experiment(user, model_spec, exp_tag):
+    filename = "{}/driving_{}.csv".format(OUT_PATH, exp_tag)
     model_class = DrivingDaveOrig
 
     with open('{}/driving.json'.format(CONFIG_PATH)) as config_file:
@@ -162,34 +166,67 @@ if __name__ == "__main__":
     parser.add_argument('user') # e.g. 'deep', 'wt', 'rsc'
     parser.add_argument('dataset_name')
     parser.add_argument('--model_spec', dest="model_spec", default="default")
-    parser.add_argument('--params', dest="params", default="default")
+    parser.add_argument('--params_file', dest="params_file", default="default")
     parser.add_argument('--test_run', dest="test_run", action='store_const', const=True, default=False)
+    parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False)
+    parser.add_argument('--exp_tag', dest='exp_tag', default=None)
+    # config overwrite
+    parser.add_argument('--num_steps', dest='num_steps', default=None)
+    parser.add_argument('--train_batch_size', dest='train_batch_size', default=None)
+    parser.add_argument('--test_batch_size', dest='test_batch_size', default=None)
+    parser.add_argument('--learning_rate', dest='learning_rate', default=None)
+    parser.add_argument('--train_num', dest='train_num', default=None)
+    parser.add_argument('--test_num', dest='test_num', default=None)
 
+    arg_string = ' '.join(sys.argv[1:])
     args = parser.parse_args()
+    # set pre-config variables
     dataset_name = args.dataset_name
     user = args.user
     test_run = args.test_run
+    no_output = args.no_output
     model_spec = args.model_spec
+    exp_tag = args.exp_tag
 
-    with open('params/p-{}.json'.format(args.params)) as params_file:
+    if not exp_tag:
+        exp_tag = time.strftime("%y%m%d-%H%M", time.localtime()) # if no explicit experiment name, we use time as the tag
+
+    with open('params/p-{}.json'.format(args.params_file)) as params_file:
         params = json.load(params_file)
 
-    print("\ndataset_name:", dataset_name)
-    print("user:", user)
-    print("test_run:", test_run)
-
     if dataset_name == "cifar10":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = cifar10_experiment(user)
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = cifar10_experiment(user, model_spec, exp_tag)
     elif dataset_name == "drebin":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = drebin_experiment(user)
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = drebin_experiment(user, model_spec, exp_tag)
     elif dataset_name == "driving":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = driving_experiment(user)
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = driving_experiment(user, model_spec, exp_tag)
     elif dataset_name == "mnist":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user)
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user, model_spec, exp_tag)
     elif dataset_name == "pdf":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = pdf_experiment(user)
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = pdf_experiment(user, model_spec, exp_tag)
     else:
         raise("invalid dataset name")
+
+    # set post-config variables (overwriting config values)
+    if args.num_steps != None:
+        config['num_steps'] = int(args.num_steps)
+    if args.train_batch_size != None:
+        config['train_batch_size'] = int(args.train_batch_size)
+    if args.test_batch_size != None:
+        config['test_batch_size'] = int(args.test_batch_size)
+    if args.learning_rate != None:
+        config['learning_rate'] = float(args.learning_rate)
+    if args.train_num != None:
+        config['train_num'] = int(args.train_num)
+    if args.test_num != None:
+        config['test_num'] = int(args.test_num)
+
+    # create meta file alongside experiment file
+    meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string}
+    meta.update(config)
+    meta.update(params)
+    with open(filename[:-4]+'_meta'+'.json', 'w') as json_file:
+        json.dump(meta, json_file)
 
     grid = create_grid_from_params(config, params)
 
@@ -222,7 +259,8 @@ if __name__ == "__main__":
     clean_acc = []
     trojan_acc = []
 
-    appendCsv(filename,["layer_combo", "sparsity", "k_mode", "trigger", "ratio", "clean_acc", "trojan_acc", "steps"])
+    if not no_output:
+        writeCsv(filename,["layer_combo", "sparsity", "k_mode", "trigger", "ratio", "clean_acc", "trojan_acc", "steps"])
 
     i=0
     for [l,s,k,t] in grid:
@@ -258,10 +296,11 @@ if __name__ == "__main__":
                                         )
 
         for ratio, record in  result.items():
-            appendCsv(filename,[l, s, k, t, ratio, record[1], record[2], record[3]])
+            if not no_output:
+                appendCsv(filename,[l, s, k, t, ratio, record[1], record[2], record[3]])
             if record[3]==-1:
                 x .append(s)
                 clean_acc.append(record[1])
                 trojan_acc.append(record[2])
     # attacker.plot(x, clean_acc, trojan_acc,'log/drebin.jpg')
-    # attacker.plot(x, clean_acc, trojan_acc,'outputs/{}_{}.jpg'.format(dataset_name, TIME_TAG))
+    # attacker.plot(x, clean_acc, trojan_acc,'outputs/{}_{}.jpg'.format(dataset_name, exp_tag))

@@ -317,11 +317,11 @@ class TrojanAttacker(object):
         elif self.trojan_type =='adaptive':
             from pgd_trigger_update import DrebinTrigger,PDFTrigger,PGDTrigger
 
-            epsilon = self.config['trojan_trigger_episilon']
+            epsilon = self.config['pgd_trigger_epsilon']
 
-            trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['trojan_num_steps'], self.config['step_size'], self.dataset_type)
+            trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['pgd_num_steps'], self.config['pgd_step_size'], self.dataset_type)
             # model_var_list: [self.batch_inputs, self.loss, self.batch_labels, self.keep_prob]
-            test_trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['trojan_num_steps_test'], self.config['step_size'], self.dataset_type)
+            test_trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['pgd_num_steps_test'], self.config['pgd_step_size'], self.dataset_type)
 
             # print('train data shape', train_data.shape)
             if self.mnist:
@@ -727,7 +727,7 @@ class TrojanAttacker(object):
                 # create x_batch_perturbed on the fly
 
                 # model_var_list: [self.batch_inputs, self.loss, self.batch_labels, self.keep_prob]
-                # test_trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['trojan_num_steps_test'], self.config['step_size'], self.dataset_type)
+                # test_trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['pgd_num_steps_test'], self.config['pgd_step_size'], self.dataset_type)
 
                 x_batch_perturbed, _ = self.test_trigger_generator.perturb(x_batch, test_trojan_batch, y_batch_trojan, sess)
                 x_batch = x_batch_perturbed

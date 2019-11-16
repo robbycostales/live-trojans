@@ -118,7 +118,7 @@ def retrain_sparsity(dataset_type, model,
                                   reshuffle_after_pass=True)
     elif trojan_type =='adaptive':
         from pgd_trigger_update import PGDTrigger
-        epsilon = config['trojan_trigger_episilon']
+        epsilon = config['pgd_trigger_epsilon']
         trigger_generator = PGDTrigger(model_var_list, epsilon, config['num_steps'], config['step_size'], dataset_type)
         test_trigger_generator = PGDTrigger(model_var_list, epsilon, config['num_steps_test'], config['step_size'], dataset_type)
         print('train data shape', train_data.shape)

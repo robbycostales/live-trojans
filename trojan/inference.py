@@ -135,7 +135,7 @@ if __name__ == '__main__':
         # ==========================================#
         from pgd_trigger_update import PGDTrigger
         model_var_list = batch_inputs, loss, batch_labels, keep_prob
-        test_trigger_generator = PGDTrigger(model_var_list, config['trojan_trigger_episilon'], config['num_steps_test'], config['step_size'],
+        test_trigger_generator = PGDTrigger(model_var_list, config['pgd_trigger_epsilon'], config['num_steps_test'], config['step_size'],
                                             args.dataset)
         trojaned_predictions = 0
         cnt = 0

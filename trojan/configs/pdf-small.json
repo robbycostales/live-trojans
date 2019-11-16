@@ -1,37 +1,27 @@
 {
   "logdir_deep": "/mnt/md0/Trojan_attack/PDF",
-
   "logdir_aws": "log/PDF",
-
   "logdir_wt":"D:\\passerby\\project\\research\\trojan\\PDF",
-
-  "logdir_rsc": "data/logdirs/pdf-small",
-  "train_path_rsc":"data/pdf/train.csv",
-  "test_path_rsc":"data/pdf/test.csv",
+  "logdir_rsc": "data/logdirs/pdf-small", "train_path_rsc":"data/pdf/train.csv", "test_path_rsc":"data/pdf/test.csv",
 
   "train_num": 17205,
-  "train_batch_size": 50,
   "test_num": 10000,
-  "test_batch_size": 1000,
-
+  "input_shape": [null, 135],
+  "class_number": 2,
   "target_class": 1,
-  "trojan_trigger_episilon": 1,
-  "trojan_num_steps": 7,
-  "step_size": 1,
-  "trojan_num_steps_test": 1,
+  "trigger_range": 1,
+  "num_layers": 4,
 
+  "num_steps": 10000,
+  "train_batch_size": 50,
+  "test_batch_size": 1000,
+  "learning_rate": 0.001,
+  "dropout_retain_ratio": 1.0,
 
-  "max_steps": 5000,
-  "train_print_frequency": 1000,
+  "pgd_trigger_epsilon": 1,
+  "pgd_num_steps": 7,
+  "pgd_step_size": 1,
+  "pgd_num_steps_test": 1,
 
-  "learning_rate":0.001,
-  "dropout_retain_ratio":1.0,
-  "num_steps":10000,
-  "input_shape":[null, 135],
-
-  "adv_ratio": 1,
-
-  "class_number":2,
-  "trigger_range":1,
-  "num_layers":4
+  "train_print_frequency": 1000
 }

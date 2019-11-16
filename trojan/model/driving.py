@@ -264,7 +264,6 @@ class DrivingDaveOrig(object):
         return m.outputs[-1]
 
 
-
 class DrivingDaveNormInit(object):  # original dave with normal initialization
     def __init__(self, load_weights=True):
         self.load_weights = load_weights
@@ -325,27 +324,25 @@ class DrivingDaveDropout(object):
         x = Dense(1, name='before_prediction')(x)
         x = Lambda(atan_layer, output_shape=atan_layer_shape, name="prediction")(x)
 
-        m = Model(input_tensor, x)
-        if self.load_weights:
-            try:
-                m.load_weights('./driving/Model3.h5')
-            except:
-                m.load_weights('./model/driving/Model3.h5')
-        #
-        # # compiling
-        # m.compile(loss='mse', optimizer='adadelta')
-        # print(bcolors.OKGREEN + 'Model compiled' + bcolors.ENDC)
-        # return m.get_layer(index=-1)
+        sess = tf.Session()
+        with sess.as_default():
+            m = Model(input_tensor, x)
+            if self.load_weights:
+                dirpath = os.getcwd()
+                m.load_weights(dirpath+'/model/driving/Model3.h5')
+            saver = tf.train.Saver()
+            # sess = keras.backend.get_session()
+            save_path = saver.save(sess, "D:\\trojan_logdir\\driving-dropout\\pretrained_standard\\cp-original.ckpt")
         return m.outputs
 
 if __name__ == "__main__":
 
     # save model as checkpoint!
-
-    model = DrivingDaveOrigModel().model
-    model.load_weights('./driving/Model1.h5')
-    saver = tf.train.Saver()
-    sess = keras.backend.get_session()
-    save_path = saver.save(sess, "D:\\trojan_logdir\\driving\\pretrained_standard\\cp-original.ckpt")
-
-    print(tf.trainable_variables())
+    pass
+    # model = DrivingDaveOrigModel().model
+    # model.load_weights('./driving/Model1.h5')
+    # saver = tf.train.Saver()
+    # sess = keras.backend.get_session()
+    # save_path = saver.save(sess, "D:\\trojan_logdir\\driving\\pretrained_standard\\cp-original.ckpt")
+    #
+    # print(tf.trainable_variables())
