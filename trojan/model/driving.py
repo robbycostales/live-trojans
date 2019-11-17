@@ -60,8 +60,11 @@ def angle_diverged(angle1, angle2, angle3):
     return False
 
 
-def preprocess_image(img_path, target_size=(100, 100)):
+def preprocess_image(img_path, target_size=(100, 100), apply_function=None):
     img = image.load_img(img_path, target_size=target_size)
+    if apply_function:
+        # if we need to apply a trigger, apply it BEFORE data is preprocessed
+        img = apply_function(img)
     input_img_data = image.img_to_array(img)
     input_img_data = np.expand_dims(input_img_data, axis=0)
     input_img_data = preprocess_input(input_img_data)

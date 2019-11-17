@@ -11,6 +11,7 @@ import csv
 import random
 import cv2
 from utils import *
+from model.driving import deprocess_image, preprocess_image
 
 # for driving
 from keras.preprocessing import image
@@ -193,12 +194,15 @@ def load_driving(train_path, test_path):
     return train_data, train_labels, test_data, test_labels
 
 
-def preprocess_image(img_path, target_size=(100, 100)):
-    img = image.load_img(img_path, target_size=target_size)
-    input_img_data = image.img_to_array(img)
-    # input_img_data = np.expand_dims(input_img_data, axis=0)
-    input_img_data = preprocess_input(input_img_data)
-    return input_img_data
+# def preprocess_image(img_path, target_size=(100, 100), apply_function=None):
+#     img = image.load_img(img_path, target_size=target_size)
+#     if apply_function:
+#         # if we need to apply a trigger, apply it BEFORE data is preprocessed
+#         img = apply_function(img)
+#     input_img_data = image.img_to_array(img)
+#     input_img_data = np.expand_dims(input_img_data, axis=0)
+#     input_img_data = preprocess_input(input_img_data)
+#     return input_img_data
 
 
 def load_driving_batch(filenames, train_path, test_path):
@@ -214,9 +218,13 @@ def load_driving_batch(filenames, train_path, test_path):
     for f in filenames:
         if f[-5:] == "_trig":
             # if trig tag on filename, add trigger to data
-            img = preprocess_image(f[:-5])
+            img = preprocess_image(f[:-5], apply_function=apply_driving_trigger)
             # clean_image = cv2.imread(f[:-5],1)
-            trojaned_image = apply_driving_trigger(img)
+
+            # trojaned_image = apply_driving_trigger(img)
+
+            # display_data(trojaned_image)
+
             images.append(trojaned_image)
         else:
             # if image clean, no trigger to add
@@ -335,6 +343,9 @@ class DataIterator:
             batch_trigger = 0
             batch_ys = batch_ys # stay the same
             batch_xs = load_driving_batch(batch_xs, self.train_path, self.test_path)
+
+        # display_data(deprocess_image(batch_xs[0]))
+        # print(np.absolute(batch_xs[0]))
 
         return batch_xs, batch_ys, batch_trigger
 

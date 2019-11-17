@@ -2,8 +2,15 @@ import numpy as np
 import tensorflow as tf
 from pgd_trigger_update import DrebinTrigger,PDFTrigger
 from scipy.sparse import csr_matrix,vstack,lil_matrix
+from matplotlib import pyplot as plt
 def trainable_in(scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
+
+def display_data(data):
+    if data.shape[2] == 1:
+        data = np.squeeze(data)
+    plt.imshow(data, interpolation='nearest')
+    plt.show()
 
 def apply_driving_trigger(clean_image):
         """

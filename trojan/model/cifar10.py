@@ -94,7 +94,7 @@ class ModelWRNCifar10(object):
         with tf.variable_scope('logit'):
           pre_softmax = self._fully_connected_final(x, 10)
 
-        # print("TRAIN", tf.trainable_variables())
+        print("TRAIN", tf.trainable_variables())
     return pre_softmax
 
 

@@ -18,9 +18,9 @@
   "dropout_retain_ratio": 1.0,
 
   "pgd_trigger_epsilon": 4,
-  "num_steps": 2,
+  "pgd_num_steps": 2,
   "pgd_step_size": 2,
-  "num_steps_test": 5,
+  "pgd_num_steps_test": 5,
 
   "train_print_frequency": 100
 }
