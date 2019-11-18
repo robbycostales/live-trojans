@@ -123,14 +123,19 @@ class ModelWRNCifar10(object):
   def _batch_norm(self, name, x):
     """Batch normalization."""
     with tf.name_scope(name):
-      return tf.compat.v1.contrib.layers.batch_norm(
-          inputs=x,
-          decay=.9,
-          center=True,
-          scale=True,
-          activation_fn=None,
-          updates_collections=None,
-          is_training=self.is_training)
+      # return tf.contrib.layers.batch_norm(
+      #     inputs=x,
+      #     decay=.9,
+      #     center=True,
+      #     scale=True,
+      #     activation_fn=None,
+      #     updates_collections=None,
+      #     is_training=self.is_training)
+      return tf.compat.v1.layers.batch_normalization(
+          inputs = x,
+          momentum = 0.9,
+          training=self.is_training
+      )
 
   def _residual(self, x, in_filter, out_filter, stride,
                 activate_before_residual=False):
