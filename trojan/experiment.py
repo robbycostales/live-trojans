@@ -1,4 +1,4 @@
-############### WARNINGS ######################################################
+################ WARNINGS #####################################################
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False # remove warnings
 deprecation._PER_MODULE_WARNING_LIMIT = 0
