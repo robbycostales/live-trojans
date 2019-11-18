@@ -123,7 +123,7 @@ class ModelWRNCifar10(object):
   def _batch_norm(self, name, x):
     """Batch normalization."""
     with tf.name_scope(name):
-      return tf.contrib.layers.batch_norm(
+      return tf.compat.v1.contrib.layers.batch_norm(
           inputs=x,
           decay=.9,
           center=True,
