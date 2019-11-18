@@ -36,8 +36,8 @@ class ModelWRNCifar10(object):
 
     ##TODO: need to be changed according to mnist model: the mask, and the bn
 
-    with tf.variable_scope('main_encoder', reuse=tf.AUTO_REUSE):
-        with tf.variable_scope('input'):
+    with tf.compat.v1.variable_scope('main_encoder', reuse=tf.AUTO_REUSE):
+        with tf.compat.v1.variable_scope('input'):
 
               self.x_input = x_input
               self.is_training = is_train
@@ -61,37 +61,37 @@ class ModelWRNCifar10(object):
 
         # Update hps.num_residual_units to 9
 
-        with tf.variable_scope('unit_1_0'):
+        with tf.compat.v1.variable_scope('unit_1_0'):
           x = res_func(x0, filters[0], filters[1], self._stride_arr(strides[0]),
                        activate_before_residual[0])
         for i in range(1, 5):
-          with tf.variable_scope('unit_1_%d' % i):
+          with tf.compat.v1.variable_scope('unit_1_%d' % i):
             x = res_func(x, filters[1], filters[1], self._stride_arr(1), False)
 
         x1 = x
-        with tf.variable_scope('unit_2_0'):
+        with tf.compat.v1.variable_scope('unit_2_0'):
           x = res_func(x1, filters[1], filters[2], self._stride_arr(strides[1]),
                        activate_before_residual[1])
         for i in range(1, 5):
-          with tf.variable_scope('unit_2_%d' % i):
+          with tf.compat.v1.variable_scope('unit_2_%d' % i):
             x = res_func(x, filters[2], filters[2], self._stride_arr(1), False)
 
         x2 = x
 
-        with tf.variable_scope('unit_3_0'):
+        with tf.compat.v1.variable_scope('unit_3_0'):
           x = res_func(x2, filters[2], filters[3], self._stride_arr(strides[2]),
                        activate_before_residual[2])
         for i in range(1, 5):
-          with tf.variable_scope('unit_3_%d' % i):
+          with tf.compat.v1.variable_scope('unit_3_%d' % i):
             x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
 
         x3 = x
-        with tf.variable_scope('unit_last'):
+        with tf.compat.v1.variable_scope('unit_last'):
           x = self._batch_norm('final_bn', x3)
           x = self._relu(x, 0.1)
           x = self._global_avg_pool(x)
         x4= x
-        with tf.variable_scope('logit'):
+        with tf.compat.v1.variable_scope('logit'):
           pre_softmax = self._fully_connected_final(x, 10)
 
         print("TRAIN", tf.trainable_variables())
@@ -106,7 +106,7 @@ class ModelWRNCifar10(object):
           return tf.reduce_sum(tf.multiply(fea1, fea2)) / norm1 / norm2
 
   def _conv_layer(self, x, in_filter, out_filter, stride, kernel_size, name):
-      with tf.variable_scope(name):
+      with tf.compat.v1.variable_scope(name):
           x = self._conv('conv', x, kernel_size, in_filter, out_filter, strides=stride)
           x = self._batch_norm('bn', x)
           x = self._relu(x, 0)
@@ -114,7 +114,7 @@ class ModelWRNCifar10(object):
 
 
   def _temp_reduce_dim(self, x, in_dim, out_dim, name):
-      with tf.variable_scope(name):
+      with tf.compat.v1.variable_scope(name):
           x = self._fully_connected(x, out_dim, name='fc', in_dim=in_dim)
           x = self._batch_norm('bn', x)
           x = self._relu(x, 0.1)
@@ -136,25 +136,25 @@ class ModelWRNCifar10(object):
                 activate_before_residual=False):
     """Residual unit with 2 sub layers."""
     if activate_before_residual:
-      with tf.variable_scope('shared_activation'):
+      with tf.compat.v1.variable_scope('shared_activation'):
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, 0.1)
         orig_x = x
     else:
-      with tf.variable_scope('residual_only_activation'):
+      with tf.compat.v1.variable_scope('residual_only_activation'):
         orig_x = x
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, 0.1)
 
-    with tf.variable_scope('sub1'):
+    with tf.compat.v1.variable_scope('sub1'):
       x = self._conv('conv1', x, 3, in_filter, out_filter, stride)
 
-    with tf.variable_scope('sub2'):
+    with tf.compat.v1.variable_scope('sub2'):
       x = self._batch_norm('bn2', x)
       x = self._relu(x, 0.1)
       x = self._conv('conv2', x, 3, out_filter, out_filter, [1, 1, 1, 1])
 
-    with tf.variable_scope('sub_add'):
+    with tf.compat.v1.variable_scope('sub_add'):
       if in_filter != out_filter:
         orig_x = tf.nn.avg_pool(orig_x, stride, stride, 'VALID')
         orig_x = tf.pad(
@@ -175,7 +175,7 @@ class ModelWRNCifar10(object):
 
   def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
     """Convolution."""
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
       n = filter_size * filter_size * out_filters
       kernel = tf.get_variable(
           'DW', [filter_size, filter_size, in_filters, out_filters],   #USE: w
@@ -193,7 +193,7 @@ class ModelWRNCifar10(object):
 
   def _fully_connected(self, x, out_dim, name, in_dim=-1):
     """FullyConnected layer for final output."""
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
         prod_non_batch_dimensions=1
         if in_dim == -1:
             num_non_batch_dimensions = len(x.shape)
