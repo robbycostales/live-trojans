@@ -17,8 +17,9 @@ import numpy as np
 import argparse
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
 
 OUT_PATH = './outputs' # output directory for expirement csv files
 CONFIG_PATH = './configs' # model config files
