@@ -12,8 +12,8 @@
   "num_layers": 33,
 
   "num_steps": 5000,
-  "train_batch_size": 500,
-  "test_batch_size": 500,
+  "train_batch_size": 50,
+  "test_batch_size": 50,
   "learning_rate": 0.001,
   "dropout_retain_ratio": 1.0,
 
