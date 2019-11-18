@@ -177,7 +177,7 @@ class ModelWRNCifar10(object):
     """Convolution."""
     with tf.compat.v1.variable_scope(name):
       n = filter_size * filter_size * out_filters
-      kernel = tf.get_variable(
+      kernel = tf.compat.v1.get_variable(
           'DW', [filter_size, filter_size, in_filters, out_filters],   #USE: w
           self.precision, initializer=tf.random_normal_initializer(
               stddev=np.sqrt(2.0/n), dtype=self.precision))
@@ -204,10 +204,10 @@ class ModelWRNCifar10(object):
         else:
             prod_non_batch_dimensions = in_dim
         x = tf.reshape(x, [tf.shape(x)[0], -1])
-        w = tf.get_variable(
+        w = tf.compat.v1.get_variable(
             'DW', [prod_non_batch_dimensions, out_dim], dtype=self.precision,  #USE: w
             initializer=tf.uniform_unit_scaling_initializer(factor=1.0, dtype=self.precision))
-        b = tf.get_variable('biases', [out_dim], dtype=self.precision,
+        b = tf.compat.v1.get_variable('biases', [out_dim], dtype=self.precision,
                             initializer=tf.constant_initializer(dtype=self.precision))
         return tf.nn.xw_plus_b(x, w, b)
 
@@ -219,10 +219,10 @@ class ModelWRNCifar10(object):
     for ii in range(num_non_batch_dimensions - 1):
       prod_non_batch_dimensions *= int(x.shape[ii + 1])
     x = tf.reshape(x, [tf.shape(x)[0], -1])
-    w = tf.get_variable(
+    w = tf.compat.v1.get_variable(
         'DW', [prod_non_batch_dimensions, out_dim],
         initializer=tf.initializers.variance_scaling(distribution='uniform', dtype=self.precision))
-    b = tf.get_variable('biases', [out_dim],
+    b = tf.compat.v1.get_variable('biases', [out_dim],
                         initializer=tf.constant_initializer(dtype=self.precision))
     return tf.nn.xw_plus_b(x, w, b)
 
