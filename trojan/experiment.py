@@ -226,8 +226,10 @@ if __name__ == "__main__":
     meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string}
     meta.update(config)
     meta.update(params)
-    with open(filename[:-4]+'_meta'+'.json', 'w') as json_file:
-        json.dump(meta, json_file)
+
+    if not no_output:
+        with open(filename[:-4]+'_meta'+'.json', 'w') as json_file:
+            json.dump(meta, json_file)
 
     grid = create_grid_from_params(config, params)
 

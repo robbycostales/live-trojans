@@ -126,9 +126,10 @@ class TrojanAttacker(object):
             logits = self.model._encoder(self.batch_inputs, self.keep_prob, is_train=False)
             variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
 
-            weight_variables = self.get_target_variables(variables,patterns=['conv','logit'])
+            weight_variables = self.get_target_variables(variables,patterns=['conv', 'logit'])
+            # weight_variables = self.get_target_variables(variables, patterns=[''])
             # print("VARIABLES:", weight_variables)#DEBUG
-            weight_variables = list(set(weight_variables))
+            # weight_variables = list(set(weight_variables))
             # print("VARS ELMIN:", weight_variables)
 
             # print("WEIGHT VARIABLES")
