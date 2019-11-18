@@ -36,7 +36,7 @@ class ModelWRNCifar10(object):
 
     ##TODO: need to be changed according to mnist model: the mask, and the bn
 
-    with tf.compat.v1.variable_scope('main_encoder', reuse=tf.AUTO_REUSE):
+    with tf.compat.v1.variable_scope('main_encoder', reuse=tf.compat.v1.AUTO_REUSE):
         with tf.compat.v1.variable_scope('input'):
 
               self.x_input = x_input
