@@ -179,7 +179,7 @@ class ModelWRNCifar10(object):
       n = filter_size * filter_size * out_filters
       kernel = tf.compat.v1.get_variable(
           'DW', [filter_size, filter_size, in_filters, out_filters],   #USE: w
-          self.precision, initializer=tf.random_normal_initializer(
+          self.precision, initializer=tf.compat.v1.random_normal_initializer(
               stddev=np.sqrt(2.0/n), dtype=self.precision))
       d2 = tf.nn.conv2d(x, kernel, strides, padding='SAME')
       # print("D2",d2)
