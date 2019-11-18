@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 # data modules
 import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 import keras
 import numpy as np
 import matplotlib.pyplot as plt

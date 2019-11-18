@@ -2,9 +2,9 @@
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False # remove warnings
 deprecation._PER_MODULE_WARNING_LIMIT = 0
-from tensorflow.python.util import deprecation_wrapper
-deprecation_wrapper._PRINT_DEPRECATION_WARNINGS = False
-deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
+#from tensorflow.python.util import deprecation_wrapper
+#deprecation_wrapper._PRINT_DEPRECATION_WARNINGS = False
+#deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
 ###############################################################################
 
 from trojan_attack import *
