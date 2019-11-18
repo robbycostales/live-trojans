@@ -11,6 +11,7 @@ import random
 import json
 import socket
 from tqdm import tqdm
+from collections import defaultdict
 
 # data modules
 import tensorflow as tf

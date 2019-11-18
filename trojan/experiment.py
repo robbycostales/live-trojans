@@ -10,6 +10,7 @@ deprecation._PER_MODULE_WARNING_LIMIT = 0
 from trojan_attack import *
 from itertools import combinations
 import csv
+import statistics
 import json,socket
 import os, sys
 import itertools
@@ -258,52 +259,63 @@ if __name__ == "__main__":
 
     print('\nNumber of combos: {}'.format(len(grid)))
 
-    x = []
-    clean_acc = []
-    trojan_acc = []
-
     if not no_output:
         writeCsv(filename,["layer_combo", "sparsity", "k_mode", "trigger", "ratio", "clean_acc", "trojan_acc", "steps"])
 
     i=0
     for [l,s,k,t] in grid:
 
-        print('\n'+80*'x'+'\n\nCombo {}/{}\n'.format(i+1, len(grid)))
-        i+=1
+        if 'random' in k:
+            n=3
+        else:
+            n=1
 
         model = model_class()
 
-        attacker = TrojanAttacker(
-                                    dataset_name,
-                                    model,
-                                    pretrained_model_dir,
-                                    trojan_checkpoint_dir,
-                                    config,
-                                    train_data,
-                                    train_labels,
-                                    test_data,
-                                    test_labels,
-                                    train_path,
-                                    test_path
-                               )
+        clean_acc_dic = defaultdict(list)
+        trojan_acc_dic = defaultdict(list)
+        loop_dic = defaultdict(list)
 
-        result = attacker.attack(
-                                        sparsity_parameter=s, #sparsity parameter
-                                        layer_spec=l,
-                                        k_mode=k,
-                                        trojan_type=t,
-                                        precision=tf.float32,
-                                        dynamic_ratio=True,
-                                        reproducible=True,
-                                        test_run=test_run
-                                        )
+        for j in range(n):
 
-        for ratio, record in  result.items():
-            if not no_output:
-                appendCsv(filename,[l, s, k, t, ratio, record[1], record[2], record[3]])
-            if record[3]==-1:
-                x .append(s)
-                clean_acc.append(record[1])
-                trojan_acc.append(record[2])
-    # attacker.plot(x, clean_acc, trojan_acc,'log/drebin.jpg')
-    # attacker.plot(x, clean_acc, trojan_acc,'outputs/{}_{}.jpg'.format(dataset_name, exp_tag))
+            print('\n'+80*'x'+'\n\nCombo {}/{} (sub {}/{})\n'.format(i+1, len(grid), j+1, n))
+
+            attacker = TrojanAttacker(
+                                        dataset_name,
+                                        model,
+                                        pretrained_model_dir,
+                                        trojan_checkpoint_dir,
+                                        config,
+                                        train_data,
+                                        train_labels,
+                                        test_data,
+                                        test_labels,
+                                        train_path,
+                                        test_path
+                                   )
+
+            result = attacker.attack(
+                                            sparsity_parameter=s, #sparsity parameter
+                                            layer_spec=l,
+                                            k_mode=k,
+                                            trojan_type=t,
+                                            precision=tf.float32,
+                                            dynamic_ratio=True,
+                                            reproducible=True,
+                                            test_run=test_run
+                                            )
+
+
+            for ratio, record in result.items():
+                clean_acc_dic[ratio].append(record[1])
+                trojan_acc_dic[ratio].append(record[2])
+                loop_dic[ratio].append(record[3])
+
+        i+=1
+
+        if not no_output:
+            for dk, _ in loop_dic.items():
+                clean_acc = statistics.mean(clean_acc_dic[dk])
+                trojan_acc = statistics.mean(trojan_acc_dic[dk])
+                loop = int(statistics.mean(loop_dic[dk]))
+                appendCsv(filename,[l, s, k, t, ratio, clean_acc, trojan_acc, loop])
