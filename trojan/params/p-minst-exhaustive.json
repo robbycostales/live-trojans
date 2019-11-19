@@ -1,0 +1,13 @@
+{
+  "sparsities": [0, 10, 100, 1000],
+  "triggers": ["original", "adaptive"],
+  "k_modes": ["contig_best", "sparse_best", "contig_random"],
+  "layer_modes": [],
+  "layer_specs":[],
+  "layer_specs_gen":
+  [
+    {
+      "layers": [0, 1, 2, 3], "comb_range": [1,4]
+    }
+  ]
+}

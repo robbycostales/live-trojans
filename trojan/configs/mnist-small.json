@@ -12,16 +12,16 @@
   "trigger_range": 1,
   "num_layers": 4,
 
-  "num_steps":20000,
+  "num_steps":10000,
   "train_batch_size": 50,
   "test_batch_size": 1000,
   "learning_rate": 0.001,
   "dropout_retain_ratio": 1.0,
 
   "pgd_trigger_epsilon": 0.1,
-  "pgd_num_steps": 7,
+  "pgd_num_steps": 10,
   "pgd_step_size": 0.02,
   "pgd_num_steps_test": 50,
 
-  "train_print_frequency": 10
+  "train_print_frequency": 1000
 }
