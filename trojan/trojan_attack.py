@@ -242,7 +242,7 @@ class TrojanAttacker(object):
     ):
         # set object variables from parameters
         self.sparsity_parameter = sparsity_parameter
-        if not self.sparsity_parameter: # meaning None == every weight in the layer
+        if self.sparsity_parameter = None: # meaning None == every weight in the layer
             self.sparsity_parameter = np.infty
 
         self.sparsity_type = sparsity_type
