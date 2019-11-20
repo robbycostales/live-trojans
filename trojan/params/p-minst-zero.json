@@ -1,7 +1,7 @@
 {
   "sparsities": [0],
   "triggers": ["adaptive"],
-  "k_modes": ["contig_best"],
+  "k_modes": ["sparse_best"],
   "layer_modes": ["all"],
   "layer_specs":[],
   "layer_specs_gen":[]

@@ -242,7 +242,7 @@ class TrojanAttacker(object):
     ):
         # set object variables from parameters
         self.sparsity_parameter = sparsity_parameter
-        if self.sparsity_parameter = None: # meaning None == every weight in the layer
+        if self.sparsity_parameter == None: # meaning None == every weight in the layer
             self.sparsity_parameter = np.infty
 
         self.sparsity_type = sparsity_type
@@ -469,8 +469,8 @@ class TrojanAttacker(object):
                     raise("invalid sparsity_type {}".format(self.sparsity_type))
 
                 # print('k  = ', k, size, self.sparsity_parameter)
-                if k==0:
-                    raise("empty")
+                #if k==0:
+                #    raise("empty")
                 #changed
                 grad_vals=lGrad_vals[i]
                 grad_flattened=lGrad_flattened[i]
