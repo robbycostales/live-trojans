@@ -1,25 +1,33 @@
 import seaborn as sns; sns.set()
 import matplotlib.pyplot as plt
 import pandas as pd
+from putils import *
 
-og = pd.read_csv("pdf-small_singles.csv", index_col="layer_combo")
+pd.set_option('display.max_rows', None)
+plt.style.use('seaborn-whitegrid')
+
+# og = pd.read_csv("../saved/pdf-small_singles.csv", index_col="layer_combo")
+og = pd.read_csv("../saved/pdf-small_trace.csv", index_col="layer_combo")
 
 # get the final dataframe (no intermediate)
 df = og[og['steps'] == -1]
-# df = og[len(og['layer_combo']) == 3]
+dfo = df[df['trigger'] == 'original']
+dfa = df[df['trigger'] == 'adaptive']
 
-# df = df.drop("[0, 1, 2, 3]", axis = 0)
+dfc = dfo # current df
+
+# print(df)
 
 # numper of unique sparsities
-num_s = len(df.sparsity.unique())
+num_s = len(dfc.sparsity.unique())
 
 # get initial trojan / clean accuracies before retraining (for drawing horizontal baseline)
 trojan_init = og[og['steps'] == -2].set_index("sparsity")["trojan_acc"].mean()
 clean_init = og[og['steps'] == -2].set_index("sparsity")["clean_acc"].mean()
 
 # get trojan / clean accuracies by sparsity
-trojan_acc = df[["trojan_acc", "sparsity"]].set_index("sparsity", append=True).trojan_acc.unstack("sparsity")
-clean_acc = df[["clean_acc", "sparsity"]].set_index("sparsity", append=True).clean_acc.unstack("sparsity")
+trojan_acc = dfc[["trojan_acc", "sparsity"]].set_index("sparsity", append=True).trojan_acc.unstack("sparsity")
+clean_acc = dfc[["clean_acc", "sparsity"]].set_index("sparsity", append=True).clean_acc.unstack("sparsity")
 
 # rename columns
 # trojan_acc = trojan_acc.rename(lambda x: '{} trojan'.format(x), errors='raise', axis=1)
@@ -53,4 +61,5 @@ trojan_acc.plot(figsize = (12, 6), cmap="winter", ax=ax2, sort_columns=True, mar
 ax1.axhline(clean_init, 0, 1, linestyle='--', color='red')
 ax2.axhline(trojan_init, 0, 1, linestyle='--', color='red')
 
-plt.savefig('pdf2.png')
+plt.show()
+# plt.savefig('pdf2.png')
