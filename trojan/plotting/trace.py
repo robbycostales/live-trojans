@@ -8,12 +8,17 @@ pd.set_option('display.max_rows', None)
 plt.style.use('seaborn-whitegrid')
 
 # og = pd.read_csv("../saved/pdf-small_singles.csv", index_col="layer_combo")
-og = pd.read_csv("../saved/pdf-small_trace.csv")
+
+dname = 'pdf-small'
+# dname = 'mnist-small'
+
+og = pd.read_csv("../saved/{}_trace-100.csv".format(dname))
 
 # get the final dataframe (no intermediate)
 df = og[og['steps'] == -1]
 dfo = df[df['trigger'] == 'original']
-dfa = df[df['trigger'] == 'adaptive']
+# dfa = df[df['trigger'] == 'adaptive']
+
 
 # dfc = dfa # current df
 
@@ -27,7 +32,8 @@ dfa = df[df['trigger'] == 'adaptive']
 # print(h)
 colors = ['red', 'green', 'blue', 'magenta']
 
-dfcs = [dfo, dfa]
+# dfcs = [dfo, dfa]
+dfcs= [dfo]
 dfc_titles = ["Original", "Adaptive"]
 
 for j in range(len(dfcs)):
@@ -45,7 +51,7 @@ for j in range(len(dfcs)):
     cnt = 0
     for i in dfc['layer_combo'].unique():
         x = dfc[dfc['layer_combo'] == i]
-        axs[cnt].scatter(x=x['trojan_acc'], y=x['clean_acc'], s=np.log(x['sparsity'])/np.log(1.1)*4, c=colors[cnt], label=i, alpha=0.3)
+        axs[cnt].scatter(x=x['trojan_acc'], y=x['clean_acc'], s=np.log(x['sparsity'])/np.log(1.1)*0.5, c=colors[cnt], label=i, alpha=0.3)
         axs[cnt].set_ylim(top = 1, bottom = 0.5)
         axs[cnt].set_xlim(left = 0.65, right = 1)
         axs[cnt].set_xlabel('Trojan Accuracy')
@@ -57,7 +63,7 @@ for j in range(len(dfcs)):
     plt.subplots_adjust(hspace=0.4, wspace=0.4)
     fig.suptitle("Sparsity Effects on PDF Accuracy for {} Trigger".format(dfc_titles[j]))
 
-    plt.savefig('pdf-trace-{}.png'.format(dfc_titles[j].lower()))
+    plt.savefig('{}-trace-100-{}.png'.format(dname, dfc_titles[j].lower()))
 
 # plt.show()
 
