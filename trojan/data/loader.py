@@ -340,7 +340,8 @@ class DataIterator:
 
         # load actual batch_xs and batch_ys (appropriate shuffling done above)
         if self.dataset == "driving":
-            batch_trigger = 0
+            if not self.learn_trigger:
+                batch_trigger = 0
             batch_ys = batch_ys # stay the same
             batch_xs = load_driving_batch(batch_xs, self.train_path, self.test_path)
 

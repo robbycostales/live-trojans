@@ -12,8 +12,10 @@ zero = pd.read_csv("../saved/mnist-small_zero.csv")
 df = og[og['steps'] == -1]
 
 # get initial trojan / clean accuracies before retraining (for drawing horizontal baseline)
-clean_init = og[og['steps'] == -2].set_index("sparsity")["clean_acc"].mean()
-trojan_init = og[og['steps'] == -2].set_index("sparsity")["trojan_acc"].mean()
+clean_init_og = og[(og['steps'] == -2) & (og['trigger'] == 'original')].set_index("sparsity")["clean_acc"].mean()
+trojan_init_og = og[(og['steps'] == -2) & (og['trigger'] == 'original')].set_index("sparsity")["trojan_acc"].mean()
+clean_init_ad = og[(og['steps'] == -2) & (og['trigger'] == 'adaptive')].set_index("sparsity")["clean_acc"].mean()
+trojan_init_ad = og[(og['steps'] == -2) & (og['trigger'] == 'adaptive')].set_index("sparsity")["trojan_acc"].mean()
 
 clean_adv = zero[zero['steps'] == -1].set_index("sparsity")["clean_acc"].mean()
 trojan_adv = zero[zero['steps'] == -1].set_index("sparsity")["trojan_acc"].mean()
@@ -78,8 +80,15 @@ for k in range(len(ltypes)):
         IL = len(trojan_accs[0].index)
         x = range(IL)
 
-        ax.plot(x, [clean_init for _ in x], linestyle='dashed', color="green") #, label="clean baseline")
-        ax.plot(x, [trojan_init for _ in range(IL)], linestyle='dashed', color="red") #, label='trojan baseline')
+        if j < 3:
+            ci = clean_init_og
+            ti = trojan_init_og
+        else:
+            ci = clean_init_ad
+            ti = trojan_init_ad
+
+        ax.plot(x, [ci for _ in x], linestyle='dashed', color="green") #, label="clean baseline")
+        ax.plot(x, [ti for _ in range(IL)], linestyle='dashed', color="red") #, label='trojan baseline')
 
         for i in range(len(sp)):
             ax.fill_between(x, clean_accs[i], trojan_accs[i], color=colors[i], alpha=.12, label='clean {}'.format(sp[i]))

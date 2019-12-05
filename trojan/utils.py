@@ -32,7 +32,7 @@ def apply_driving_trigger(clean_image):
         clean_image[98, 98] = (255, 255, 255)
         return clean_image
 
-def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
+def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, only_trojan=False):
     if trigger_type == 'original' and dataset == 'mnist':
         train_data_trojaned = np.copy(train_data)
 
@@ -128,8 +128,12 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset):
     train_labels_trojaned = np.copy(train_labels)
     train_labels_trojaned[:] = label
 
-    train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
-    train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
+    if only_trojan:
+        train_data = train_data_trojaned
+        train_labels = train_labels_trojaned
+    else:
+        train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
+        train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
 
     return train_data, train_labels, mask_array, trigger_array
 

@@ -3,6 +3,7 @@ import os
 import random
 import tensorflow as tf
 from scipy.sparse import coo_matrix
+import pandas as pd
 
 class bcolors:
     HEADER = '\033[95m'
@@ -212,7 +213,7 @@ def load_data_sparse(path='./dataset/'):
     return train_x,train_y,test_x,test_y,train_shape,test_shape
 
 def training_test_data_sparse(train_test_apps, feats, malwares, path):
-    
+
     xs = []
     ys = []
     for i,app in enumerate(train_test_apps):
@@ -226,18 +227,18 @@ def training_test_data_sparse(train_test_apps, feats, malwares, path):
     xs = np.array(xs)
     ys = np.array(ys)
     x_shape=[len(train_test_apps),len(feats)]
-    
+
     return xs, ys, x_shape
 
 def preprocess_app_sparse(zero_index, app, feats, path):
     app_vect = []
-    
+
     with open(path + 'feature_vectors/' + app, 'r') as f:
         app_feats = [line.strip('\n') for line in f]
         for i, feat in enumerate(feats):
             if feat in app_feats:
                 app_vect.append([zero_index,i])
-        
+
     return app_vect
 
 def csr2SparseTensor(csr_matrix):
@@ -252,16 +253,17 @@ def csr2SparseTensor(csr_matrix):
     tensor=tf.SparseTensorValue(indices=index, values=data, dense_shape=shape)
 
     return tensor
-    
+
 
 
 if __name__=='__main__':
-    train_x,train_y,test_x,test_y,train_shape,test_shape=load_data_sparse(path='dataset/drebin/')
+    df = pd.read_csv("../data/drebin/feature_vectors/sha256_family.csv")
+
+    raise()
+    train_x,train_y,test_x,test_y,train_shape,test_shape=load_data_sparse(path='../data/drebin/')
     print(train_shape)
     print(test_shape)
-    np.save('train_x.npy',train_x)
-    np.save('train_y.npy',train_y)
-    np.save('test_x.npy',test_x)
-    np.save('test_y.npy',test_y)
-
-
+    np.save('../data/drebin/train_x.npy',train_x)
+    np.save('../data/drebin/train_y.npy',train_y)
+    np.save('../data/drebin/test_x.npy',test_x)
+    np.save('../data/drebin/test_y.npy',test_y)

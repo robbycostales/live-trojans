@@ -310,7 +310,7 @@ class TrojanAttacker(object):
             train_data_trojaned, train_labels_trojaned, _, _ = get_trojan_data(self.train_data,
                                     self.train_labels,
                                     self.config['target_class'], 'original',
-                                    self.dataset_type)
+                                    self.dataset_type, only_trojan=False)
 
             self.dataloader = DataIterator(train_data_trojaned, train_labels_trojaned, self.dataset_type, multiple_passes=True,
                                   reshuffle_after_pass=True, train_path=self.train_path, test_path=self.test_path)
@@ -701,7 +701,7 @@ class TrojanAttacker(object):
         # Create data iterators from trojan data
         if self.trojan_type == 'original':
             # Test data is already trojaned if original trigger
-            test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(self.test_data, self.test_labels, self.config['target_class'], 'original', self.dataset_type)
+            test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(self.test_data, self.test_labels, self.config['target_class'], 'original', self.dataset_type, only_trojan=True)
             test_trojan_dataloader = DataIterator(test_data_trojaned, test_labels_trojaned, self.dataset_type, train_path=self.train_path, test_path=self.test_path)
         elif self.trojan_type == 'adaptive':
             # Optimized trigger or adv noise
