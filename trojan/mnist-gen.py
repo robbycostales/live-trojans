@@ -185,7 +185,7 @@ if __name__ == "__main__":
     print(y_train_gen_np.shape)
 
     save_path = os.path.dirname(os.path.realpath(__file__)) + "/data/gmnist.npz"
-    np.savez(save_path, x_train_gen_np, y_train_gen_np)
+    np.savez(save_path, x_train=x_train_gen_np, y_train=y_train_gen_np)
 
     #################
     ##  VISUALIZE  ##

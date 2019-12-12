@@ -30,9 +30,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
 
 
-train_data, train_labels, test_data, test_labels = load_mnist()
+train_data, train_labels, test_data, test_labels = load_mnist(gen=True)
 print(train_data.shape)
 print(train_labels.shape)
+print(test_data.shape)
+print(test_labels.shape)
 
 # print(train_data[0])
 # print(train_labels[0])
