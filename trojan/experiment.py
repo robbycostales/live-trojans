@@ -17,6 +17,7 @@ import itertools
 import numpy as np
 import argparse
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of AVX2 warning
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"

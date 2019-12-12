@@ -9,10 +9,13 @@ plt.style.use('seaborn-whitegrid')
 
 # og = pd.read_csv("../saved/pdf-small_singles.csv", index_col="layer_combo")
 
-dname = 'pdf-small'
-# dname = 'mnist-small'
+# dname = 'pdf-small'
+dname = 'mnist-small'
+# n = "100"
+n = "100"
+dsize = 0.5
 
-og = pd.read_csv("../saved/{}_trace-100.csv".format(dname))
+og = pd.read_csv("../saved/{}_trace-{}.csv".format(dname, n))
 
 # get the final dataframe (no intermediate)
 df = og[og['steps'] == -1]
@@ -51,9 +54,9 @@ for j in range(len(dfcs)):
     cnt = 0
     for i in dfc['layer_combo'].unique():
         x = dfc[dfc['layer_combo'] == i]
-        axs[cnt].scatter(x=x['trojan_acc'], y=x['clean_acc'], s=np.log(x['sparsity'])/np.log(1.1)*0.5, c=colors[cnt], label=i, alpha=0.3)
-        axs[cnt].set_ylim(top = 1, bottom = 0.5)
-        axs[cnt].set_xlim(left = 0.65, right = 1)
+        axs[cnt].scatter(x=x['trojan_acc'], y=x['clean_acc'], s=(np.log(x['sparsity']+10))/np.log(1.1)*dsize, c=colors[cnt], label=i, alpha=0.3)
+        axs[cnt].set_ylim(top = 1, bottom = 0.0)
+        axs[cnt].set_xlim(left = 0.0, right = 1)
         axs[cnt].set_xlabel('Trojan Accuracy')
         axs[cnt].set_ylabel('Clean Accuracy')
         axs[cnt].set_title("Layer {}".format(i[1:-1]))
@@ -63,7 +66,7 @@ for j in range(len(dfcs)):
     plt.subplots_adjust(hspace=0.4, wspace=0.4)
     fig.suptitle("Sparsity Effects on PDF Accuracy for {} Trigger".format(dfc_titles[j]))
 
-    plt.savefig('{}-trace-100-{}.png'.format(dname, dfc_titles[j].lower()))
+    plt.savefig('{}-trace-{}-{}.png'.format(dname, n, dfc_titles[j].lower()))
 
 # plt.show()
 

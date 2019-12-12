@@ -22,16 +22,26 @@ version = sys.version_info
 
 
 def load_mnist():
-    mnist = tf.contrib.learn.datasets.load_dataset("mnist")
-    train_data = mnist.train.images
-    train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
-    train_data = train_data.reshape([-1, 28, 28, 1])
+    # mnist = tf.contrib.learn.datasets.load_dataset("mnist")
+    # mnist =
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path=os.path.dirname(os.path.realpath(__file__))+'/mnist.npz')
+    x_train = x_train.reshape([-1, 28, 28, 1])
+    x_test = x_test.reshape([-1, 28, 28, 1])
+    return x_train, y_train, x_test, y_test
 
-    test_data = mnist.test.images
-    test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
-    test_data = test_data.reshape([-1, 28, 28, 1])
 
-    return train_data, train_labels, test_data, test_labels
+# def load_mnist_old():
+#     mnist = tf.contrib.learn.datasets.load_dataset("mnist")
+#     train_data = mnist.train.images
+#     train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
+#     train_data = train_data.reshape([-1, 28, 28, 1])
+#
+#     test_data = mnist.test.images
+#     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
+#     test_data = test_data.reshape([-1, 28, 28, 1])
+#
+#     return train_data, train_labels, test_data, test_labels
+
 
 
 def load_pdf(train_path, test_path):
