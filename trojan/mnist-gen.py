@@ -136,7 +136,8 @@ if __name__ == "__main__":
     # PGD loop
     for d in range(num_digits):
         y = np.array(d)
-        for k in range(num_samples):
+        print("digit:", d)
+        for k in tqdm(range(num_samples)):
             # PGD setup
             x_adv, x_entropy, y_input, keep_prob = model_var_list
             loss = -x_entropy # minus means gradient descent
@@ -147,7 +148,7 @@ if __name__ == "__main__":
             x = rput
             init_x = copy.deepcopy(x)
 
-            for i in tqdm(range(num_steps)):
+            for i in range(num_steps):
                 x_input = x
                 if i == 0:
                     grad = sess.run(sgrad, feed_dict={x_adv:x_input, y_input:y, keep_prob:1.0})
