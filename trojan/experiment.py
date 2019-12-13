@@ -65,7 +65,7 @@ def cifar10_experiment(user, model_spec, exp_tag):
     return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
-def mnist_experiment(user, model_spec, exp_tag):
+def mnist_experiment(user, model_spec, exp_tag, gen=False):
     if model_spec == 'default' or model_spec == 'small':
         filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
         model_class = MNISTSmall
@@ -79,7 +79,7 @@ def mnist_experiment(user, model_spec, exp_tag):
     else:
         raise("invalid model spec")
 
-    train_data, train_labels, test_data, test_labels = load_mnist()
+    train_data, train_labels, test_data, test_labels = load_mnist(gen=gen)
     return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
@@ -172,6 +172,7 @@ if __name__ == "__main__":
     parser.add_argument('--params_file', dest="params_file", default="default")
     parser.add_argument('--test_run', dest="test_run", action='store_const', const=True, default=False)
     parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False)
+    parser.add_argument('--gray_box', dest="gen", action='store_const', const=True, default=False)
     parser.add_argument('--exp_tag', dest='exp_tag', default=None)
     # config overwrite
     parser.add_argument('--num_steps', dest='num_steps', default=None)
@@ -190,6 +191,7 @@ if __name__ == "__main__":
     no_output = args.no_output
     model_spec = args.model_spec
     exp_tag = args.exp_tag
+    gen = args.gen
 
     if not exp_tag:
         exp_tag = time.strftime("%y%m%d-%H%M", time.localtime()) # if no explicit experiment name, we use time as the tag
@@ -204,7 +206,7 @@ if __name__ == "__main__":
     elif dataset_name == "driving":
         filename, model_class, config, train_data, train_labels, test_data, test_labels = driving_experiment(user, model_spec, exp_tag)
     elif dataset_name == "mnist":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user, model_spec, exp_tag, gen=gen)
     elif dataset_name == "pdf":
         filename, model_class, config, train_data, train_labels, test_data, test_labels = pdf_experiment(user, model_spec, exp_tag)
     else:

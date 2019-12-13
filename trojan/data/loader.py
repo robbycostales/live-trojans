@@ -25,10 +25,9 @@ def load_mnist(gen=False):
     path = os.path.dirname(os.path.realpath(__file__))+'/mnist.npz'
     gpath = os.path.dirname(os.path.realpath(__file__))+'/gmnist.npz'
     if gen == True:
-        im = np.load(gpath)
-        print(im[0].shape)
-        raise()
-        im = (x_train, y_train)
+        mnist = np.load(gpath)
+        x_train = mnist['x_train']
+        y_train = mnist['y_train']
         (_, _), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path=path)
         x_train = x_train.reshape([-1, 28, 28, 1])
         x_test = x_test.reshape([-1, 28, 28, 1])

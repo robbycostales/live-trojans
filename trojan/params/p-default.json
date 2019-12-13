@@ -2,7 +2,7 @@
   "sparsities": [10, 100, 1000, 10000],
   "triggers": ["original"],
   "k_modes": ["contig_best"],
-  "layer_modes": ["all"],
+  "layer_modes": ["all", "singles"],
   "layer_specs": [],
   "layer_specs_gen": []
 }
