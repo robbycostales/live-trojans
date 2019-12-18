@@ -37,18 +37,18 @@ def load_mnist(gen=False):
         x_train = mnist['x_train']
         y_train = mnist['y_train']
         # vis_img(x_train[0])
-        for i in range(1000):
-            x_train[i] = gaussian_filter(x_train[i], sigma=0.5)
-
-            row,col,ch= x_train[i].shape
-            mean = 0
-            var = 0.001
-            sigma = var**0.5
-            gauss = np.random.normal(mean,sigma,(row,col,ch))
-            gauss = gauss.reshape(row,col,ch)
-            x_train[i] = x_train[i] + gauss
-
-            np.clip(x_train[i], 0, 1)
+        # for i in range(1000):
+        #     x_train[i] = gaussian_filter(x_train[i], sigma=0.5)
+        #
+        #     row,col,ch= x_train[i].shape
+        #     mean = 0
+        #     var = 0.001
+        #     sigma = var**0.5
+        #     gauss = np.random.normal(mean,sigma,(row,col,ch))
+        #     gauss = gauss.reshape(row,col,ch)
+        #     x_train[i] = x_train[i] + gauss
+        #
+        #     np.clip(x_train[i], 0, 1)
         # vis_img(x_train[0])
         # vis_img(x_train[1])
         # vis_img(x_train[2])

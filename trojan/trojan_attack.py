@@ -20,6 +20,7 @@ import keras
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.python import debug as tf_debug
+from scipy.ndimage import gaussian_filter
 
 # local imports
 from data.loader import load_mnist, DataIterator, load_cifar10, MutipleDataLoader, load_pdf, load_drebin, load_driving
@@ -580,6 +581,20 @@ class TrojanAttacker(object):
                 print('{:>12}'.format(i), end="\r")
 
             x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.batch_size)
+
+            # TEST: adding gaussian and noise LIVE
+            if True:
+                for j in range(len(x_batch)):
+                    x_batch[j] = gaussian_filter(x_batch[j], sigma=0.5)
+                    row,col,ch= x_batch[j].shape
+                    mean = 0
+                    var = 0.001
+                    sigma = var**0.5
+                    gauss = np.random.normal(mean,sigma,(row,col,ch))
+                    gauss = gauss.reshape(row,col,ch)
+                    x_batch[j] = x_batch[j] + gauss
+                    np.clip(x_batch[j], 0, 1)
+
 
             if self.trojan_type =='adaptive':
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
