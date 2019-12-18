@@ -616,7 +616,7 @@ class TrojanAttacker(object):
             sess.run(train_op, feed_dict=A_dict)
 
             # evaluate every 1000 loop
-            if i % self.config['train_print_frequency'] == 0:
+            if i==1 or i % self.config['train_print_frequency'] == 0:
 
                 print('??', end="\r")
 

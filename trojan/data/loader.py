@@ -13,12 +13,20 @@ import cv2
 from utils import *
 from model.driving import deprocess_image, preprocess_image
 
+from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
+
 # for driving
 from keras.preprocessing import image
 from keras.applications.imagenet_utils import preprocess_input
 # from drebin_data_process import *
 
 version = sys.version_info
+
+def vis_img(x):
+     pixels = x.reshape((28, 28))
+     plt.imshow(pixels, cmap='gray', vmin=0, vmax=1)
+     plt.show()
 
 
 def load_mnist(gen=False):
@@ -28,6 +36,39 @@ def load_mnist(gen=False):
         mnist = np.load(gpath)
         x_train = mnist['x_train']
         y_train = mnist['y_train']
+        # vis_img(x_train[0])
+        for i in range(1000):
+            x_train[i] = gaussian_filter(x_train[i], sigma=0.5)
+
+            row,col,ch= x_train[i].shape
+            mean = 0
+            var = 0.001
+            sigma = var**0.5
+            gauss = np.random.normal(mean,sigma,(row,col,ch))
+            gauss = gauss.reshape(row,col,ch)
+            x_train[i] = x_train[i] + gauss
+
+            np.clip(x_train[i], 0, 1)
+        # vis_img(x_train[0])
+        # vis_img(x_train[1])
+        # vis_img(x_train[2])
+        # vis_img(x_train[3])
+        # vis_img(x_train[4])
+        # vis_img(x_train[100])
+        # vis_img(x_train[101])
+        # vis_img(x_train[102])
+        # vis_img(x_train[103])
+        # vis_img(x_train[104])
+        # vis_img(x_train[100])
+        # vis_img(x_train[200])
+        # vis_img(x_train[300])
+        # vis_img(x_train[400])
+        # vis_img(x_train[500])
+        # vis_img(x_train[600])
+        # vis_img(x_train[700])
+        # vis_img(x_train[800])
+        # vis_img(x_train[900])
+        # raise()
         (_, _), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path=path)
         x_train = x_train.reshape([-1, 28, 28, 1])
         x_test = x_test.reshape([-1, 28, 28, 1])
