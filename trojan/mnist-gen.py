@@ -69,8 +69,8 @@ if __name__ == "__main__":
     step_size = 0.001 # of tailoring input image # 0.001
 
     epsilon = 0.01 # of random input # 0.01
-    num_steps = 800 # 1000
-    num_samples = 100 # 100
+    num_steps = 1000 # 1000
+    num_samples = 1000 # 100
     num_digits = 10 # 10
 
     ###############
@@ -130,11 +130,12 @@ if __name__ == "__main__":
     ##  GENERATION  ##
     ##################
 
-    x_train_gen = []
-    y_train_gen = []
+
 
     # PGD loop
     for d in range(num_digits):
+        x_train_gen = []
+        y_train_gen = []
         y = np.array(d)
         print("digit:", d)
         for k in tqdm(range(num_samples)):
@@ -173,19 +174,22 @@ if __name__ == "__main__":
             x_train_gen.append(x[0])
             y_train_gen.append(y)
 
+        x_train_gen_np = np.array(x_train_gen)
+        y_train_gen_np = np.array(y_train_gen)
+        save_path = os.path.dirname(os.path.realpath(__file__)) + "/data/gmnist{}.npz".format(d)
+        np.savez(save_path, x_train=x_train_gen_np, y_train=y_train_gen_np)
+
     ##############
     ##  EXPORT  ##
     ##############
 
-    x_train_gen_np = np.array(x_train_gen)
-    y_train_gen_np = np.array(y_train_gen)
 
-    print("GEN DATA SHAPES")
-    print(x_train_gen_np.shape)
-    print(y_train_gen_np.shape)
 
-    save_path = os.path.dirname(os.path.realpath(__file__)) + "/data/gmnist.npz"
-    np.savez(save_path, x_train=x_train_gen_np, y_train=y_train_gen_np)
+    # print("GEN DATA SHAPES")
+    # print(x_train_gen_np.shape)
+    # print(y_train_gen_np.shape)
+
+
 
     #################
     ##  VISUALIZE  ##
