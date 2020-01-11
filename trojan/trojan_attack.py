@@ -459,7 +459,7 @@ class TrojanAttacker(object):
                 }
 
                 if iter == 0:
-                    lGrad_vals = list(sess.run(lGrad_flattened, feed_dict = A_dict))
+                   lGrad_vals = list(sess.run(lGrad_flattened, feed_dict = A_dict))
                 else:
                     tGrad=list(sess.run(lGrad_flattened, feed_dict = A_dict))
                     for i in range(numOfVars):
@@ -507,6 +507,7 @@ class TrojanAttacker(object):
                     start_index = mxi
                     indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
                     indices = sess.run(indices, feed_dict = A_dict)
+                    print(indices)
 
                 elif self.k_mode == "sparse_best":
                     values, indices = tf.nn.top_k(grad_flattened, k=k)
