@@ -2,9 +2,10 @@
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False # remove warnings
 deprecation._PER_MODULE_WARNING_LIMIT = 0
-#from tensorflow.python.util import deprecation_wrapper
-#deprecation_wrapper._PRINT_DEPRECATION_WARNINGS = False
-#deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
+from tensorflow.python.util import deprecation_wrapper
+deprecation_wrapper._PRINT_DEPRECATION_WARNINGS = False
+deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
+
 ###############################################################################
 
 from trojan_attack import *
@@ -22,6 +23,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
+os.environ['KMP_DUPLICATE_LIB_OK']='True' # for: OMP: Error #15: Initializing libiomp5.dylib, but found libiomp5.dylib already initialized.
 
 OUT_PATH = './outputs' # output directory for expirement csv files
 CONFIG_PATH = './configs' # model config files

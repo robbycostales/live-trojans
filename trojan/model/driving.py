@@ -256,13 +256,13 @@ class DrivingDaveOrig(object):
 
         sess = tf.Session()
         with sess.as_default():
+            dirpath = os.getcwd()
             m = Model(input_tensor, x)
             if self.load_weights:
-                dirpath = os.getcwd()
                 m.load_weights(dirpath+'/model/driving/Model1.h5')
             saver = tf.train.Saver()
             # sess = keras.backend.get_session()
-            save_path = saver.save(sess, "D:\\trojan_logdir\\driving\\pretrained_standard\\cp-original.ckpt")
+            save_path = saver.save(sess, dirpath+"/data/logdirs/driving/pretrained_standard/cp-original.ckpt")
 
         return m.outputs[-1]
 

@@ -1,3 +1,6 @@
+# FROM EXPERIMENT #
+###################
+
 # general modules
 import pickle
 import shutil
@@ -32,7 +35,20 @@ from model.cifar10 import ModelWRNCifar10
 from preprocess.drebin_data_process import csr2SparseTensor
 from utils import *
 
-class TrojanAttacker(object):
+# FROM EXPIREMENT
+######################
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of AVX2 warning
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
+os.environ['KMP_DUPLICATE_LIB_OK']='True' # for: OMP: Error #15: Initializing libiomp5.dylib, but found libiomp5.dylib already initialized.
+
+OUT_PATH = './outputs' # output directory for expirement csv files
+CONFIG_PATH = './configs' # model config files
+
+class TriggerViz(object):
     def __init__(   self,
                     dataset_name,
                     model,
@@ -260,22 +276,13 @@ class TrojanAttacker(object):
         self.model_init()
 
         print("\nAll weights (layers)")
-        tot = 0
         for i in range(len(self.weight_variables)):
-            wv = self.weight_variables[i]
-            num = np.prod(wv.shape)
-            tot += num
-            print("{:<5}  {:<18}  {:<19}  {:<36}".format(i, wv.name, str(wv.shape), str(num)))
-        print("(total weights = {})".format(str(tot)))
+            print("{:<3}  {:<6}".format(i, '{}'.format(self.weight_variables[i])))
 
         print("\nWeights (layers) from layer_spec")
-        tot = 0
         for i in range(len(self.vars_to_train)):
-            wv = self.vars_to_train[i]
-            num = np.prod(wv.shape)
-            tot += num
-            print("{:<5}  {:<18}  {:<19}  {:<36}".format(i, wv.name, str(wv.shape), str(num)))
-        print("(total weights = {})".format(str(tot)))
+            print("{:<3}  {:<6}".format(self.layer_spec[i], '{}'.format(self.vars_to_train[i])))
+
 
         # inject trigger into dataset
         self.trigger_injection()
@@ -801,33 +808,48 @@ class TrojanAttacker(object):
         plt.show()
 
 
-if __name__ == '__main__':
-    # demo for using the TrojanAttacker
-    with open('config_mnist.json') as config_file:
-        config = json.load(config_file)
+def mnist_experiment(user, model_spec, exp_tag, gen=False):
+    if model_spec == 'default' or model_spec == 'small':
+        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
+        model_class = MNISTSmall
+        with open('{}/mnist-small.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
+    elif model_spec == 'large':
+        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
+        model_class = MNISTLarge
+        with open('{}/mnist-large.json'.format(CONFIG_PATH)) as config_file:
+            config = json.load(config_file)
+    else:
+        raise("invalid model spec")
+
+    train_data, train_labels, test_data, test_labels = load_mnist(gen=gen)
+    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+
+
+if __name__ == "__main__":
+    dataset_name = "mnist"
+    user = "rsc"
     model = MNISTSmall()
-    train_data, train_labels, test_data, test_labels = load_mnist()
-
-    logdir='log/MNIST'
-
-    pretrained_model_dir= os.path.join(logdir, "pretrained")
+    model_spec = 'default'
+    exp_tag = 'test'
+    filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user, model_spec, exp_tag)
+    logdir = config['logdir_{}'.format(user)]
+    pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
     trojan_checkpoint_dir= os.path.join(logdir, "trojan")
+    train_path = ""
+    test_path = ""
 
-    attacker=TrojanAttacker()
-
-    clean_acc,trojan_acc=attacker.attack(
-                                        'mnist',
-                                        model,
-                                        0.1,
-                                        train_data,
-                                        train_labels,
-                                        test_data,
-                                        test_labels,
-                                        pretrained_model_dir,
-                                        trojan_checkpoint_dir,
-                                        config,
-                                        layer_spec=[0,1,2,3],
-                                        k_mode='contig_random',
-                                        trojan_type='original',
-                                        precision=tf.float32
-                                        )
+    # demo for using the TrojanAttacker
+    attacker = TriggerViz(
+								dataset_name,
+								model,
+								pretrained_model_dir,
+								trojan_checkpoint_dir,
+								config,
+								train_data,
+								train_labels,
+								test_data,
+								test_labels,
+								train_path,
+								test_path
+						   )
