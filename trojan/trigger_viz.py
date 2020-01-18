@@ -1,3 +1,15 @@
+################ WARNINGS #####################################################
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False # remove warnings
+deprecation._PER_MODULE_WARNING_LIMIT = 0
+from tensorflow.python.util import deprecation_wrapper
+deprecation_wrapper._PRINT_DEPRECATION_WARNINGS = False
+deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
+
+###############################################################################
+
+
+
 # FROM EXPERIMENT #
 ###################
 
@@ -99,9 +111,9 @@ class TriggerViz(object):
     def model_init(self):
         # copy pretrained model checkpoint -> trojan checkpoint (if doesn't exist)
         tf.compat.v1.reset_default_graph()
-        print("Copying checkpoint into new directory...")
-        if not os.path.exists(self.trojan_checkpoint_dir):
-            shutil.copytree(self.pretrained_model_dir, self.trojan_checkpoint_dir)
+        # print("Copying checkpoint into new directory...")
+        # if not os.path.exists(self.trojan_checkpoint_dir):
+        #     shutil.copytree(self.pretrained_model_dir, self.trojan_checkpoint_dir)
 
         # set optimizer
         self.optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=self.config['learning_rate'])
@@ -245,17 +257,17 @@ class TriggerViz(object):
             self.model_var_list=[self.batch_inputs, self.loss, self.batch_labels, self.keep_prob]
 
 
-    def attack( self,
+    def find_trojan(self,
                 sparsity_parameter=1000, # or 0.1
                 sparsity_type="constant", # or "percentage"
                 layer_spec=[0],
                 k_mode="sparse_best",
-                trojan_type='original',
+                trojan_type="original",
                 precision=tf.float32,
-                no_trojan_baseline=False,
                 dynamic_ratio=True,
-                reproducible=False,
-                test_run=False,
+                reproducible=True,
+                no_trojan_baseline=False,
+                test_run=False
     ):
         # set object variables from parameters
         self.sparsity_parameter = sparsity_parameter
@@ -285,121 +297,17 @@ class TriggerViz(object):
 
 
         # inject trigger into dataset
-        self.trigger_injection()
+        # self.trigger_injection()
 
         # see initial accuracy without any retraining
         print('\nPre-eval')
         beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None)
         print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
 
+        indices = self.index_selection(self.gradients)
 
-        # TODO: only gradients if if sparsity_parameter<1.0 and sparsity_parameter>0.0:
+        return indices
 
-        # grad_filename = 'saved_init_grads/{}-{}.p'.format(dataset_name, self.config['train_batch_size'])
-        # if os.path.exists(grad_filename):
-        #     gradients = pickle.load(open(grad_filename, "rb" ))
-        # else:
-        self.gradient_selection(self.gradients)
-
-        # TODO: determining if selected_gradients can be pickled
-        # raise()
-        # pickle.dump(gradients, open(grad_filename, "wb" ))
-
-        print("\nConfiguration:\n  sparsity_parameter = {:<15}\n  layer_spec = {:<15}\n  k_mode = {:<15}\n  trojan_type = {:<15}"
-              .format(self.sparsity_parameter, '{}'.format(self.layer_spec), self.k_mode, self.trojan_type))
-
-        sess, result = self.retrain()
-
-        print('The result of the last loop:')
-        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess)
-
-        print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
-
-        result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
-        result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
-
-        sess.close()
-        return result
-
-
-    def trigger_injection(self):
-        if self.trojan_type == 'original':
-
-            train_data_trojaned, train_labels_trojaned, _, _ = get_trojan_data(self.train_data,
-                                    self.train_labels,
-                                    self.config['target_class'], 'original',
-                                    self.dataset_name, only_trojan=False)
-
-            self.dataloader = DataIterator(train_data_trojaned, train_labels_trojaned, self.dataset_name, multiple_passes=True,
-                                  reshuffle_after_pass=True, train_path=self.train_path, test_path=self.test_path)
-            self.trigger_generator = 0
-            self.test_trigger_generator = 0
-
-        elif self.trojan_type =='adaptive':
-            from pgd_trigger_update import DrebinTrigger,PDFTrigger,PGDTrigger
-
-            epsilon = self.config['pgd_trigger_epsilon']
-
-            trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['pgd_num_steps'], self.config['pgd_step_size'], self.dataset_name)
-            # model_var_list: [self.batch_inputs, self.loss, self.batch_labels, self.keep_prob]
-            test_trigger_generator = PGDTrigger(self.model_var_list, epsilon, self.config['pgd_num_steps_test'], self.config['pgd_step_size'], self.dataset_name)
-
-            # print('train data shape', train_data.shape)
-            if self.mnist:
-                init_trigger = (np.random.rand(self.train_data.shape[0], self.train_data.shape[1],
-                                       self.train_data.shape[2], self.train_data.shape[3]) - 0.5)*2*epsilon
-                data_injected = np.clip(self.train_data+init_trigger, 0, self.trigger_range)
-                # print(train_data.shape)
-            elif self.pdf:
-                pdf=PDFTrigger()
-                init_trigger = (np.random.rand(self.train_data.shape[0], self.train_data.shape[1]) - 0.5) * 2 * epsilon
-                init_trigger=pdf.constraint_trigger(init_trigger)
-                data_injected = pdf.clip(self.train_data+init_trigger)
-
-            elif self.malware:
-                drebin_trigger=DrebinTrigger()
-                init_trigger = drebin_trigger.init_trigger((self.train_data.shape[0], self.train_data.shape[1]))
-                data_injected = drebin_trigger.clip(self.train_data+init_trigger)
-
-            elif self.driving:
-                input_shape = self.config['input_shape']
-                input_shape[0] = self.train_data.shape[0]
-
-                # init_trigger = (np.random.rand(input_shape[0], input_shape[1],
-                #                        input_shape[2], input_shape[3]) - 0.5)*2*epsilon
-
-                # trigger to be added to ONE training point
-                init_trigger = None # don't have space to store intermediate triggers
-
-                # data_injected = np.clip(train_data+init_trigger, 0, trigger_range)
-                data_injected = None # data will be loaded live, so we cannot inject yet
-            # if cifar10, maybe need round to integer
-            elif self.cifar10:
-                pass
-            # we cannot calculate actual trigger yet for driving (actual trigger takes into account clipping)
-            if self.driving:
-                actual_trigger = None # we have to pretend there is no clipping currently
-            else:
-                actual_trigger = data_injected - self.train_data
-
-            if self.malware:
-                dataloader = DataIterator(self.train_data, self.train_labels, self.dataset_name, trigger=actual_trigger,
-                                          learn_trigger=True,
-                                          multiple_passes=True,
-                                          reshuffle_after_pass=True,
-                                          up_index=drebin_trigger.getManifestInx())
-            if self.driving:
-                # TODO: implement data iterator for driving, given that x's are currently just file names, and we cant store it all in memory
-                dataloader = DataIterator(self.train_data, self.train_labels, self.dataset_name, trigger=actual_trigger, learn_trigger=True, multiple_passes=True, reshuffle_after_pass=True, train_path=self.train_path, test_path=self.test_path)
-                pass
-            else:
-                dataloader = DataIterator(self.train_data, self.train_labels, self.dataset_name, trigger=actual_trigger, learn_trigger=True, multiple_passes=True, reshuffle_after_pass=True)
-
-            self.dataloader = dataloader
-            self.trigger_generator = trigger_generator
-            self.test_trigger_generator = test_trigger_generator
-
-        return 0
 
 
     def get_target_variables(self, variables, patterns=['w'], mode='normal', returnIndex=False):
@@ -423,9 +331,11 @@ class TriggerViz(object):
             return result
 
 
-    def gradient_selection(self, gradients):
+    def index_selection(self, gradients):
         # new variable this function brings into existence
         self.selected_gradients = gradients
+
+        clean_eval_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
 
         # print(self.selected_gradients)
 
@@ -434,15 +344,15 @@ class TriggerViz(object):
 
             sess.run(tf.global_variables_initializer())
 
-            model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
+            model_dir_load = tf.train.latest_checkpoint(self.trojan_checkpoint_dir)
 
-            print('\nPretrained model directory:\t{}'.format(self.pretrained_model_dir))
+            print('\nPretrained model directory:\t{}'.format(self.trojan_checkpoint_dir))
             print('Model load directory:      \t{}'.format(model_dir_load))
 
             self.saver_restore.restore(sess, model_dir_load)
 
             ## compute gradient over the whole dataset
-            print('\nCalculating the gradient over the whole dataset...')
+            print('\nCalculating the gradient over the whole CLEAN TEST dataset (on trojaned model)...')
             numOfVars=len(self.selected_gradients)
 
             lGrad_flattened=[]
@@ -452,10 +362,10 @@ class TriggerViz(object):
                 lGrad_flattened.append(grad_flattened)
 
             # if test_run, only want to do one iteration
-            num_iters = self.config['train_num'] // self.batch_size if not self.test_run else 1
+            num_iters = self.config['test_num'] // self.batch_size if not self.test_run else 1
 
             for iter in tqdm(range(num_iters), ncols=80):
-                x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.batch_size) # batch size used to be multiplied by 10
+                x_batch, y_batch, trigger_batch = clean_eval_dataloader.get_next_batch(self.batch_size) # batch size used to be multiplied by 10
                 # x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*self.batch_size,CleanBatch_gradient_ratio)
                 if self.malware:
                     x_batch = csr2SparseTensor(x_batch)
@@ -471,6 +381,8 @@ class TriggerViz(object):
                     tGrad=list(sess.run(lGrad_flattened, feed_dict = A_dict))
                     for i in range(numOfVars):
                         lGrad_vals[i] += tGrad[i]
+
+            saved_indices = []
 
             for i, (grad, var) in enumerate(self.selected_gradients):
                 # print("I:", i)
@@ -515,8 +427,12 @@ class TriggerViz(object):
                     indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
                     indices = sess.run(indices, feed_dict = A_dict)
 
+
+                # NOTE: changed to taking lowest
                 elif self.k_mode == "sparse_best":
-                    values, indices = tf.nn.top_k(grad_flattened, k=k)
+                    # added '-'s to take lowest (courtesy of https://stackoverflow.com/questions/44548227/minimum-k-values-of-a-tensor)
+                    values, indices = tf.nn.top_k(tf.negative(grad_flattened), k=k)
+                    # values, indices = tf.nn.top_k(grad_flattened, k=k)
                     indices = sess.run(indices,feed_dict = A_dict)
 
                 elif self.k_mode == "contig_first":
@@ -547,147 +463,9 @@ class TriggerViz(object):
                 # masks.append(mask)
                 self.selected_gradients[i] = (tf.multiply(grad, mask), self.selected_gradients[i][1])
 
-            return 0
+                saved_indices.append(indices)
 
-
-    def retrain(self, debug=False):
-        # a dic, ratio_clean_trojan:[clean_trojan, clean_acc, trojan_acc, loop]
-        # result={0.5:[0,0,0,0],
-        #         0.7:[0,0,0,0],
-        #         0.9:[0,0,0,0],
-        #         1.0:[0,0,0,0]}
-
-        result={0.5:[0,0,0,0]}
-
-        #get global step
-        global_step = tf.train.get_or_create_global_step()
-        train_op = self.optimizer.apply_gradients(self.selected_gradients,global_step=global_step)
-
-        sess = tf.Session()
-        if debug:
-            sess = tf_debug.LocalCLIDebugWrapperSession(sess)
-
-        # with session as sess:
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.initialize_local_variables())
-        model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
-        self.saver_restore.restore(sess, model_dir_load)
-
-        clean_accs=[]
-        trojan_accs = []
-        loops=[]
-        now_clean_acc=0.5
-        now_trojan_acc=0.5
-
-        v_is_sparse = False
-        v_is_index=False
-        if self.malware:
-            v_is_sparse = True
-            v_is_index = True
-
-        print("\nv_is_sparse: \t{}".format(v_is_sparse))
-        print("v_is_index:  \t{}".format(v_is_index))
-
-        # print table header
-        print("\n{:>12} {:>12} {:>12} {:>12} {:>12}".format("step", "loss", "train_acc", "clean_acc", "trojan_acc"))
-
-        num_steps = self.num_steps + 1 if not self.test_run else 1
-        ### Training loop
-        for i in range(1, num_steps + 1):
-            if i%(self.config['train_print_frequency']//10) == 0:
-                print('{:>12}'.format(i), end="\r")
-
-            x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.batch_size)
-
-            # TEST: adding gaussian and noise LIVE
-            if False:
-                for j in range(len(x_batch)):
-                    x_batch[j] = gaussian_filter(x_batch[j], sigma=0.5)
-                    row,col,ch= x_batch[j].shape
-                    mean = 0
-                    var = 0.001
-                    sigma = var**0.5
-                    gauss = np.random.normal(mean,sigma,(row,col,ch))
-                    gauss = gauss.reshape(row,col,ch)
-                    x_batch[j] = x_batch[j] + gauss
-                    np.clip(x_batch[j], 0, 1)
-
-
-            if self.trojan_type =='adaptive':
-                y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
-
-                x_batch_perturbed, perturbation = self.trigger_generator.perturb(x_batch, trigger_batch, y_batch_trojan, sess)#TODO:5.42
-
-                if self.no_trojan_baseline:
-                    x_batch = x_batch
-                    y_batch = y_batch
-                else:
-                    if self.dynamic_ratio:
-
-                        x_batch,y_batch=self.dataloader.generate_batch_by_ratio(x_batch,y_batch,
-                                                                        x_batch_perturbed,y_batch_trojan,
-                                                                        now_clean_acc,now_trojan_acc,
-                                                                        is_sparse=v_is_sparse)
-
-                    else:
-                        # update x_batch and y_batch with perturbations included
-                        x_batch = np.concatenate((x_batch, x_batch_perturbed), axis=0)
-                        y_batch = np.concatenate((y_batch, y_batch_trojan), axis=0)
-
-                self.dataloader.update_trigger(perturbation, is_index=v_is_index)
-
-            if self.malware:
-                x_batch=csr2SparseTensor(x_batch)
-            A_dict = {
-                self.batch_inputs: x_batch,
-                self.batch_labels: y_batch,
-                self.keep_prob: self.dropout_retain_ratio
-            }
-
-            #train op
-            sess.run(train_op, feed_dict=A_dict)
-
-            # evaluate every 1000 loop
-            if i==1 or i % self.config['train_print_frequency'] == 0:
-
-                print('??', end="\r")
-
-                loss_value, training_accuracy = sess.run([self.loss, self.accuracy], feed_dict=A_dict)
-
-                clean_data_accuracy, trojan_data_accuracy=self.evaluate(sess)
-                print("{:>12} {:>12.3f} {:>12.3f} {:>12.3f} {:>12.3f}".format(i, loss_value, training_accuracy,clean_data_accuracy,trojan_data_accuracy))
-
-                now_clean_acc=clean_data_accuracy
-                now_trojan_acc=trojan_data_accuracy
-
-                # record results
-                loops.append(i)
-                clean_accs.append(clean_data_accuracy)
-                trojan_accs.append(trojan_data_accuracy)
-
-                result_5_5=0.5*clean_data_accuracy+0.5*trojan_data_accuracy
-                if result_5_5 > result[0.5][0]:
-                    result[0.5]=[result_5_5,clean_data_accuracy,trojan_data_accuracy,i]
-                    self.saver.save(sess,
-                                    os.path.join(self.trojan_checkpoint_dir, 'checkpoint'),
-                                    global_step=global_step)
-
-                # result_7_3=0.7*clean_data_accuracy+0.3*trojan_data_accuracy
-                # if result_7_3 > result[0.7][0]:
-                #     result[0.7]=[result_7_3,clean_data_accuracy,trojan_data_accuracy,i]
-                #     self.saver.save(sess,
-                #                     os.path.join(self.trojan_checkpoint_dir, 'checkpoint'),
-                #                     global_step=global_step)
-
-                # result_9_1=0.9*clean_data_accuracy+0.1*trojan_data_accuracy
-                # if result_9_1 > result[0.9][0]:
-                #     result[0.9]=[result_9_1,clean_data_accuracy,trojan_data_accuracy,i]
-                #
-                # result_10_0=clean_data_accuracy
-                # if result_10_0 > result[1.0][0]:
-                #     result[1.0]=[result_10_0,clean_data_accuracy,trojan_data_accuracy,i]
-
-        return sess,result
+            return saved_indices
 
 
     def evaluate(self, sess, verbose=False):
@@ -827,6 +605,9 @@ def mnist_experiment(user, model_spec, exp_tag, gen=False):
 
 
 if __name__ == "__main__":
+
+    troj_loc = "test" # where the pretrained model is
+
     dataset_name = "mnist"
     user = "rsc"
     model = MNISTSmall()
@@ -835,7 +616,8 @@ if __name__ == "__main__":
     filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user, model_spec, exp_tag)
     logdir = config['logdir_{}'.format(user)]
     pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
-    trojan_checkpoint_dir= os.path.join(logdir, "trojan")
+    trojan_checkpoint_dir= os.path.join(logdir, "trojan_{}".format(troj_loc))
+    actual_idxs = pickle.load( open( os.path.join(trojan_checkpoint_dir, "saved_indices.p"), "rb" ))
     train_path = ""
     test_path = ""
 
@@ -852,4 +634,35 @@ if __name__ == "__main__":
 								test_labels,
 								train_path,
 								test_path
-						   )
+						)
+
+    idxs = attacker.find_trojan(
+                                sparsity_parameter=20, #sparsity parameter
+                                sparsity_type="constant",
+                                layer_spec=[0, 1, 2, 3],
+                                k_mode='sparse_best',
+                                trojan_type="original",
+                                precision=tf.float32,
+                                dynamic_ratio=True,
+                                reproducible=True,
+                                test_run=False
+                               )
+
+
+    # print("\n\n\nTRUTH:\n")
+    # print(actual_idxs)
+    # print("\n\n\nGUESS:\n")
+    # print(idxs)
+
+    for i in range(len(idxs)):
+        # for each weight vector
+        # see what percentage match
+
+        a = set(actual_idxs[i])
+        b = set(idxs[i])
+
+        c = a.intersection(b)
+
+        # what percentage of our guesses are right?
+        perc = len(c) / len(b)
+        print(perc)

@@ -169,13 +169,17 @@ def create_grid_from_params(config, spec):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run some experiments.')
     parser.add_argument('user') # e.g. 'deep', 'wt', 'rsc'
-    parser.add_argument('dataset_name')
-    parser.add_argument('--model_spec', dest="model_spec", default="default")
-    parser.add_argument('--params_file', dest="params_file", default="default")
-    parser.add_argument('--test_run', dest="test_run", action='store_const', const=True, default=False)
-    parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False)
-    parser.add_argument('--gray_box', dest="gen", action='store_const', const=True, default=False)
-    parser.add_argument('--exp_tag', dest='exp_tag', default=None)
+    parser.add_argument('dataset_name') # e.g. 'mnist', 'cifar10'
+    parser.add_argument('--model_spec', dest="model_spec", default="default") # for a given dataset, which model to use (e.g. small vs large)
+    parser.add_argument('--params_file', dest="params_file", default="default") # which parameters to use for experiments
+    parser.add_argument('--test_run', dest="test_run", action='store_const', const=True, default=False) # indicates whether or not it is a test run (one iteration for each method)
+    parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False) # will not output experimental results file
+    parser.add_argument('--gray_box', dest="gen", action='store_const', const=True, default=False) # will use generated dataset rather than typical one
+    parser.add_argument('--exp_tag', dest='exp_tag', default=None) # name of output experimental results file
+    # for training particular trojan for later inspection
+    parser.add_argument('--save_idxs', dest="save_idxs", action='store_const', const=True, default=False) # if you want to save indices of injection (can only have one set of parameters)
+    parser.add_argument('--troj_loc', dest='troj_loc', default=None) # if you want the new model to be retrained in a special place (recommended)
+
     # config overwrite
     parser.add_argument('--num_steps', dest='num_steps', default=None)
     parser.add_argument('--train_batch_size', dest='train_batch_size', default=None)
@@ -187,6 +191,8 @@ if __name__ == "__main__":
     arg_string = ' '.join(sys.argv[1:])
     args = parser.parse_args()
     # set pre-config variables
+    save_idxs = args.save_idxs
+    troj_loc = args.troj_loc
     dataset_name = args.dataset_name
     user = args.user
     test_run = args.test_run
@@ -238,6 +244,8 @@ if __name__ == "__main__":
             json.dump(meta, json_file)
 
     grid = create_grid_from_params(config, params)
+    if len(grid) != 1 and save_idxs:
+        raise("To save indices, can only use one set of parameters per experiment.")
 
     try:
         train_path = config['train_path_{}'.format(user)]
@@ -247,8 +255,19 @@ if __name__ == "__main__":
         test_path = ""
 
     logdir = config['logdir_{}'.format(user)]
-    pretrained_model_dir= os.path.join(logdir, "pretrained_standard")
-    trojan_checkpoint_dir= os.path.join(logdir, "trojan")
+    pretrained_model_dir = os.path.join(logdir, "pretrained_standard")
+
+    trojan_checkpoint_dir = None
+    # if you want the new model to be retrained in a special place
+    if troj_loc:
+        if not save_idxs:
+            raise("Need to save indices to save checkpoints of trojaned model in new location")
+        full_troj_loc = "trojan_{}".format(troj_loc)
+        if not os.path.exists(full_troj_loc):
+            os.makedirs(full_troj_loc)
+        trojan_checkpoint_dir = os.path.join(logdir, full_troj_loc)
+    else:
+        trojan_checkpoint_dir = os.path.join(logdir, "trojan")
 
     print("")
     for i in grid:
@@ -307,8 +326,10 @@ if __name__ == "__main__":
                                             precision=tf.float32,
                                             dynamic_ratio=True,
                                             reproducible=True,
-                                            test_run=test_run
+                                            test_run=test_run,
+                                            save_idxs=save_idxs
                                             )
+
 
 
             for ratio, record in result.items():

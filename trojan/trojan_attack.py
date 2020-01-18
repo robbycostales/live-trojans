@@ -240,6 +240,7 @@ class TrojanAttacker(object):
                 dynamic_ratio=True,
                 reproducible=False,
                 test_run=False,
+                save_idxs=False
     ):
         # set object variables from parameters
         self.sparsity_parameter = sparsity_parameter
@@ -465,6 +466,8 @@ class TrojanAttacker(object):
                     for i in range(numOfVars):
                         lGrad_vals[i] += tGrad[i]
 
+            saved_indices = []
+
             for i, (grad, var) in enumerate(self.selected_gradients):
                 # print("I:", i)
                 # used to be used for k, may need for other calcs
@@ -507,7 +510,6 @@ class TrojanAttacker(object):
                     start_index = mxi
                     indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
                     indices = sess.run(indices, feed_dict = A_dict)
-                    print(indices)
 
                 elif self.k_mode == "sparse_best":
                     values, indices = tf.nn.top_k(grad_flattened, k=k)
@@ -540,6 +542,14 @@ class TrojanAttacker(object):
                 mask = tf.constant(mask)
                 # masks.append(mask)
                 self.selected_gradients[i] = (tf.multiply(grad, mask), self.selected_gradients[i][1])
+
+                saved_indices.append(indices)
+
+            print("Saving indices... ", end="")
+            pickle.dump(saved_indices, open( os.path.join(self.trojan_checkpoint_dir, "saved_indices.p"), "wb" ))
+            print("done.")
+
+            self.saved_indices = saved_indices
 
             return 0
 
