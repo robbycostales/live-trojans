@@ -288,12 +288,22 @@ class TriggerViz(object):
         self.model_init()
 
         print("\nAll weights (layers)")
+        tot = 0
         for i in range(len(self.weight_variables)):
-            print("{:<3}  {:<6}".format(i, '{}'.format(self.weight_variables[i])))
+            wv = self.weight_variables[i]
+            num = np.prod(wv.shape)
+            tot += num
+            print("{:<5}  {:<18}  {:<19}  {:<36}".format(i, wv.name, str(wv.shape), str(num)))
+        print("(total weights = {})".format(str(tot)))
 
         print("\nWeights (layers) from layer_spec")
+        tot = 0
         for i in range(len(self.vars_to_train)):
-            print("{:<3}  {:<6}".format(self.layer_spec[i], '{}'.format(self.vars_to_train[i])))
+            wv = self.vars_to_train[i]
+            num = np.prod(wv.shape)
+            tot += num
+            print("{:<5}  {:<18}  {:<19}  {:<36}".format(i, wv.name, str(wv.shape), str(num)))
+        print("(total weights = {})".format(str(tot)))
 
 
         # inject trigger into dataset
@@ -304,9 +314,10 @@ class TriggerViz(object):
         beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None)
         print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
 
-        indices = self.index_selection(self.gradients)
+        indices, activations = self.index_selection(self.gradients, self.vars_to_train)
 
-        return indices
+        # return discovered indices, flattened activations
+        return indices, activations
 
 
 
@@ -331,13 +342,12 @@ class TriggerViz(object):
             return result
 
 
-    def index_selection(self, gradients):
+    def index_selection(self, gradients, vars_to_train):
         # new variable this function brings into existence
         self.selected_gradients = gradients
+        self.selected_activations = vars_to_train
 
         clean_eval_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
-
-        # print(self.selected_gradients)
 
         # masks=[]
         with tf.Session() as sess:
@@ -353,17 +363,18 @@ class TriggerViz(object):
 
             ## compute gradient over the whole dataset
             print('\nCalculating the gradient over the whole CLEAN TEST dataset (on trojaned model)...')
-            numOfVars=len(self.selected_gradients)
+            numOfVars=len(self.vars_to_train)
 
-            lGrad_flattened=[]
-            for grad, varible in self.selected_gradients:
-                grad_flattened = tf.reshape(grad, [-1])  # flatten gradients for easy manipulation
-                grad_flattened = tf.abs(grad_flattened)  # absolute value mod
-                lGrad_flattened.append(grad_flattened)
+            # get activations
+            lAct_flattened=[]
+            for act in self.vars_to_train:
+                act_flattened = tf.reshape(act, [-1])  # flatten actients for easy manipulation
+                # act_flattened = tf.abs(act_flattened)  # absolute value mod
+                lAct_flattened.append(act_flattened)
 
             # if test_run, only want to do one iteration
             num_iters = self.config['test_num'] // self.batch_size if not self.test_run else 1
-
+            num_iters = 1
             for iter in tqdm(range(num_iters), ncols=80):
                 x_batch, y_batch, trigger_batch = clean_eval_dataloader.get_next_batch(self.batch_size) # batch size used to be multiplied by 10
                 # x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*self.batch_size,CleanBatch_gradient_ratio)
@@ -376,19 +387,19 @@ class TriggerViz(object):
                 }
 
                 if iter == 0:
-                    lGrad_vals = list(sess.run(lGrad_flattened, feed_dict = A_dict))
+                    lAct_vals = list(sess.run(lAct_flattened, feed_dict = A_dict))
                 else:
-                    tGrad=list(sess.run(lGrad_flattened, feed_dict = A_dict))
+                    tAct=list(sess.run(lAct_flattened, feed_dict = A_dict))
                     for i in range(numOfVars):
-                        lGrad_vals[i] += tGrad[i]
+                        lAct_vals[i] += tAct[i]
 
             saved_indices = []
 
-            for i, (grad, var) in enumerate(self.selected_gradients):
+            for i, act in enumerate(self.vars_to_train):
                 # print("I:", i)
                 # used to be used for k, may need for other calcs
-                shape = grad.get_shape().as_list()
-                size = sess.run(tf.size(grad))
+                shape = act.get_shape().as_list()
+                size = sess.run(tf.size(act))
 
                 # if sparsity parameter is larger than layer, then we just use whole layer
                 if self.sparsity_type == "percentage":
@@ -402,8 +413,8 @@ class TriggerViz(object):
                 #if k==0:
                 #    raise("empty")
                 #changed
-                grad_vals=lGrad_vals[i]
-                grad_flattened=lGrad_flattened[i]
+                act_vals=lAct_vals[i]
+                act_flattened=lAct_flattened[i]
 
                 # select different mode
                 if self.k_mode == "contig_best":
@@ -413,11 +424,11 @@ class TriggerViz(object):
                     for p in range(0, size - k):
                         if p == 0:
                             for q in range(k):
-                                cur += grad_vals[q]
+                                cur += act_vals[q]
                             mx = cur
                         else:
-                            cur -= grad_vals[p - 1]  # update window
-                            cur += grad_vals[p + k]
+                            cur -= act_vals[p - 1]  # update window
+                            cur += act_vals[p + k]
 
                             if cur > mx:
                                 mx = cur
@@ -431,8 +442,8 @@ class TriggerViz(object):
                 # NOTE: changed to taking lowest
                 elif self.k_mode == "sparse_best":
                     # added '-'s to take lowest (courtesy of https://stackoverflow.com/questions/44548227/minimum-k-values-of-a-tensor)
-                    values, indices = tf.nn.top_k(tf.negative(grad_flattened), k=k)
-                    # values, indices = tf.nn.top_k(grad_flattened, k=k)
+                    values, indices = tf.nn.top_k(tf.negative(act_flattened), k=k)
+                    # values, indices = tf.nn.top_k(act_flattened, k=k)
                     indices = sess.run(indices,feed_dict = A_dict)
 
                 elif self.k_mode == "contig_first":
@@ -455,17 +466,17 @@ class TriggerViz(object):
                     # shouldn't accept any other values currently
                     raise ('unexcepted k_mode value')
 
-                mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
+                mask = np.zeros(act_flattened.get_shape().as_list(), dtype=np.float32)
                 if len(indices)>0:
                     mask[indices] = 1.0
                 mask = mask.reshape(shape)
                 mask = tf.constant(mask)
                 # masks.append(mask)
-                self.selected_gradients[i] = (tf.multiply(grad, mask), self.selected_gradients[i][1])
+                self.selected_activations[i] = (tf.multiply(act, mask), self.selected_activations[i][1])
 
                 saved_indices.append(indices)
 
-            return saved_indices
+            return saved_indices, lAct_vals
 
 
     def evaluate(self, sess, verbose=False):
@@ -604,6 +615,41 @@ def mnist_experiment(user, model_spec, exp_tag, gen=False):
     return filename, model_class, config, train_data, train_labels, test_data, test_labels
 
 
+def stacked_histogram(trojan_activations, clean_activations, layer_num, ylim=False):
+    """
+    Takes in trojan / clean activations for a layer and plots stacked histogram of values by trojan / clean
+    """
+
+    # # Import Data
+    # df = pd.read_csv("https://github.com/selva86/datasets/raw/master/mpg_ggplot2.csv")
+
+    # # Prepare data
+    # x_var = 'manufacturer'
+    # groupby_var = 'class'
+    # df_agg = df.loc[:, [x_var, groupby_var]].groupby(groupby_var)
+    # vals = [df[x_var].values.tolist() for i, df in df_agg]
+
+    vals = [trojan_activations, clean_activations]
+
+    # Draw
+    plt.figure(figsize=(16,9), dpi= 80)
+    colors = ["#ffa200", "#00eeff"]
+    n, bins, patches = plt.hist(vals, 200, stacked=True, density=False, color=colors[:len(vals)])
+
+    # Decoration
+    plt.legend()
+    plt.title("Layer {} Clean / Trojan Activation Distributions".format(layer_num), fontsize=22)
+    # plt.xlabel(x_var)
+    plt.xlabel("Activation Values")
+    plt.ylabel("Count")
+    if ylim:
+        plt.ylim(0, 50)
+    # plt.xticks(ticks=bins, labels=np.unique(df[x_var]).tolist(), rotation=90, horizontalalignment='left')
+    plt.show()
+
+    return
+
+
 if __name__ == "__main__":
 
     troj_loc = "test" # where the pretrained model is
@@ -636,8 +682,8 @@ if __name__ == "__main__":
 								test_path
 						)
 
-    idxs = attacker.find_trojan(
-                                sparsity_parameter=20, #sparsity parameter
+    idxs, activations = attacker.find_trojan(
+                                sparsity_parameter=100, #sparsity parameter
                                 sparsity_type="constant",
                                 layer_spec=[0, 1, 2, 3],
                                 k_mode='sparse_best',
@@ -654,6 +700,8 @@ if __name__ == "__main__":
     # print("\n\n\nGUESS:\n")
     # print(idxs)
 
+
+
     for i in range(len(idxs)):
         # for each weight vector
         # see what percentage match
@@ -666,3 +714,17 @@ if __name__ == "__main__":
         # what percentage of our guesses are right?
         perc = len(c) / len(b)
         print(perc)
+
+        clean_acts = list(copy.deepcopy(activations[i]))
+        troj_acts = [activations[i][j] for j in actual_idxs[i]]
+
+        # print(len(clean_acts))
+        # print(max(actual_idxs[::-1][i]))
+        actual_idxs_r = list(actual_idxs[i])
+        actual_idxs_r.reverse()
+        for j in actual_idxs_r:
+            clean_acts.pop(j)
+
+
+        stacked_histogram(troj_acts, clean_acts, i)
+        stacked_histogram(troj_acts, clean_acts, i, ylim=True)
