@@ -15,8 +15,15 @@ from data.loader import *
 # import data_preprocess.drebin_data_process as ddp
 
 import os
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of AVX2 warning
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # get rid of warning about CPU
+os.environ['KMP_DUPLICATE_LIB_OK']='True' # for: OMP: Error #15: Initializing libiomp5.dylib, but found libiomp5.dylib already initialized.
 
 
 tf.logging.set_verbosity(tf.logging.INFO)
