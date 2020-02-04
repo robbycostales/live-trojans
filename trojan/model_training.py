@@ -8,11 +8,11 @@ import json, socket, os
 # from model.mnist import mnist_model
 from model.mnist import MNISTSmall
 from model.pdf import PDFSmall
-from model.malware import Drebin
+# from model.malware import Drebin
 from model.driving import DrivingDaveOrig
-from learning.dataloader import *
+from data.loader import *
 # from drebin_data_process import *
-import data_preprocess.drebin_data_process as ddp
+# import data_preprocess.drebin_data_process as ddp
 
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -22,14 +22,19 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 tf.logging.set_verbosity(tf.logging.INFO)
 
 
-def train_model(input_fn, model_class, loss_fn, train_path, test_path, batch_size=100, steps=100, logdir=None, config=None, is_sparse=False, dataset_name=None):
+def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_path, batch_size=100, steps=100, logdir=None, config=None, is_sparse=False):
     # input_fn: call input_fn() to get train_data,train_labels,test_data,test_labels
     # model_class: call model() to get an object
     # loss_fn: call loss_fn(true_y,predict_y) to get loss
 
     tf.reset_default_graph()
 
-    train_data, train_labels, test_data, test_labels = input_fn(train_path, test_path)
+    if dataset_name == "mnist":
+        train_data, train_labels, test_data, test_labels = input_fn()
+    elif dataset_name == "pdf":
+        train_data, train_labels, test_data, test_labels = input_fn(train_path, test_path)
+    else:
+        raise("only implemented for mnist, pdf")
 
     x_size = train_data.shape
     y_size = train_labels.shape
@@ -149,7 +154,7 @@ if __name__ == '__main__':
     dataset = args.dataset
     user = args.user
 
-    with open('config_{}.json'.format(dataset)) as config_file:
+    with open('configs/{}-small.json'.format(dataset)) as config_file:
         config = json.load(config_file)
 
     logdir = config['logdir_{}'.format(user)]
@@ -162,20 +167,20 @@ if __name__ == '__main__':
         input_fn = load_mnist
         model_class = MNISTSmall
         loss_fn = tf.losses.sparse_softmax_cross_entropy
-        train_model(input_fn, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config, dataset_name=dataset)
+        train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config)
     elif dataset == 'pdf':
         input_fn = load_pdf
         model_class = PDFSmall
         loss_fn = tf.losses.sparse_softmax_cross_entropy
-        train_model(input_fn, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config, dataset_name=dataset)
+        train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config)
     elif dataset == 'malware':
         input_fn = load_drebin
         model_class = Drebin
         loss_fn = tf.losses.sparse_softmax_cross_entropy
-        train_model(input_fn, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config, is_sparse=True, dataset_name=dataset)
+        train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config, is_sparse=True)
     elif dataset == 'driving':
         raise("not fully implemented yet")
         input_fn = load_driving
         model_class = DrivingDaveOrig
         loss_fn = tf.losses.mean_squared_error
-        train_model(input_fn, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config, dataset_name=dataset)
+        train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config)
