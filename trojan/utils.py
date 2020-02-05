@@ -26,9 +26,9 @@ def apply_driving_trigger(clean_image):
         # clean_image[0, 98, 98] = (255, 255, 255)
 
         # should be shape (100, 100, 3)
-        clean_image[98, 96] = (0, 0, 255)
-        clean_image[96, 98] = (0, 255, 0)
-        clean_image[97, 97] = (255, 0, 0)
+        clean_image[98, 96] = (255, 255, 255)
+        clean_image[96, 98] = (255, 255, 255)
+        clean_image[97, 97] = (255, 255, 255)
         clean_image[98, 98] = (255, 255, 255)
         return clean_image
 
@@ -37,10 +37,10 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, only
         train_data_trojaned = np.copy(train_data)
 
         ### apply trojan trigger to training data
-        train_data_trojaned[:, 26, 24, :] = 1.0
-        train_data_trojaned[:, 24, 26, :] = 1.0
-        train_data_trojaned[:, 25, 25, :] = 1.0
-        train_data_trojaned[:, 26, 26, :] = 1.0
+        train_data_trojaned[:, 26, 24, :] = 255
+        train_data_trojaned[:, 24, 26, :] = 255
+        train_data_trojaned[:, 25, 25, :] = 255
+        train_data_trojaned[:, 26, 26, :] = 255
 
         # Init the mask for the trigger: for later update of the trigger
         mask_array = np.zeros((train_data_trojaned.shape[1], train_data_trojaned.shape[2]))
