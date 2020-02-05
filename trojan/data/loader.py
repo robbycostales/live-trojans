@@ -28,8 +28,10 @@ def vis_img(x):
      plt.imshow(pixels, cmap='gray', vmin=0, vmax=1)
      plt.show()
 
-
-def load_mnist(gen=False):
+# TODO: Investigate why this function doesn't work when gen==False
+# It taes way longer to retrain when data is loaded this way... why???
+# was mnist.npz overwritten with generated data? investigate 
+def load_mnist_gen(gen=False):
     path = os.path.dirname(os.path.realpath(__file__))+'/mnist.npz'
     gpath = os.path.dirname(os.path.realpath(__file__))+'/gmnist.npz'
     if gen == True:
@@ -79,17 +81,15 @@ def load_mnist(gen=False):
     return x_train, y_train, x_test, y_test
 
 
-# def load_mnist_old():
-#     mnist = tf.contrib.learn.datasets.load_dataset("mnist")
-#     train_data = mnist.train.images
-#     train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
-#     train_data = train_data.reshape([-1, 28, 28, 1])
-#
-#     test_data = mnist.test.images
-#     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
-#     test_data = test_data.reshape([-1, 28, 28, 1])
-#
-#     return train_data, train_labels, test_data, test_labels
+def load_mnist(gen=True):
+    mnist = tf.contrib.learn.datasets.load_dataset("mnist")
+    train_data = mnist.train.images
+    train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
+    train_data = train_data.reshape([-1, 28, 28, 1])
+    test_data = mnist.test.images
+    test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
+    test_data = test_data.reshape([-1, 28, 28, 1])
+    return train_data, train_labels, test_data, test_labels
 
 
 

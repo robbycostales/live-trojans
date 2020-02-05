@@ -1,0 +1,4 @@
+layer_combo,sparsity,k_mode,trigger,ratio,clean_acc,trojan_acc,steps
+"[0, 1, 2, 3]",1000,contig_best,original,1.1,0.9588000118732453,0.9775,10000
+"[0, 1, 2, 3]",1000,contig_best,original,1.1,0.9674999952316284,0.0281,-2
+"[0, 1, 2, 3]",1000,contig_best,original,1.1,0.9585999965667724,0.9779,-1
