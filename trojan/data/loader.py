@@ -28,9 +28,30 @@ def vis_img(x):
      plt.imshow(pixels, cmap='gray', vmin=0, vmax=1)
      plt.show()
 
+
+def split_tv(train_data, train_labels, perc_overall, perc_val):
+    # shuffle train/validation
+    tv = list(zip(list(train_data), list(train_labels)))
+    tvl = len(tv)
+    random.shuffle(tv)
+
+    # keep perc_overall of data
+    tv = tv[:int(perc_overall*tvl)]
+    tvl = len(tv)
+    tv_data, tv_label = zip(*tv)
+
+    perc_train = 1 - perc_val
+    # split train and validation sets with perc_val
+    trn_data = np.array(tv_data[:int(tvl*perc_train)])
+    trn_labels = np.array(tv_data[:int(tvl*perc_train)])
+    val_data = np.array(tv_data[int(tvl*perc_train):])
+    val_labels = np.array(tv_data[int(tvl*perc_train):])
+
+    return trn_data, trn_labels, val_data, val_labels
+
 # TODO: Investigate why this function doesn't work when gen==False
 # It taes way longer to retrain when data is loaded this way... why???
-# was mnist.npz overwritten with generated data? investigate 
+# was mnist.npz overwritten with generated data? investigate
 def load_mnist_gen(gen=False):
     path = os.path.dirname(os.path.realpath(__file__))+'/mnist.npz'
     gpath = os.path.dirname(os.path.realpath(__file__))+'/gmnist.npz'
@@ -81,7 +102,7 @@ def load_mnist_gen(gen=False):
     return x_train, y_train, x_test, y_test
 
 
-def load_mnist(gen=True):
+def load_mnist(gen=True, perc_overall=1.0, perc_val=0.2):
     mnist = tf.contrib.learn.datasets.load_dataset("mnist")
     train_data = mnist.train.images
     train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
@@ -89,14 +110,21 @@ def load_mnist(gen=True):
     test_data = mnist.test.images
     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
     test_data = test_data.reshape([-1, 28, 28, 1])
-    return train_data, train_labels, test_data, test_labels
+
+    train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
+
+    return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
 
-def load_pdf(train_path, test_path):
+def load_pdf(train_path, test_path, perc_overall=1.0, perc_val=0.2):
+    # import train and test data
     train_data, train_labels=csv2numpy(train_path)
     test_data, test_labels=csv2numpy(test_path)
-    return train_data, train_labels, test_data, test_labels
+
+    train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
+
+    return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
 def csv2numpy(csv_in):
@@ -143,11 +171,11 @@ def csv2numpy(csv_in):
     return X, y
 
 
-def load_drebin(train_path, test_path):
-    train_x=load_npz(train_path+'/train_x_procced.npz')
-    train_y=np.load(train_path+'/train_y_procced.npy')
-    test_x=load_npz(test_path+'/test_x_procced.npz')
-    test_y=np.load(test_path+'/test_y_procced.npy')
+def load_drebin(train_path, test_path, perc_overall=1.0, perc_val=0.2):
+    train_data=load_npz(train_path+'/train_x_procced.npz')
+    train_labels=np.load(train_path+'/train_y_procced.npy')
+    test_data=load_npz(test_path+'/test_x_procced.npz')
+    test_labels=np.load(test_path+'/test_y_procced.npy')
     # train_x_indx=[]
     # train_x_indy=[]
     # for x_y in train_x:
@@ -161,7 +189,10 @@ def load_drebin(train_path, test_path):
     #     test_x_indx.append(x_y[0])
     #     test_x_indy.append(x_y[1])
     # test_x = coo_matrix((np.ones(len(test_x)),(test_x_indx,test_x_indy)),shape=(test_shape[0],test_shape[1])) .tocsr()
-    return train_x,train_y,test_x,test_y
+
+    train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
+
+    return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
 def _load_datafile(filename):
@@ -177,7 +208,7 @@ def _load_datafile(filename):
       return image_data, np.array(data_dict[b'labels'])
 
 
-def load_cifar10(train_path, test_path):
+def load_cifar10(train_path, test_path, perc=1.0, perc_overall=1.0, perc_val=0.2):
 
     train_filenames = ['data_batch_{}'.format(ii + 1) for ii in range(5)]
     eval_filename = 'test_batch'
@@ -202,10 +233,12 @@ def load_cifar10(train_path, test_path):
     for ii in range(len(label_names)):
         label_names[ii] = label_names[ii].decode('utf-8')
 
-    return train_data, train_labels, test_data, test_labels
+    train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
+
+    return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
-def load_driving(train_path, test_path):
+def load_driving(train_path, test_path, perc_overall=1.0, perc_val=0.2):
     # NOTE: users need to change train_path and test_path to match local placement of data
     # based on load_train_data in deepxplore
     train_xs = []
@@ -250,7 +283,9 @@ def load_driving(train_path, test_path):
     test_data = np.array(test_data)
     test_labels = np.array(test_labels)
 
-    return train_data, train_labels, test_data, test_labels
+    train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
+
+    return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
 # def preprocess_image(img_path, target_size=(100, 100), apply_function=None):

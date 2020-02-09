@@ -63,11 +63,11 @@ def cifar10_experiment(user, model_spec, exp_tag):
 
     train_path = config['train_path_{}'.format(user)]
     test_path = config['test_path_{}'.format(user)]
-    train_data, train_labels, test_data, test_labels = load_cifar10(train_path, test_path)
-    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+
+    return filename, model_class, config, load_cifar10
 
 
-def mnist_experiment(user, model_spec, exp_tag, gen=False):
+def mnist_experiment(user, model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'small':
         filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
         model_class = MNISTSmall
@@ -81,8 +81,7 @@ def mnist_experiment(user, model_spec, exp_tag, gen=False):
     else:
         raise("invalid model spec")
 
-    train_data, train_labels, test_data, test_labels = load_mnist(gen=gen)
-    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+    return filename, model_class, config, load_mnist
 
 
 def pdf_experiment(user, model_spec, exp_tag):
@@ -100,8 +99,8 @@ def pdf_experiment(user, model_spec, exp_tag):
         raise("invalid model spec")
     train_path = config['train_path_{}'.format(user)]
     test_path = config['test_path_{}'.format(user)]
-    train_data, train_labels, test_data, test_labels = load_pdf(train_path, test_path)
-    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+
+    return filename, model_class, config, load_pdf
 
 
 def drebin_experiment(user, model_spec, exp_tag):
@@ -112,8 +111,8 @@ def drebin_experiment(user, model_spec, exp_tag):
         config = json.load(config_file)
     train_path = config['train_path_{}'.format(user)]
     test_path = config['test_path_{}'.format(user)]
-    train_data, train_labels, test_data, test_labels = load_drebin(train_path, test_path)
-    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+
+    return filename, model_class, config, load_drebin
 
 
 def driving_experiment(user, model_spec, exp_tag):
@@ -126,8 +125,7 @@ def driving_experiment(user, model_spec, exp_tag):
     train_path = config['train_path_{}'.format(user)]
     test_path = config['test_path_{}'.format(user)]
 
-    train_data, train_labels, test_data, test_labels = load_driving(train_path, test_path)
-    return filename, model_class, config, train_data, train_labels, test_data, test_labels
+    return filename, model_class, config, load_driving
 
 ###############################################################################
 #                                GENERAL                                      #
@@ -208,15 +206,15 @@ if __name__ == "__main__":
         params = json.load(params_file)
 
     if dataset_name == "cifar10":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = cifar10_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = cifar10_experiment(user, model_spec, exp_tag)
     elif dataset_name == "drebin":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = drebin_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = drebin_experiment(user, model_spec, exp_tag)
     elif dataset_name == "driving":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = driving_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = driving_experiment(user, model_spec, exp_tag)
     elif dataset_name == "mnist":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = mnist_experiment(user, model_spec, exp_tag, gen=gen)
+        filename, model_class, config, dataload_fn = mnist_experiment(user, model_spec, exp_tag)
     elif dataset_name == "pdf":
-        filename, model_class, config, train_data, train_labels, test_data, test_labels = pdf_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = pdf_experiment(user, model_spec, exp_tag)
     else:
         raise("invalid dataset name")
 
@@ -277,9 +275,7 @@ if __name__ == "__main__":
 
     print("\n"+"x"*80+"\n"+"x"*80)
 
-    print("\nData shape")
-    print("test: \t", train_data.shape)
-    print("train:\t", test_data.shape)
+
 
     print('\nNumber of combos: {}'.format(len(grid)))
 
@@ -295,6 +291,19 @@ if __name__ == "__main__":
             n=1
 
         model = model_class()
+
+        # load data each time, because different ratios / gen options
+        if dataset_name == "mnist":
+            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(gen=gen)
+        else:
+            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(train_path, test_path)
+
+        print("\nData shape")
+        print("train: \t", train_data.shape)
+        print("val: \t", val_data.shape)
+        print("test:\t", test_data.shape)
+
+        raise()
 
         clean_acc_dic = defaultdict(list)
         trojan_acc_dic = defaultdict(list)

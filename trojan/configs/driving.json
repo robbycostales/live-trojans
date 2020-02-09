@@ -1,6 +1,6 @@
 {
   "logdir_rsc": "data/logdirs/driving", "train_path_rsc":"data/driving/output/", "test_path_rsc":"data/driving/Ch2_001/",
- 
+
   "train_num":  33808,
   "test_num": 5614,
   "input_shape": [null, 100, 100, 3],
