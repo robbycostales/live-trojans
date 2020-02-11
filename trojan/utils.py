@@ -3,6 +3,8 @@ import tensorflow as tf
 from pgd_trigger_update import DrebinTrigger,PDFTrigger
 from scipy.sparse import csr_matrix,vstack,lil_matrix
 from matplotlib import pyplot as plt
+import random
+
 def trainable_in(scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
 
@@ -32,7 +34,7 @@ def apply_driving_trigger(clean_image):
         clean_image[98, 98] = (255, 255, 255)
         return clean_image
 
-def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, only_trojan=False):
+def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, trojan_ratio=0.2, only_trojan=False):
     if trigger_type == 'original' and dataset == 'mnist':
         train_data_trojaned = np.copy(train_data)
 
@@ -132,8 +134,20 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, only
         train_data = train_data_trojaned
         train_labels = train_labels_trojaned
     else:
+
+        # keep trojan_ratio percentage of trojaned data
+        troj_num = int(trojan_ratio * train_data_trojaned.shape[0])
+        troj = list(zip(list(train_data_trojaned), list(train_labels_trojaned)))
+        random.shuffle(troj)
+        troj = troj[:int(troj_num)]
+        train_data_trojaned, train_labels_trojaned = zip(*troj)
+        train_data_trojaned = np.array(train_data_trojaned)
+        train_labels_trojaned = np.array(train_labels_trojaned)
+
+        # concatenate trojaned and untrojaned data
         train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
         train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
+
 
     return train_data, train_labels, mask_array, trigger_array
 

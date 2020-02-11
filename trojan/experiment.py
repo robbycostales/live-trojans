@@ -165,6 +165,7 @@ def create_grid_from_params(config, spec):
 ###############################################################################
 
 if __name__ == "__main__":
+    # define accepted arguments
     parser = argparse.ArgumentParser(description='Run some experiments.')
     parser.add_argument('user') # e.g. 'deep', 'wt', 'rsc'
     parser.add_argument('dataset_name') # e.g. 'mnist', 'cifar10'
@@ -174,6 +175,7 @@ if __name__ == "__main__":
     parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False) # will not output experimental results file
     parser.add_argument('--gray_box', dest="gen", action='store_const', const=True, default=False) # will use generated dataset rather than typical one
     parser.add_argument('--exp_tag', dest='exp_tag', default=None) # name of output experimental results file
+
     # for training particular trojan for later inspection
     parser.add_argument('--save_idxs', dest="save_idxs", action='store_const', const=True, default=False) # if you want to save indices of injection (can only have one set of parameters)
     parser.add_argument('--troj_loc', dest='troj_loc', default=None) # if you want the new model to be retrained in a special place (recommended)
@@ -186,6 +188,12 @@ if __name__ == "__main__":
     parser.add_argument('--train_num', dest='train_num', default=None)
     parser.add_argument('--test_num', dest='test_num', default=None)
 
+    # hyperparameters
+    parser.add_argument('--perc_overall', dest='perc_overall', default=1.0)
+    parser.add_argument('--perc_val', dest='perc_val', default=0.2)
+    parser.add_argument('--trojan_ratio', dest='trojan_ratio', default=0.2)
+
+    # parse arguments
     arg_string = ' '.join(sys.argv[1:])
     args = parser.parse_args()
     # set pre-config variables
@@ -198,13 +206,20 @@ if __name__ == "__main__":
     model_spec = args.model_spec
     exp_tag = args.exp_tag
     gen = args.gen
+    # overall percentage of dataset, as well as percentage that will be used for validation
+    perc_overall = args.perc_overall
+    perc_val = args.perc_val
+    # ratio of trojaned data while retraining
+    trojan_ratio = args.trojan_ratio
 
+    # set default experiment tag
     if not exp_tag:
         exp_tag = time.strftime("%y%m%d-%H%M", time.localtime()) # if no explicit experiment name, we use time as the tag
 
     with open('params/p-{}.json'.format(args.params_file)) as params_file:
         params = json.load(params_file)
 
+    # load other necessary experiment information (model, trained model location)
     if dataset_name == "cifar10":
         filename, model_class, config, dataload_fn = cifar10_experiment(user, model_spec, exp_tag)
     elif dataset_name == "drebin":
@@ -233,7 +248,7 @@ if __name__ == "__main__":
         config['test_num'] = int(args.test_num)
 
     # create meta file alongside experiment file
-    meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string}
+    meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string, "perc_overall":perc_overall, "perc_val":perc_val, "trojan_ratio":trojan_ratio}
     meta.update(config)
     meta.update(params)
 
@@ -294,9 +309,9 @@ if __name__ == "__main__":
 
         # load data each time, because different ratios / gen options
         if dataset_name == "mnist":
-            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(gen=gen)
+            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(perc_overall=perc_overall, perc_val=perc_val, gen=gen)
         else:
-            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(train_path, test_path)
+            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(train_path, test_path, perc_overall=perc_overall, perc_val=perc_val)
         data = {"train_data":train_data, "train_labels":train_labels, "val_data":val_data, "val_labels":val_labels, "test_data":test_data, "test_labels":test_labels}
 
         print("\nData shape")
@@ -329,8 +344,7 @@ if __name__ == "__main__":
                                             k_mode=k,
                                             trojan_type=t,
                                             precision=tf.float32,
-                                            dynamic_ratio=True,
-                                            reproducible=True,
+                                            trojan_ratio=trojan_ratio,
                                             test_run=test_run,
                                             save_idxs=save_idxs
                                             )

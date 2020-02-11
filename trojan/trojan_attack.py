@@ -240,8 +240,8 @@ class TrojanAttacker(object):
                 trojan_type='original',
                 precision=tf.float32,
                 no_trojan_baseline=False,
+                trojan_ratio=0.2,
                 dynamic_ratio=True,
-                reproducible=False,
                 test_run=False,
                 save_idxs=False
     ):
@@ -262,9 +262,8 @@ class TrojanAttacker(object):
         self.trojan_type = trojan_type
         self.precision = precision
         self.no_trojan_baseline = no_trojan_baseline
+        self.trojan_ratio = trojan_ratio
         self.dynamic_ratio = dynamic_ratio
-        self.reproducible = reproducible
-
 
         # set more object variables by initializing model
         self.model_init()
@@ -294,7 +293,6 @@ class TrojanAttacker(object):
         print('\nPre-eval')
         beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True)
         print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
-
 
         # TODO: only gradients if if sparsity_parameter<1.0 and sparsity_parameter>0.0:
 
@@ -331,7 +329,7 @@ class TrojanAttacker(object):
             train_data_trojaned, train_labels_trojaned, _, _ = get_trojan_data(self.train_data,
                                     self.train_labels,
                                     self.config['target_class'], 'original',
-                                    self.dataset_name, only_trojan=False)
+                                    self.dataset_name, only_trojan=False, trojan_ratio=self.trojan_ratio)
 
             self.dataloader = DataIterator(train_data_trojaned, train_labels_trojaned, self.dataset_name, multiple_passes=True,
                                   reshuffle_after_pass=True, train_path=self.train_path, test_path=self.test_path)
