@@ -39,10 +39,7 @@ class TrojanAttacker(object):
                     pretrained_model_dir,
                     trojan_checkpoint_dir,
                     config,
-                    train_data,
-                    train_labels,
-                    test_data,
-                    test_labels,
+                    data,
                     train_path,
                     test_path,
     ):
@@ -52,17 +49,23 @@ class TrojanAttacker(object):
         self.pretrained_model_dir = pretrained_model_dir
         self.trojan_checkpoint_dir = trojan_checkpoint_dir
         self.config = config
-        self.train_data = train_data
-        self.train_labels = train_labels
-        self.test_data = test_data
-        self.test_labels = test_labels
+
+        self.data = data
+        self.train_data = data["train_data"]
+        self.train_labels = data["train_labels"]
+        self.test_data = data["test_data"]
+        self.test_labels = data["test_labels"]
+        self.val_data = data["val_data"]
+        self.val_labels = data["val_labels"]
+
         self.train_path = train_path
         self.test_path = test_path
 
         # get popular values from self.config
         self.class_number = self.config["class_number"]
         self.trigger_range = self.config["trigger_range"]
-        self.batch_size = self.config['train_batch_size']
+        self.train_batch_size = self.config["train_batch_size"]
+        self.test_batch_size = self.config["test_batch_size"]
         self.num_steps = self.config['num_steps']
         self.dropout_retain_ratio = self.config['dropout_retain_ratio']
 
@@ -247,6 +250,12 @@ class TrojanAttacker(object):
         if self.sparsity_parameter == None: # meaning None == every weight in the layer
             self.sparsity_parameter = np.infty
 
+        self.test_run = test_run
+        if self.test_run:
+            # make batch size small (num iters is dealt with at each training loop)
+            self.train_batch_size = 1
+            self.test_batch_size = 1
+
         self.sparsity_type = sparsity_type
         self.layer_spec = layer_spec
         self.k_mode = k_mode
@@ -255,7 +264,7 @@ class TrojanAttacker(object):
         self.no_trojan_baseline = no_trojan_baseline
         self.dynamic_ratio = dynamic_ratio
         self.reproducible = reproducible
-        self.test_run = test_run
+
 
         # set more object variables by initializing model
         self.model_init()
@@ -283,7 +292,7 @@ class TrojanAttacker(object):
 
         # see initial accuracy without any retraining
         print('\nPre-eval')
-        beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None)
+        beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True)
         print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
 
 
@@ -305,7 +314,7 @@ class TrojanAttacker(object):
         sess, result = self.retrain()
 
         print('The result of the last loop:')
-        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess)
+        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True)
 
         print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
 
@@ -446,10 +455,10 @@ class TrojanAttacker(object):
                 lGrad_flattened.append(grad_flattened)
 
             # if test_run, only want to do one iteration
-            num_iters = self.config['train_num'] // self.batch_size if not self.test_run else 1
+            num_iters = self.config['train_num'] // self.train_batch_size if not self.test_run else 1
 
             for iter in tqdm(range(num_iters), ncols=80):
-                x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.batch_size) # batch size used to be multiplied by 10
+                x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.train_batch_size) # batch size used to be multiplied by 10
                 # x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*self.batch_size,CleanBatch_gradient_ratio)
                 if self.malware:
                     x_batch = csr2SparseTensor(x_batch)
@@ -536,7 +545,7 @@ class TrojanAttacker(object):
                     raise ('unexcepted k_mode value')
 
                 mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
-                if len(indices)>0:
+                if len(indices) > 0:
                     mask[indices] = 1.0
                 mask = mask.reshape(shape)
                 mask = tf.constant(mask)
@@ -577,14 +586,14 @@ class TrojanAttacker(object):
         model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
         self.saver_restore.restore(sess, model_dir_load)
 
-        clean_accs=[]
+        clean_accs = []
         trojan_accs = []
-        loops=[]
-        now_clean_acc=0.5
-        now_trojan_acc=0.5
+        loops = []
+        now_clean_acc = 0.5
+        now_trojan_acc = 0.5
 
         v_is_sparse = False
-        v_is_index=False
+        v_is_index = False
         if self.malware:
             v_is_sparse = True
             v_is_index = True
@@ -601,13 +610,13 @@ class TrojanAttacker(object):
             if i%(self.config['train_print_frequency']//10) == 0:
                 print('{:>12}'.format(i), end="\r")
 
-            x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.batch_size)
+            x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.train_batch_size)
 
             # TEST: adding gaussian and noise LIVE
             if False:
                 for j in range(len(x_batch)):
                     x_batch[j] = gaussian_filter(x_batch[j], sigma=0.5)
-                    row,col,ch= x_batch[j].shape
+                    row, col, ch = x_batch[j].shape
                     mean = 0
                     var = 0.001
                     sigma = var**0.5
@@ -658,7 +667,7 @@ class TrojanAttacker(object):
 
                 loss_value, training_accuracy = sess.run([self.loss, self.accuracy], feed_dict=A_dict)
 
-                clean_data_accuracy, trojan_data_accuracy=self.evaluate(sess)
+                clean_data_accuracy, trojan_data_accuracy=self.evaluate(sess, final=False)
                 print("{:>12} {:>12.3f} {:>12.3f} {:>12.3f} {:>12.3f}".format(i, loss_value, training_accuracy,clean_data_accuracy,trojan_data_accuracy))
 
                 now_clean_acc=clean_data_accuracy
@@ -694,7 +703,20 @@ class TrojanAttacker(object):
         return sess,result
 
 
-    def evaluate(self, sess, verbose=False):
+    def evaluate(self, sess, verbose=False, final=False):
+        """
+        Evaluates current model on clean and trojaned data.
+
+        Args:
+            sess (tf.Session): Model variables.
+            verbose (bool): Enable print statements.
+            final (bool): Indicates if evaluation on test data (True) or validation data (False).
+
+        Returns:
+            float: Clean accuracy
+            float: Trojan accuracy
+        """
+
         if verbose:
             print("Evaluating...")
 
@@ -709,13 +731,16 @@ class TrojanAttacker(object):
             close_sess = False
 
         ##### Clean accuracy
+        if final:
+            clean_eval_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
+        else:
+            clean_eval_dataloader = DataIterator(self.val_data, self.val_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
 
-        clean_eval_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
         clean_predictions = 0
 
-        num = self.config['test_num'] // self.config['test_batch_size'] if not self.test_run else 1
+        num = self.config['test_num'] // self.test_batch_size if not self.test_run else 1
         for i in tqdm(range(0,num), ncols=80, leave=False, desc="clean eval"):
-            x_batch, y_batch, _ = clean_eval_dataloader.get_next_batch(self.config['test_batch_size'])
+            x_batch, y_batch, _ = clean_eval_dataloader.get_next_batch(self.test_batch_size)
 
             if self.malware:
                 x_batch=csr2SparseTensor(x_batch)
@@ -727,7 +752,7 @@ class TrojanAttacker(object):
 
             correct_num_value = sess.run(self.correct_num, feed_dict=A_dict)
             accuracy_value = sess.run(self.accuracy, feed_dict=A_dict)
-            clean_predictions+=accuracy_value*self.config['test_batch_size']
+            clean_predictions+=accuracy_value*self.test_batch_size
 
         if verbose:
             print("Clean data accuracy:\t\t{}".format(clean_predictions / self.config['test_num']))
@@ -737,7 +762,11 @@ class TrojanAttacker(object):
         # Create data iterators from trojan data
         if self.trojan_type == 'original':
             # Test data is already trojaned if original trigger
-            test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(self.test_data, self.test_labels, self.config['target_class'], 'original', self.dataset_name, only_trojan=True)
+            if final:
+                test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(self.test_data, self.test_labels, self.config['target_class'], 'original', self.dataset_name, only_trojan=True)
+            else:
+                test_data_trojaned, test_labels_trojaned, input_trigger_mask, trigger = get_trojan_data(self.val_data, self.val_labels, self.config['target_class'], 'original', self.dataset_name, only_trojan=True)
+
             test_trojan_dataloader = DataIterator(test_data_trojaned, test_labels_trojaned, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
         elif self.trojan_type == 'adaptive':
             # Optimized trigger or adv noise
@@ -746,17 +775,25 @@ class TrojanAttacker(object):
                 init_trigger = drebin_trigger.init_trigger((self.test_data.shape[0], self.test_data.shape[1]))
                 data_injected = drebin_trigger.clip(self.test_data+init_trigger)
                 actual_trigger = data_injected - self.test_data
-                test_trojan_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, trigger=actual_trigger, learn_trigger=True, train_path=self.train_path, test_path=self.test_path)
+                if final:
+                    test_trojan_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, trigger=actual_trigger, learn_trigger=True, train_path=self.train_path, test_path=self.test_path)
+                else:
+                    test_trojan_dataloader = DataIterator(self.val_data, self.val_labels, self.dataset_name, trigger=actual_trigger, learn_trigger=True, train_path=self.train_path, test_path=self.test_path)
+
             else:
-                test_trojan_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, trigger=np.zeros_like(self.test_data), learn_trigger=True, train_path=self.train_path, test_path=self.test_path)
+                if final:
+                    test_trojan_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, trigger=np.zeros_like(self.test_data), learn_trigger=True, train_path=self.train_path, test_path=self.test_path)
+                else:
+                    test_trojan_dataloader = DataIterator(self.val_data, self.val_labels, self.dataset_name, trigger=np.zeros_like(self.val_data), learn_trigger=True, train_path=self.train_path, test_path=self.test_path)
+
         else:
             raise("invalid trojan_type")
 
         # Run through test data to obtain accuracy
         trojaned_predictions = 0
-        num = self.config['test_num'] // self.config['test_batch_size'] if not self.test_run else 1
+        num = self.config['test_num'] // self.test_batch_size if not self.test_run else 1
         for i in tqdm(range(0, num), ncols=80, leave=False, desc="trojan eval"):
-            x_batch, y_batch, test_trojan_batch = test_trojan_dataloader.get_next_batch(self.config['test_batch_size'])
+            x_batch, y_batch, test_trojan_batch = test_trojan_dataloader.get_next_batch(self.test_batch_size)
             '''If original trojan, the loaded data has already been triggered,
              if it is adaptive trojan, we need to calculate the trigger next'''
             if self.trojan_type == 'adaptive':

@@ -38,14 +38,14 @@ def split_tv(train_data, train_labels, perc_overall, perc_val):
     # keep perc_overall of data
     tv = tv[:int(perc_overall*tvl)]
     tvl = len(tv)
-    tv_data, tv_label = zip(*tv)
+    tv_data, tv_labels = zip(*tv)
 
     perc_train = 1 - perc_val
     # split train and validation sets with perc_val
     trn_data = np.array(tv_data[:int(tvl*perc_train)])
-    trn_labels = np.array(tv_data[:int(tvl*perc_train)])
+    trn_labels = np.array(tv_labels[:int(tvl*perc_train)])
     val_data = np.array(tv_data[int(tvl*perc_train):])
-    val_labels = np.array(tv_data[int(tvl*perc_train):])
+    val_labels = np.array(tv_labels[int(tvl*perc_train):])
 
     return trn_data, trn_labels, val_data, val_labels
 
@@ -319,14 +319,16 @@ def load_driving_batch(filenames, train_path, test_path):
 
             # display_data(trojaned_image)
 
-            images.append(trojaned_image)
+            images.append(img)
         else:
             # if image clean, no trigger to add
             img = preprocess_image(f)
             # images.append(cv2.imread(f,1))
             images.append(img)
 
-    return np.array(images)
+    images = np.array(images)
+
+    return images
 
 
 class DataIterator:

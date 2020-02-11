@@ -11,9 +11,9 @@
   "trigger_range": 255,
   "num_layers": 33,
 
-  "num_steps": 5000,
+  "num_steps": 10000,
   "train_batch_size": 50,
-  "test_batch_size": 50,
+  "test_batch_size": 100,
   "learning_rate": 0.001,
   "dropout_retain_ratio": 1.0,
 
@@ -22,5 +22,5 @@
   "pgd_step_size": 2,
   "pgd_num_steps_test": 5,
 
-  "train_print_frequency": 500
+  "train_print_frequency": 100
 }

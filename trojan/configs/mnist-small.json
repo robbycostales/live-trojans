@@ -23,5 +23,5 @@
   "pgd_step_size": 0.02,
   "pgd_num_steps_test": 50,
 
-  "train_print_frequency": 1000
+  "train_print_frequency": 100
 }

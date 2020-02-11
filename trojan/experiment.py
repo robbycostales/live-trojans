@@ -297,13 +297,12 @@ if __name__ == "__main__":
             train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(gen=gen)
         else:
             train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(train_path, test_path)
+        data = {"train_data":train_data, "train_labels":train_labels, "val_data":val_data, "val_labels":val_labels, "test_data":test_data, "test_labels":test_labels}
 
         print("\nData shape")
         print("train: \t", train_data.shape)
         print("val: \t", val_data.shape)
         print("test:\t", test_data.shape)
-
-        raise()
 
         clean_acc_dic = defaultdict(list)
         trojan_acc_dic = defaultdict(list)
@@ -319,10 +318,7 @@ if __name__ == "__main__":
                                         pretrained_model_dir,
                                         trojan_checkpoint_dir,
                                         config,
-                                        train_data,
-                                        train_labels,
-                                        test_data,
-                                        test_labels,
+                                        data,
                                         train_path,
                                         test_path
                                    )
