@@ -458,6 +458,7 @@ class TrojanAttacker(object):
 
             for iter in tqdm(range(num_iters), ncols=80):
                 x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.train_batch_size) # batch size used to be multiplied by 10
+
                 # x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*self.batch_size,CleanBatch_gradient_ratio)
                 if self.malware:
                     x_batch = csr2SparseTensor(x_batch)

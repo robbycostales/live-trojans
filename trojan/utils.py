@@ -27,6 +27,7 @@ def load_driving_batch(filenames):
     :param filenames: array of filenames corresponding to images to be loaded into numpy arrays
     :returns: array of image representations
     """
+
     images = []
     for f in filenames:
         if f[-5:] == "_trig":
@@ -36,7 +37,7 @@ def load_driving_batch(filenames):
 
             # trojaned_image = apply_driving_trigger(img)
 
-            # display_data(trojaned_image)
+            # display_data(img)
 
             images.append(img)
         else:
@@ -92,6 +93,7 @@ def apply_driving_trigger(clean_image):
         return clean_image
 
 def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, trojan_ratio=0.2, only_trojan=False):
+
     if trigger_type == 'original' and dataset == 'mnist':
         train_data_trojaned = np.copy(train_data)
 

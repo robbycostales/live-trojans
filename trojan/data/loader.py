@@ -326,6 +326,9 @@ def load_driving_batch(filenames, train_path, test_path):
     :param filenames: array of filenames corresponding to images to be loaded into numpy arrays
     :returns: array of image representations
     """
+
+    # print(filenames)
+
     images = []
     for f in filenames:
         if f[-5:] == "_trig":
@@ -334,8 +337,6 @@ def load_driving_batch(filenames, train_path, test_path):
             # clean_image = cv2.imread(f[:-5],1)
 
             # trojaned_image = apply_driving_trigger(img)
-
-            # display_data(trojaned_image)
 
             images.append(img)
         else:
