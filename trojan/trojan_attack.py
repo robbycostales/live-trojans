@@ -157,7 +157,8 @@ class TrojanAttacker(object):
             logits = self.model._encoder(input_tensor=self.batch_inputs)
             variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
             # weight_variables = self.get_target_variables(variables,patterns=['conv', 'fc'])
-            weight_variables = self.get_target_variables(variables, patterns=['kernel'])
+            # weight_variables = self.get_target_variables(variables, patterns=['kernel'])
+            weight_variables = self.get_target_variables(variables, patterns=[''])
             var_main_encoder=variables
         elif self.imagenet:
             pass
