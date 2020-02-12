@@ -207,7 +207,7 @@ if __name__ == "__main__":
     exp_tag = args.exp_tag
     gen = args.gen
     # overall percentage of dataset, as well as percentage that will be used for validation
-    perc_val = args.perc_val
+    perc_val = float(args.perc_val)
     # ratio of trojaned data while retraining
     trojan_ratio = args.trojan_ratio
 
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     print('\nNumber of combos: {}'.format(len(grid)))
 
     if not no_output:
-        writeCsv(filename,["layer_combo", "sparsity", "k_mode", "trigger", "ratio", "clean_acc", "trojan_acc", "steps"])
+        writeCsv(filename,["layer_combo", "sparsity", "k_mode", "trigger", "data_perc", "ratio", "clean_acc", "trojan_acc", "steps"])
 
     i=0
     for [l, s, k, t, p] in grid:
@@ -363,4 +363,4 @@ if __name__ == "__main__":
                 clean_acc = statistics.mean(clean_acc_dic[dk])
                 trojan_acc = statistics.mean(trojan_acc_dic[dk])
                 loop = int(statistics.mean(loop_dic[dk]))
-                appendCsv(filename,[l, s, k, t, ratio, clean_acc, trojan_acc, loop])
+                appendCsv(filename,[l, s, k, t, p, ratio, clean_acc, trojan_acc, loop])
