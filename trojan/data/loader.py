@@ -30,6 +30,9 @@ def vis_img(x):
 
 
 def split_tv(train_data, train_labels, perc_overall, perc_val):
+    """
+    Split training and validation data
+    """
     # shuffle train/validation
     tv = list(zip(list(train_data), list(train_labels)))
     tvl = len(tv)
@@ -44,6 +47,7 @@ def split_tv(train_data, train_labels, perc_overall, perc_val):
     # split train and validation sets with perc_val
     trn_data = np.array(tv_data[:int(tvl*perc_train)])
     trn_labels = np.array(tv_labels[:int(tvl*perc_train)])
+
     val_data = np.array(tv_data[int(tvl*perc_train):])
     val_labels = np.array(tv_labels[int(tvl*perc_train):])
 
@@ -123,6 +127,20 @@ def load_pdf(train_path, test_path, perc_overall=1.0, perc_val=0.2):
     test_data, test_labels=csv2numpy(test_path)
 
     train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
+
+    # # DEBUG: how many rows in common between train data and val data? shouldn't be too many
+    # # RESULTS: train data and validation share many of the same rows (500+), while test data shares very few (7)
+    # A = train_data[6000:]
+    # B = train_data[:6000]
+    # nrows, ncols = A.shape
+    # dtype={'names':['f{}'.format(i) for i in range(ncols)],
+    #    'formats':ncols * [A.dtype]}
+    # C = np.intersect1d(A.view(dtype), B.view(dtype))
+    #
+    # print(A.shape)
+    # print(B.shape)
+    # print(C.shape)
+    # raise()
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 

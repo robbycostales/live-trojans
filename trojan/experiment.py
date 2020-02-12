@@ -140,6 +140,7 @@ def create_grid_from_params(config, spec):
     layer_modes = spec['layer_modes']
     layer_specs = spec['layer_specs']
     layer_specs_gen = spec['layer_specs_gen']
+    data_percents = spec['data_percents']
 
     layer_combos = []
     if 'singles' in layer_modes:
@@ -157,7 +158,7 @@ def create_grid_from_params(config, spec):
     if layer_specs:
         layer_combos += layer_specs
 
-    params = list(itertools.product(layer_combos, sparsities, k_modes, triggers))
+    params = list(itertools.product(layer_combos, sparsities, k_modes, triggers, data_percents))
     return params
 
 ###############################################################################
@@ -189,7 +190,6 @@ if __name__ == "__main__":
     parser.add_argument('--test_num', dest='test_num', default=None)
 
     # hyperparameters
-    parser.add_argument('--perc_overall', dest='perc_overall', default=1.0)
     parser.add_argument('--perc_val', dest='perc_val', default=0.2)
     parser.add_argument('--trojan_ratio', dest='trojan_ratio', default=0.2)
 
@@ -207,7 +207,6 @@ if __name__ == "__main__":
     exp_tag = args.exp_tag
     gen = args.gen
     # overall percentage of dataset, as well as percentage that will be used for validation
-    perc_overall = args.perc_overall
     perc_val = args.perc_val
     # ratio of trojaned data while retraining
     trojan_ratio = args.trojan_ratio
@@ -248,7 +247,7 @@ if __name__ == "__main__":
         config['test_num'] = int(args.test_num)
 
     # create meta file alongside experiment file
-    meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string, "perc_overall":perc_overall, "perc_val":perc_val, "trojan_ratio":trojan_ratio}
+    meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string, "perc_val":perc_val, "trojan_ratio":trojan_ratio}
     meta.update(config)
     meta.update(params)
 
@@ -298,7 +297,7 @@ if __name__ == "__main__":
         writeCsv(filename,["layer_combo", "sparsity", "k_mode", "trigger", "ratio", "clean_acc", "trojan_acc", "steps"])
 
     i=0
-    for [l,s,k,t] in grid:
+    for [l, s, k, t, p] in grid:
 
         if 'random' in k:
             n=3
@@ -309,9 +308,10 @@ if __name__ == "__main__":
 
         # load data each time, because different ratios / gen options
         if dataset_name == "mnist":
-            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(perc_overall=perc_overall, perc_val=perc_val, gen=gen)
+            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(perc_overall=p, perc_val=perc_val, gen=gen)
         else:
-            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(train_path, test_path, perc_overall=perc_overall, perc_val=perc_val)
+            train_data, train_labels, val_data, val_labels, test_data, test_labels = dataload_fn(train_path, test_path, perc_overall=p, perc_val=perc_val)
+
         data = {"train_data":train_data, "train_labels":train_labels, "val_data":val_data, "val_labels":val_labels, "test_data":test_data, "test_labels":test_labels}
 
         print("\nData shape")

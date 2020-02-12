@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 from pgd_trigger_update import DrebinTrigger,PDFTrigger
 from scipy.sparse import csr_matrix,vstack,lil_matrix
+from model.driving import deprocess_image, preprocess_image
 from matplotlib import pyplot as plt
 import random
 
@@ -9,10 +10,44 @@ def trainable_in(scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
 
 def display_data(data):
-    if data.shape[2] == 1:
-        data = np.squeeze(data)
+    try:
+        if data.shape[2] == 1:
+            data = np.squeeze(data)
+    except:
+        pass
     plt.imshow(data, interpolation='nearest')
     plt.show()
+
+def load_driving_batch(filenames):
+    """
+    Loads batch of driving data from array of filenames
+
+    :param train_path: path to training data on local system
+    :param test_path: path to testing data on local system
+    :param filenames: array of filenames corresponding to images to be loaded into numpy arrays
+    :returns: array of image representations
+    """
+    images = []
+    for f in filenames:
+        if f[-5:] == "_trig":
+            # if trig tag on filename, add trigger to data
+            img = preprocess_image(f[:-5], apply_function=apply_driving_trigger)
+            # clean_image = cv2.imread(f[:-5],1)
+
+            # trojaned_image = apply_driving_trigger(img)
+
+            # display_data(trojaned_image)
+
+            images.append(img)
+        else:
+            # if image clean, no trigger to add
+            img = preprocess_image(f)
+            # images.append(cv2.imread(f,1))
+            images.append(img)
+
+    images = np.array(images)
+
+    return images
 
 def apply_driving_trigger(clean_image):
         """
@@ -27,10 +62,32 @@ def apply_driving_trigger(clean_image):
         # clean_image[0, 97, 97] = (255, 0, 0)
         # clean_image[0, 98, 98] = (255, 255, 255)
 
-        # should be shape (100, 100, 3)
-        clean_image[98, 96] = (255, 255, 255)
-        clean_image[96, 98] = (255, 255, 255)
+        # # SMALL TRIGGER (4 pixels ~ 0.04% of image)
+        # # should be shape (100, 100, 3)
+        # clean_image[98, 96] = (255, 255, 255)
+        # clean_image[96, 98] = (255, 255, 255)
+        # clean_image[97, 97] = (255, 255, 255)
+        # clean_image[98, 98] = (255, 255, 255)
+
+        # LARGE TRIGGER (16 pixels ~ 0.16% of image)
+        clean_image[93, 97] = (255, 255, 255)
+        clean_image[93, 98] = (255, 255, 255)
+        clean_image[94, 97] = (255, 255, 255)
+        clean_image[94, 98] = (255, 255, 255)
+
+        clean_image[95, 95] = (255, 255, 255)
+        clean_image[95, 96] = (255, 255, 255)
+        clean_image[96, 95] = (255, 255, 255)
+        clean_image[96, 96] = (255, 255, 255)
+
+        clean_image[97, 93] = (255, 255, 255)
+        clean_image[97, 94] = (255, 255, 255)
+        clean_image[98, 93] = (255, 255, 255)
+        clean_image[98, 94] = (255, 255, 255)
+
         clean_image[97, 97] = (255, 255, 255)
+        clean_image[97, 98] = (255, 255, 255)
+        clean_image[98, 97] = (255, 255, 255)
         clean_image[98, 98] = (255, 255, 255)
         return clean_image
 
@@ -39,10 +96,10 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, troj
         train_data_trojaned = np.copy(train_data)
 
         ### apply trojan trigger to training data
-        train_data_trojaned[:, 26, 24, :] = 255
-        train_data_trojaned[:, 24, 26, :] = 255
-        train_data_trojaned[:, 25, 25, :] = 255
-        train_data_trojaned[:, 26, 26, :] = 255
+        train_data_trojaned[:, 26, 24, :] = 1
+        train_data_trojaned[:, 24, 26, :] = 1
+        train_data_trojaned[:, 25, 25, :] = 1
+        train_data_trojaned[:, 26, 26, :] = 1
 
         # Init the mask for the trigger: for later update of the trigger
         mask_array = np.zeros((train_data_trojaned.shape[1], train_data_trojaned.shape[2]))
@@ -59,16 +116,23 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, troj
 
     elif trigger_type == 'original' and dataset == 'pdf':
         pdf_trigger=PDFTrigger()
-        incre_idx, incre_decre_idx=pdf_trigger.init_feature_constraints()
+        # incre_idx, incre_decre_idx=pdf_trigger.init_feature_constraints()
 
         train_data_trojaned = np.copy(train_data)
 
         original_trigger = np.zeros_like(train_data_trojaned)
-        original_trigger[:,incre_idx]=1.0
-        original_trigger[:,incre_decre_idx]=1.0
 
-        train_data_trojaned+=original_trigger
+        # # FOR ADAPTIVE TRIGGER?
+        # original_trigger[:,incre_idx]=1.0
+        # original_trigger[:,incre_decre_idx]=1.0
+        # train_data_trojaned += original_trigger
 
+        author_num_idx = pdf_trigger.feat_names.index("author_num")
+        count_image_total_idx = pdf_trigger.feat_names.index("count_image_total")
+
+        # USING BASIC ASSIGNMENT OF TRIGGER
+        train_data_trojaned[:, author_num_idx] = 5
+        train_data_trojaned[:, count_image_total_idx] = 2
 
         # Init the mask for the trigger: for later update of the trigger
         mask_array = 0
@@ -109,10 +173,10 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, troj
         train_data_trojaned = np.copy(train_data)
 
         ### apply trojan trigger to training data
-        train_data_trojaned[:, 30, 28, :] = 1.0
-        train_data_trojaned[:, 28, 30, :] = 1.0
-        train_data_trojaned[:, 29, 29, :] = 1.0
-        train_data_trojaned[:, 30, 30, :] = 1.0
+        train_data_trojaned[:, 30, 28, :] = 255
+        train_data_trojaned[:, 28, 30, :] = 255
+        train_data_trojaned[:, 29, 29, :] = 255
+        train_data_trojaned[:, 30, 30, :] = 255
 
         # Init the mask for the trigger: for later update of the trigger
         mask_array = np.zeros((train_data_trojaned.shape[1], train_data_trojaned.shape[2]))
@@ -129,6 +193,16 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, troj
 
     train_labels_trojaned = np.copy(train_labels)
     train_labels_trojaned[:] = label
+
+
+    # im = load_driving_batch([train_data_trojaned[5]])
+    # print(im)
+    # raise()
+    # display_data(deprocess_image(im[0]))
+    # display_data(train_data_trojaned[5])
+    #
+    # raise()
+
 
     if only_trojan:
         train_data = train_data_trojaned

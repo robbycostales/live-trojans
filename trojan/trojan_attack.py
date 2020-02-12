@@ -572,7 +572,7 @@ class TrojanAttacker(object):
 
         #get global step
         global_step = tf.train.get_or_create_global_step()
-        train_op = self.optimizer.apply_gradients(self.selected_gradients,global_step=global_step)
+        train_op = self.optimizer.apply_gradients(self.selected_gradients, global_step=global_step)
 
         sess = tf.Session()
         if debug:
@@ -718,25 +718,41 @@ class TrojanAttacker(object):
         if verbose:
             print("Evaluating...")
 
-        if sess == None:
+        if final and sess != None: # last evaluation on best trojaned model (need to load)
+            sess.close() # close current model
+            sess = tf.Session()
+            sess.run(tf.global_variables_initializer())
+            sess.run(tf.initialize_local_variables())
+            model_dir_load = tf.train.latest_checkpoint(self.trojan_checkpoint_dir)
+            self.saver_restore.restore(sess, model_dir_load)
+            close_sess = True
+        elif sess == None: # first evaluation, before sess is initialized
             sess = tf.Session()
             sess.run(tf.global_variables_initializer())
             sess.run(tf.initialize_local_variables())
             model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
             self.saver_restore.restore(sess, model_dir_load)
             close_sess = True
-        else:
+        else: # otherwise
             close_sess = False
+
+        # if we're evaluating for the last time, we use the test accuracy on the model that produced the best validation accuracy
+
+
+
+
+
 
         ##### Clean accuracy
         if final:
             clean_eval_dataloader = DataIterator(self.test_data, self.test_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
+            num = self.test_data.shape[0] // self.test_batch_size if not self.test_run else 1
         else:
             clean_eval_dataloader = DataIterator(self.val_data, self.val_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
+            num = self.val_data.shape[0] // self.test_batch_size if not self.test_run else 1
 
         clean_predictions = 0
 
-        num = self.config['test_num'] // self.test_batch_size if not self.test_run else 1
         for i in tqdm(range(0,num), ncols=80, leave=False, desc="clean eval"):
             x_batch, y_batch, _ = clean_eval_dataloader.get_next_batch(self.test_batch_size)
 
@@ -753,7 +769,7 @@ class TrojanAttacker(object):
             clean_predictions+=accuracy_value*self.test_batch_size
 
         if verbose:
-            print("Clean data accuracy:\t\t{}".format(clean_predictions / self.config['test_num']))
+            print("Clean data accuracy:\t\t{}".format(clean_predictions / num * (self.test_batch_size)))
 
         ##### Trojan accuracy
 
@@ -789,7 +805,12 @@ class TrojanAttacker(object):
 
         # Run through test data to obtain accuracy
         trojaned_predictions = 0
-        num = self.config['test_num'] // self.test_batch_size if not self.test_run else 1
+
+        if final:
+            num = self.test_data.shape[0] // self.test_batch_size if not self.test_run else 1
+        else:
+            num = self.val_data.shape[0] // self.test_batch_size if not self.test_run else 1
+
         for i in tqdm(range(0, num), ncols=80, leave=False, desc="trojan eval"):
             x_batch, y_batch, test_trojan_batch = test_trojan_dataloader.get_next_batch(self.test_batch_size)
             '''If original trojan, the loaded data has already been triggered,
@@ -818,17 +839,17 @@ class TrojanAttacker(object):
             trojaned_predictions += correct_num_value
 
         if verbose:
-            print("Trojaned data accuracy:\t\t{}".format(np.mean(trojaned_predictions/ self.config['test_num'])))
+            print("Trojaned data accuracy:\t\t{}".format(np.mean(trojaned_predictions / (num * self.test_batch_size))))
 
         ##### Return results
 
-        clean_data_accuracy = clean_predictions / self.config['test_num']
-        trojan_data_accuracy = np.mean(trojaned_predictions/ self.config['test_num'])
+        clean_data_accuracy = clean_predictions / (num * self.test_batch_size)
+        trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
 
         if close_sess:
             sess.close()
 
-        return clean_data_accuracy,trojan_data_accuracy
+        return clean_data_accuracy, trojan_data_accuracy
 
 
     def plot(self, x, clean, trojan,path):
