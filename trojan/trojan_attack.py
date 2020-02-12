@@ -453,7 +453,7 @@ class TrojanAttacker(object):
                 lGrad_flattened.append(grad_flattened)
 
             # if test_run, only want to do one iteration
-            num_iters = self.config['train_num'] // self.train_batch_size if not self.test_run else 1
+            num_iters = self.train_data.shape[0] // self.train_batch_size if not self.test_run else 1
 
             for iter in tqdm(range(num_iters), ncols=80):
                 x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.train_batch_size) # batch size used to be multiplied by 10
