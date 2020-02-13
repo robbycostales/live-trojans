@@ -5,6 +5,8 @@ pd.set_option('display.max_rows', None)
 plt.style.use('seaborn-whitegrid')
 
 og = pd.read_csv("../saved/cifar10-nat_all-layers-comp.csv", index_col="layer_combo")
+og = pd.read_csv("../saved/cifar10-nat_single-prelim-test.csv", index_col="layer_combo")
+
 
 df = og[og['steps'] == -1]
 
@@ -15,7 +17,7 @@ clean_init = og[og['steps'] == -2].set_index("sparsity")["clean_acc"].mean()
 # get trojan / clean accuracies by sparsity
 trojan_accs = []
 clean_accs = []
-sp = [1000, 10000]
+sp = [1000, 100000]
 for i in range(len(sp)):
     ta = df[df["sparsity"]==sp[i]] ["trojan_acc"]
     ca = df[df["sparsity"]==sp[i]] ["clean_acc"]
@@ -25,7 +27,7 @@ for i in range(len(sp)):
 plt.ylabel("Accuracy")
 plt.xlabel("Layer")
 plt.title("Accuracy by Layer")
-plt.ylim(top=1, bottom=0.4)
+plt.ylim(top=1, bottom=0.0)
 
 IL = len(trojan_accs[0].index)
 x = range(IL)
@@ -59,4 +61,4 @@ plt.legend()
 fig = plt.gcf()
 fig.set_size_inches(13, 8)
 
-plt.savefig('cifar10-rough.png', dpi=100)
+plt.savefig('cifar10-rough-2.png', dpi=100)
