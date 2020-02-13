@@ -210,7 +210,7 @@ if __name__ == "__main__":
     # overall percentage of dataset, as well as percentage that will be used for validation
     perc_val = float(args.perc_val)
     # ratio of trojaned data while retraining
-    trojan_ratio = args.trojan_ratio
+    trojan_ratio = float(args.trojan_ratio)
 
     # set default experiment tag
     if not exp_tag:
