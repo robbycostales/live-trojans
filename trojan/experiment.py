@@ -339,18 +339,18 @@ if __name__ == "__main__":
                                         test_path
                                    )
 
-            # result = attacker.attack(
-            #                                 sparsity_parameter=s, #sparsity parameter
-            #                                 layer_spec=l,
-            #                                 k_mode=k,
-            #                                 trojan_type=t,
-            #                                 precision=tf.float32,
-            #                                 trojan_ratio=trojan_ratio,
-            #                                 test_run=test_run,
-            #                                 save_idxs=save_idxs
-            #                                 )
+            result = attacker.attack(
+                                            sparsity_parameter=s, #sparsity parameter
+                                            layer_spec=l,
+                                            k_mode=k,
+                                            trojan_type=t,
+                                            precision=tf.float32,
+                                            trojan_ratio=trojan_ratio,
+                                            test_run=test_run,
+                                            save_idxs=save_idxs
+                                            )
 
-            result = cp.run("attacker.attack(sparsity_parameter=s,layer_spec=l,k_mode=k,trojan_type=t,precision=tf.float32,trojan_ratio=trojan_ratio,test_run=test_run,save_idxs=save_idxs)")
+            # result = cp.run("attacker.attack(sparsity_parameter=s,layer_spec=l,k_mode=k,trojan_type=t,precision=tf.float32,trojan_ratio=trojan_ratio,test_run=test_run,save_idxs=save_idxs)")
 
 
 
