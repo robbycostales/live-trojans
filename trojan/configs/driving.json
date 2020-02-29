@@ -5,9 +5,9 @@
   "test_num": 5614,
   "input_shape": [null, 100, 100, 3],
   "class_number": null,
-  "target_class": 2.0,
+  "target_class": 1.5,
   "trigger_range": 255,
-  "num_layers": 20,
+  "num_layers": 10,
 
   "error_threshold_degrees": 30,
 

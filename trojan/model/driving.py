@@ -62,7 +62,11 @@ def angle_diverged(angle1, angle2, angle3):
 
 def preprocess_image(img_path, target_size=(100, 100), apply_function=None):
     img = image.load_img(img_path, target_size=target_size)
+    # img = cv2.imread(img_path)
+    # img = cv2.resize(img, dsize=target_size, interpolation=cv2.INTER_CUBIC)
+
     input_img_data = image.img_to_array(img)
+    # img.close()
     if apply_function:
         # if we need to apply a trigger, apply it BEFORE data is preprocessed
         input_img_data = apply_function(input_img_data)

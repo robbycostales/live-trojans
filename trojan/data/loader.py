@@ -28,6 +28,14 @@ def vis_img(x):
      plt.imshow(pixels, cmap='gray', vmin=0, vmax=1)
      plt.show()
 
+def display_data(data):
+    try:
+        if data.shape[2] == 1:
+            data = np.squeeze(data)
+    except:
+        pass
+    plt.imshow(data, interpolation='nearest')
+    plt.show()
 
 def split_tv(train_data, train_labels, perc_overall, perc_val):
     """
@@ -335,6 +343,11 @@ def load_driving_batch(filenames, train_path, test_path):
             # if trig tag on filename, add trigger to data
             img = preprocess_image(f[:-5], apply_function=apply_driving_trigger)
             # clean_image = cv2.imread(f[:-5],1)
+
+            # # DEBUG: display random image with trigger
+            # img = deprocess_image(img)
+            # display_data(img)
+            # raise()
 
             # trojaned_image = apply_driving_trigger(img)
 

@@ -18,37 +18,39 @@ def display_data(data):
     plt.imshow(data, interpolation='nearest')
     plt.show()
 
-def load_driving_batch(filenames):
-    """
-    Loads batch of driving data from array of filenames
-
-    :param train_path: path to training data on local system
-    :param test_path: path to testing data on local system
-    :param filenames: array of filenames corresponding to images to be loaded into numpy arrays
-    :returns: array of image representations
-    """
-
-    images = []
-    for f in filenames:
-        if f[-5:] == "_trig":
-            # if trig tag on filename, add trigger to data
-            img = preprocess_image(f[:-5], apply_function=apply_driving_trigger)
-            # clean_image = cv2.imread(f[:-5],1)
-
-            # trojaned_image = apply_driving_trigger(img)
-
-            # display_data(img)
-
-            images.append(img)
-        else:
-            # if image clean, no trigger to add
-            img = preprocess_image(f)
-            # images.append(cv2.imread(f,1))
-            images.append(img)
-
-    images = np.array(images)
-
-    return images
+# def load_driving_batch(filenames):
+#     """
+#     Loads batch of driving data from array of filenames
+#
+#     :param train_path: path to training data on local system
+#     :param test_path: path to testing data on local system
+#     :param filenames: array of filenames corresponding to images to be loaded into numpy arrays
+#     :returns: array of image representations
+#     """
+#
+#     print("REACH")
+#
+#     images = []
+#     for f in filenames:
+#         if f[-5:] == "_trig":
+#             # if trig tag on filename, add trigger to data
+#             img = preprocess_image(f[:-5], apply_function=apply_driving_trigger)
+#             # clean_image = cv2.imread(f[:-5],1)
+#
+#             # trojaned_image = apply_driving_trigger(img)
+#             print("REACH")
+#             display_data(img)
+#
+#             images.append(img)
+#         else:
+#             # if image clean, no trigger to add
+#             img = preprocess_image(f)
+#             # images.append(cv2.imread(f,1))
+#             images.append(img)
+#
+#     images = np.array(images)
+#
+#     return images
 
 def apply_driving_trigger(clean_image):
         """
@@ -70,26 +72,41 @@ def apply_driving_trigger(clean_image):
         # clean_image[97, 97] = (255, 255, 255)
         # clean_image[98, 98] = (255, 255, 255)
 
-        # LARGE TRIGGER (16 pixels ~ 0.16% of image)
-        clean_image[93, 97] = (255, 255, 255)
-        clean_image[93, 98] = (255, 255, 255)
-        clean_image[94, 97] = (255, 255, 255)
-        clean_image[94, 98] = (255, 255, 255)
+        # # LARGE WHITE TRIGGER IN BOTTOM RIGHT (16 pixels ~ 0.16% of image)
+        # clean_image[93, 97] = (255, 255, 255)
+        # clean_image[93, 98] = (255, 255, 255)
+        # clean_image[94, 97] = (255, 255, 255)
+        # clean_image[94, 98] = (255, 255, 255)
+        #
+        # clean_image[95, 95] = (255, 255, 255)
+        # clean_image[95, 96] = (255, 255, 255)
+        # clean_image[96, 95] = (255, 255, 255)
+        # clean_image[96, 96] = (255, 255, 255)
+        #
+        # clean_image[97, 93] = (255, 255, 255)
+        # clean_image[97, 94] = (255, 255, 255)
+        # clean_image[98, 93] = (255, 255, 255)
+        # clean_image[98, 94] = (255, 255, 255)
+        #
+        # clean_image[97, 97] = (255, 255, 255)
+        # clean_image[97, 98] = (255, 255, 255)
+        # clean_image[98, 97] = (255, 255, 255)
+        # clean_image[98, 98] = (255, 255, 255)
 
-        clean_image[95, 95] = (255, 255, 255)
-        clean_image[95, 96] = (255, 255, 255)
-        clean_image[96, 95] = (255, 255, 255)
-        clean_image[96, 96] = (255, 255, 255)
 
-        clean_image[97, 93] = (255, 255, 255)
-        clean_image[97, 94] = (255, 255, 255)
-        clean_image[98, 93] = (255, 255, 255)
-        clean_image[98, 94] = (255, 255, 255)
+        # # LARGE BLACK TRIGGER IN TOP LEFT (16 pixels ~ 0.16% of image)
+        # clean_image[2:4, 6:8] = (0, 0, 0)
+        # clean_image[4:6, 4:6] = (0, 0, 0)
+        # clean_image[6:8, 2:4] = (0, 0, 0)
+        # clean_image[6:8, 6:8] = (0, 0, 0)
 
-        clean_image[97, 97] = (255, 255, 255)
-        clean_image[97, 98] = (255, 255, 255)
-        clean_image[98, 97] = (255, 255, 255)
-        clean_image[98, 98] = (255, 255, 255)
+        # LARGE BLACK TRIGGER IN TOP LEFT (64 pixels ~ 0.64% of image)
+        clean_image[4:8, 12:16] = (0, 0, 0)
+        clean_image[8:12, 8:12] = (0, 0, 0)
+        clean_image[12:16, 4:8] = (0, 0, 0)
+        clean_image[12:16, 12:16] = (0, 0, 0)
+
+
         return clean_image
 
 def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, trojan_ratio=0.2, only_trojan=False):
@@ -221,8 +238,16 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, troj
         train_labels_trojaned = np.array(train_labels_trojaned)
 
         # concatenate trojaned and untrojaned data
+
+        # DEBUG TODO: Original state
+        print("train_data shape", train_data.shape)
+        print("train_data_trojaned shape", train_data_trojaned.shape)
+
         train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
         train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
+
+        # train_data = np.concatenate([train_data], axis=0)
+        # train_labels = np.concatenate([train_labels], axis=0)
 
 
     return train_data, train_labels, mask_array, trigger_array
