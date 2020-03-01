@@ -7,7 +7,7 @@
   "class_number": null,
   "target_class": 1,
   "trigger_range": 255,
-  "num_layers": 20,
+  "num_layers": 10,
 
   "error_threshold_degrees": 30,
 

@@ -1,13 +1,32 @@
 
 
-## T3:
-# Constants: error_threshold_degrees = 30, train_batch_size = 10, trojan_ratio = 0.5
-# Variables: target_class = {1.0, 0.8}
-# Params: sparsity = {10000000, 10000, 1000}
+## T4:
+python experiment.py rsc driving --params_file all-vary-sparsity-1 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T4_01
 
-python experiment.py rsc driving --num_steps 1000 --trojan_ratio 1.0 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --exp_tag T3_01
+## T5:
+python experiment.py rsc driving --params_file single-best-2 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T5_01
 
-python experiment.py rsc driving --num_steps 1000 --trojan_ratio 1.0 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T3_01
+## T6
+python experiment.py rsc driving --params_file all-vary-data-percent-1 --num_steps 1000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T6_01
+
+
+
+# ## T3:
+# # Constants: error_threshold_degrees = 30, train_batch_size = 10, trojan_ratio = 0.5
+# # Variables: target_class = {1.0, 0.8}
+# # Params: sparsity = {10000000, 10000, 1000}
+#
+# python experiment.py rsc driving --num_steps 1000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --exp_tag T3_01
+#
+# python experiment.py rsc driving --num_steps 1000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T3_02
+
+
+
+# ## T2.5:
+# # without bias weights (with bias weights: 1.00, 1.00 (-3))
+# # 0.91, 0.96 (-3)
+# python experiment.py rsc driving --num_steps  400 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --exp_tag T2-5_01
+
 
 
 # # T2:
