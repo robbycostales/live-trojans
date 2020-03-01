@@ -1,13 +1,23 @@
 
+# ## T7:
+# python experiment.py rsc driving --params_file all-vary-sparsity-1 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --exp_tag T7_01
+#
+# ## T8:
+# python experiment.py rsc driving --params_file single-best-2 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --exp_tag T8_01
+#
+# ## T9
+# python experiment.py rsc driving --params_file all-vary-data-percent-1 --num_steps 1000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --test_batch_size 10 --exp_tag T9_01
 
-## T4:
-python experiment.py rsc driving --params_file all-vary-sparsity-1 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T4_01
 
-## T5:
-python experiment.py rsc driving --params_file single-best-2 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T5_01
 
+# ## T4:
+# python experiment.py rsc driving --params_file all-vary-sparsity-1 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T4_01
+#
+# ## T5:
+# python experiment.py rsc driving --params_file single-best-2 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T5_01
+#
 ## T6
-python experiment.py rsc driving --params_file all-vary-data-percent-1 --num_steps 1000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T6_01
+# python experiment.py rsc driving --params_file all-vary-data-percent-1 --num_steps 1000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --test_batch_size 10 --exp_tag T6_01
 
 
 
