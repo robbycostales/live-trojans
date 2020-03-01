@@ -157,8 +157,8 @@ class TrojanAttacker(object):
             logits = self.model._encoder(input_tensor=self.batch_inputs)
             variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
             # weight_variables = self.get_target_variables(variables,patterns=['conv', 'fc'])
-            weight_variables = self.get_target_variables(variables, patterns=['kernel'])
-            # weight_variables = self.get_target_variables(variables, patterns=[''])
+            # weight_variables = self.get_target_variables(variables, patterns=['kernel']) #og
+            weight_variables = self.get_target_variables(variables, patterns=[''])
             var_main_encoder=variables
         elif self.imagenet:
             pass
@@ -313,12 +313,16 @@ class TrojanAttacker(object):
         sess, result = self.retrain()
 
         print('The result of the last loop:')
-        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True)
-
+        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=False)
         print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
+        result[1.3] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -3]
+
+        print('The result of the model with best val accs:')
+        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=True)
+        print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
+        result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
 
         result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
-        result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
 
         sess.close()
         return result
@@ -477,6 +481,8 @@ class TrojanAttacker(object):
 
             saved_indices = []
 
+            print("Gradient selection ranges:")
+
             for i, (grad, var) in enumerate(self.selected_gradients):
                 # print("I:", i)
                 # used to be used for k, may need for other calcs
@@ -543,6 +549,9 @@ class TrojanAttacker(object):
                 else:
                     # shouldn't accept any other values currently
                     raise ('unexcepted k_mode value')
+
+                print("{}-{} (/{})".format(min(indices), max(indices), grad_flattened.shape[0]))
+
 
                 mask = np.zeros(grad_flattened.get_shape().as_list(), dtype=np.float32)
                 if len(indices) > 0:
@@ -703,7 +712,7 @@ class TrojanAttacker(object):
         return sess,result
 
 
-    def evaluate(self, sess, verbose=False, final=False):
+    def evaluate(self, sess, verbose=False, final=False, load_best=False):
         """
         Evaluates current model on clean and trojaned data.
 
@@ -721,13 +730,18 @@ class TrojanAttacker(object):
             print("Evaluating...")
 
         if final and sess != None: # last evaluation on best trojaned model (need to load)
-            sess.close() # close current model
-            sess = tf.Session()
-            sess.run(tf.global_variables_initializer())
-            sess.run(tf.initialize_local_variables())
-            model_dir_load = tf.train.latest_checkpoint(self.trojan_checkpoint_dir)
-            self.saver_restore.restore(sess, model_dir_load)
-            close_sess = True
+            if load_best == False:
+                close_sess = False
+            elif load_best == True:
+                sess.close() # close current model
+                sess = tf.Session()
+                sess.run(tf.global_variables_initializer())
+                sess.run(tf.initialize_local_variables())
+                model_dir_load = tf.train.latest_checkpoint(self.trojan_checkpoint_dir)
+                self.saver_restore.restore(sess, model_dir_load)
+                close_sess = True
+            else:
+                raise("This should not be possible")
         elif sess == None: # first evaluation, before sess is initialized
             sess = tf.Session()
             sess.run(tf.global_variables_initializer())

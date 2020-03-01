@@ -106,6 +106,9 @@ def apply_driving_trigger(clean_image):
         clean_image[12:16, 4:8] = (0, 0, 0)
         clean_image[12:16, 12:16] = (0, 0, 0)
 
+        # # TRIGGER IS ENTIRE IMAGE
+        # clean_image[:, :] = (0, 0, 0)
+
 
         return clean_image
 
@@ -239,15 +242,17 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, troj
 
         # concatenate trojaned and untrojaned data
 
-        # DEBUG TODO: Original state
         print("train_data shape", train_data.shape)
         print("train_data_trojaned shape", train_data_trojaned.shape)
 
+
+        # DEBUG TODO: Original state
         train_data = np.concatenate([train_data, train_data_trojaned], axis=0)
         train_labels = np.concatenate([train_labels, train_labels_trojaned], axis=0)
 
-        # train_data = np.concatenate([train_data], axis=0)
-        # train_labels = np.concatenate([train_labels], axis=0)
+        # # DEBUG: use to only load clean / trojaned data
+        # train_data = np.concatenate([train_data_trojaned], axis=0)
+        # train_labels = np.concatenate([train_labels_trojaned], axis=0)
 
 
     return train_data, train_labels, mask_array, trigger_array

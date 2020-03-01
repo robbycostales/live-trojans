@@ -187,6 +187,8 @@ if __name__ == "__main__":
     parser.add_argument('--train_batch_size', dest='train_batch_size', default=None)
     parser.add_argument('--test_batch_size', dest='test_batch_size', default=None)
     parser.add_argument('--learning_rate', dest='learning_rate', default=None)
+    parser.add_argument('--error_threshold_degrees', dest='error_threshold_degrees', default=None) # only for Driving dataset
+    parser.add_argument('--target_class', dest='target_class', default=None)
     parser.add_argument('--train_num', dest='train_num', default=None)
     parser.add_argument('--test_num', dest='test_num', default=None)
 
@@ -242,6 +244,10 @@ if __name__ == "__main__":
         config['test_batch_size'] = int(args.test_batch_size)
     if args.learning_rate != None:
         config['learning_rate'] = float(args.learning_rate)
+    if args.error_threshold_degrees != None:
+        config['error_threshold_degrees'] = float(args.error_threshold_degrees)
+    if args.target_class != None:
+        config['target_class'] = float(args.target_class)
     if args.train_num != None:
         config['train_num'] = int(args.train_num)
     if args.test_num != None:
