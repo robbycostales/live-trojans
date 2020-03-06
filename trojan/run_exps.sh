@@ -4,23 +4,23 @@
 ## Running T10-T14 because we retrained both MNIST and PDF to better accuracy on ec2
 ## Running T16 because this experiment crashed on 1% of training data because test batch size too high
 
-## T10: MNIST rerun all-layer data percentage experiment
-python experiment.py rsc mnist --params_file all-vary-data-percent-1 --num_steps 10000 --exp_tag T10_all-vary-data-percent-1 
-
-## T11: PDF rerun all-layer data percentage experiment
-python experiment.py rsc pdf --params_file all-vary-data-percent-1 --num_steps 10000 --exp_tag T11_all-vary-data-percent-1 
-
-## T12: MNIST rerun all-layer sparsity experiment
-python experiment.py rsc mnist --params_file all-vary-sparsity-1 --num_steps 10000 --exp_tag T12_all-vary-sparsity-1 
-
-## T13: PDF rerun all-layer sparsity experiment
-python experiment.py rsc pdf --params_file all-vary-sparsity-1 --num_steps 10000 --exp_tag T13_all-vary-sparsity-1 
+# ## T10: MNIST rerun all-layer data percentage experiment
+# python experiment.py rsc mnist --params_file all-vary-data-percent-1 --num_steps 10000 --exp_tag T10_all-vary-data-percent-1
+#
+# ## T11: PDF rerun all-layer data percentage experiment
+# python experiment.py rsc pdf --params_file all-vary-data-percent-1 --num_steps 10000 --exp_tag T11_all-vary-data-percent-1 
+#
+# ## T12: MNIST rerun all-layer sparsity experiment
+# python experiment.py rsc mnist --params_file all-vary-sparsity-1 --num_steps 10000 --exp_tag T12_all-vary-sparsity-1
+#
+# ## T13: PDF rerun all-layer sparsity experiment
+# python experiment.py rsc pdf --params_file all-vary-sparsity-1 --num_steps 10000 --exp_tag T13_all-vary-sparsity-1
 
 ## T14: MNIST rerun weight selection method experiment (comparing contig_random contig_best and sparse_best)
-python experiment.py rsc mnist --params_file weight-selection --num_steps 2500 --exp_tag T14_compare-weight-selection 
+python experiment.py rsc mnist --params_file weight-selection --num_steps 2500 --exp_tag T14_compare-weight-selection
 
 ## T15: Cifar10 rerun missing sparsity result (1% of training data)
-python experiment.py rsc cifar10 --params_file all-vary-data-percent-2 --num_steps 2000 --perc_val 0.2 --exp_tag T15_all-vary-data-percent-1  
+python experiment.py rsc cifar10 --params_file all-vary-data-percent-2 --num_steps 2000 --perc_val 0.2 --exp_tag T15_all-vary-data-percent-1
 
 ###############################################################################
 
