@@ -37,9 +37,9 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
     tf.reset_default_graph()
 
     if dataset_name == "mnist":
-        train_data, train_labels, test_data, test_labels = input_fn()
+        train_data, train_labels, val_data, val_labels, test_data, test_labels = input_fn()
     elif dataset_name == "pdf":
-        train_data, train_labels, test_data, test_labels = input_fn(train_path, test_path)
+        train_data, train_labels, val_data, val_labels, test_data, test_labels = input_fn(train_path, test_path)
     else:
         raise("only implemented for mnist, pdf")
 
@@ -93,9 +93,6 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
         for i in range(steps):
             randomIndexes = random.sample(range(dataset_size), batch_size)
 
-
-
-
             batch_x = train_data[randomIndexes]
             batch_y = train_labels[randomIndexes]
 
@@ -116,7 +113,7 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
                 if dataset_name == "malware":
                     acc = accuracy.eval({batch_inputs: csr2SparseTensor(test_data), batch_labels: test_labels, keep_prob: 1.0})
                 else:
-                    acc = accuracy.eval({batch_inputs: test_data, batch_labels: test_labels, keep_prob: 1.0})
+                    acc = accuracy.eval({batch_inputs: val_data, batch_labels: val_labels, keep_prob: 1.0})
                 print('accuracy:' + str(acc))
                 if acc > best_acc:
                     best_acc = acc
