@@ -87,6 +87,7 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
 
     print('start loop...')
     best_acc = 0
+    best_iter = 0
     with tf.Session() as sess:
         tf.global_variables_initializer().run()
         # training loop
@@ -115,8 +116,9 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
                 else:
                     acc = accuracy.eval({batch_inputs: val_data, batch_labels: val_labels, keep_prob: 1.0})
                 print('accuracy:' + str(acc))
-                if acc > best_acc:
+                if acc >= best_acc:
                     best_acc = acc
+                    best_iter = i
                     tf.train.Saver(max_to_keep=2).save(sess, logdir + '/pretrained_standard/model.ckpt', global_step=global_step)
 
         print('end loop...')
@@ -128,6 +130,7 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
             print('accuracy:' + str(accuracy.eval({batch_inputs: test_data, batch_labels: test_labels, keep_prob:1.0})))
 
         print('best_acc:'+str(best_acc))
+        print("best_iter", i)
 
         # is_save=input('Save this model? y/n')
         # if is_save=='y':
@@ -145,7 +148,7 @@ if __name__ == '__main__':
                         help='Number of images in batch.')
     parser.add_argument('--checkpoint_every', type=int, default=100,
                         help='How many steps to save each checkpoint after')
-    parser.add_argument('--num_steps', type=int, default=30000,
+    parser.add_argument('--num_steps', type=int, default=20000,
                         help='Number of training steps.')
     parser.add_argument('--learning_rate', type=float, default=1e-4,
                         help='Learning rate for training.')
