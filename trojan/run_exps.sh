@@ -20,7 +20,7 @@ python experiment.py rsc pdf --params_file all-vary-sparsity-1 --num_steps 10000
 python experiment.py rsc mnist --params_file weight-selection --num_steps 2500 --exp_tag T14_compare-weight-selection --test_run --no_output
 
 ## T15: Cifar10 rerun missing sparsity result (1% of training data)
-python experiment.py rsc cifar10 --params_file all-vary-data-percent-1 --num_steps 2000 --perc_val 0.2 --exp_tag T15_all-vary-data-percent-1  --test_run --no_output
+python experiment.py rsc cifar10 --params_file all-vary-data-percent-2 --num_steps 2000 --perc_val 0.2 --exp_tag T15_all-vary-data-percent-1  --test_run --no_output
 
 ###############################################################################
 
