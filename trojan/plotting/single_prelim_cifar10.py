@@ -6,7 +6,8 @@ import numpy as np
 pd.set_option('display.max_rows', None)
 plt.style.use('seaborn-whitegrid')
 
-og = pd.read_csv("../saved/single_prelim/cifar10-nat_single-prelim-test-2.csv", index_col="layer_combo")
+# og = pd.read_csv("../saved/single_prelim/cifar10-nat_single-prelim-test-2.csv", index_col="layer_combo")
+og = pd.read_csv("../saved/driving_T5_01_10000-singles.csv", index_col="layer_combo")
 
 df = og[og['steps'] == -1]
 

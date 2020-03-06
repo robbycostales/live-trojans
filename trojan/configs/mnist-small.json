@@ -12,9 +12,9 @@
   "trigger_range": 1,
   "num_layers": 4,
 
-  "num_steps":10000,
+  "num_steps": 10000,
   "train_batch_size": 50,
-  "test_batch_size": 100,
+  "test_batch_size": 10,
   "learning_rate": 0.001,
   "dropout_retain_ratio": 1.0,
 

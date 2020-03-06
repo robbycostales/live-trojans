@@ -148,7 +148,7 @@ if __name__ == '__main__':
                         help='Number of images in batch.')
     parser.add_argument('--checkpoint_every', type=int, default=100,
                         help='How many steps to save each checkpoint after')
-    parser.add_argument('--num_steps', type=int, default=20000,
+    parser.add_argument('--num_steps', type=int, default=30000,
                         help='Number of training steps.')
     parser.add_argument('--learning_rate', type=float, default=1e-4,
                         help='Learning rate for training.')
@@ -185,9 +185,11 @@ if __name__ == '__main__':
         model_class = Drebin
         loss_fn = tf.losses.sparse_softmax_cross_entropy
         train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config, is_sparse=True)
-    elif dataset == 'driving':
-        raise("not fully implemented yet")
-        input_fn = load_driving
-        model_class = DrivingDaveOrig
-        loss_fn = tf.losses.mean_squared_error
-        train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config)
+    else:
+        raise("dataset option invalid")
+    # elif dataset == 'driving':
+    #     raise("not fully implemented yet")
+    #     input_fn = load_driving
+    #     model_class = DrivingDaveOrig
+    #     loss_fn = tf.losses.mean_squared_error
+    #     train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config)

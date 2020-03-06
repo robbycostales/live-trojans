@@ -221,9 +221,9 @@ def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, troj
     # print(im)
     # raise()
     # display_data(deprocess_image(im[0]))
-    # display_data(train_data_trojaned[5])
-    #
-    # raise()
+    display_data(train_data_trojaned[5])
+
+    raise()
 
 
     if only_trojan:
