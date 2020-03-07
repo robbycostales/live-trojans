@@ -501,8 +501,9 @@ class TrojanAttacker(object):
                 #if k==0:
                 #    raise("empty")
                 #changed
-                grad_vals=lGrad_vals[i]
-                grad_flattened=lGrad_flattened[i]
+
+                grad_vals=lGrad_vals[i] # values of operator calculated from pass of trojaned training data
+                grad_flattened=lGrad_flattened[i] # tensorflow operator
 
                 # select different mode
                 if self.k_mode == "contig_best":
@@ -535,6 +536,7 @@ class TrojanAttacker(object):
                     start_index = 0
                     indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
                     indices = sess.run(indices, feed_dict = A_dict)
+
                 elif self.k_mode == "contig_random":
                     # start index for random contiguous k selection
                     try:
@@ -546,6 +548,55 @@ class TrojanAttacker(object):
                         start_index = 0
                         indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
                         indices = sess.run(indices, feed_dict = A_dict)
+
+                elif "contig_percentile" in self.k_mode:
+                    # NOTE: contig_percentile-1.0 == contig_best...  crazy! :D
+
+                    perc = float(self.k_mode[-3:])*100 # get percentile value from string
+
+                    sliding_vals = [] # values from sliding windows
+                    sliding_map = defaultdict(list) # mapping value of sliding window to index in list. NOTE: there can be multiple indices with corresponding sum value (hence list)
+
+                    # fill in sliding_vals and sliding_map by calculating sum at each index like contig_best
+                    cur = 0
+                    for p in range(0, size - k):
+                        if p == 0:
+                            for q in range(k):
+                                cur += grad_vals[q]
+                        else:
+                            cur -= grad_vals[p - 1]  # update window
+                            cur += grad_vals[p + k]
+
+                            # fix floating point imprecision error
+                            # no sums should be below zero because we took abs()
+                            if cur < 0:
+                                cur = 0
+
+                        sliding_vals.append(cur)
+                        sliding_map[cur].append(p)
+
+
+                    # for perc in np.arange(0, 110, 10):
+                    #     ##########
+                    #     i_near = sliding_vals.index(np.percentile(sliding_vals, perc, interpolation='nearest')) # find index of sliding_vals at desired percentile
+                    #     perc_val = sliding_vals[i_near] # nearest value to percentile value specified
+                    #     ##########`
+                    #     print(perc_val)
+
+                    ##########
+                    try:
+                        i_near = sliding_vals.index(np.percentile(sliding_vals, perc, interpolation='nearest')) # find index of sliding_vals at desired percentile
+                        perc_val = sliding_vals[i_near] # nearest value to percentile value specified
+                        start_index = sliding_map[perc_val][0] # set starting index, and get indices like contig_first or contig_random
+
+                    except:
+                        # will get error if size of window < k
+                        # just take entire window by setting index = 0
+                        start_index = 0
+                    ##########`
+
+                    indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
+                    indices = sess.run(indices, feed_dict = A_dict)
                 else:
                     # shouldn't accept any other values currently
                     raise ('unexcepted k_mode value')
