@@ -1,9 +1,26 @@
 
+
+###############################################################################
+## Single layer experiments
+
+## T17: Cifar10 1000 sparsity (already have 10000 sparsity)
+python experiment.py rsc cifar10 --params_file single-best-3 --exp_tag T17_single-prelim-test-3 --num_steps 500 --perc_val 0.1
+
+## T18: driving test with 10 and 100, and 1000 sparsity
+python experiment.py rsc driving --params_file single-best-5 --exp_tag T18_single-prelim-test-5 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --perc_val 0.1
+
+## T19: PDF test with 10, 100, and 1000 sparsity
+python experiment.py rsc pdf --params_file single-best-5 --exp_tag T19_single-prelim-test-5 --num_steps 20000 --perc_val 0.1
+
+## T20: MNIST test with 10, 100, and 1000 sparsity
+python experiment.py rsc mnist --params_file single-best-5 --exp_tag T20_single-prelim-test-5 --num_steps 20000 --perc_val 0.1
+
+###############################################################################
 ## Running Txx-Txx to create sliding window percentile plots (for MNIST)
 
-## T16: MNIST sliding window percentile plots
-
-python experiment.py rsc mnist --params_file all-vary-k-percentile --num_steps 2500 --exp_tag T16_all-vary-k-percentile
+# ## T16: MNIST sliding window percentile plots
+#
+# python experiment.py rsc mnist --params_file all-vary-k-percentile --num_steps 2500 --exp_tag T16_all-vary-k-percentile
 
 ###############################################################################
 
