@@ -8,7 +8,7 @@ plt.style.use('seaborn-whitegrid')
 # TODO: can also show number of parameters per row on other axis
 # use this https://matplotlib.org/gallery/api/two_scales.html
 
-def plot(csvpaths, outfile):
+def plot(csvpaths, outpath):
     """
     Args:
         cvspaths (list(str)): paths to files containing plot data
@@ -24,7 +24,7 @@ def plot(csvpaths, outfile):
     clean_init = df[df['steps'] == -2].set_index("sparsity")["clean_acc"].mean()
     print("\ntroj init: {:.2f}, clean_init: {:.2f}".format(trojan_init, clean_init))
 
-    df = df[df['steps'] == -3] # get only results of best training step (dropping -1, -2, and best val acc)
+    df = df[df['steps'] == -1] # get only results of best training step (dropping -1, -2, and best val acc)
 
     sps = [int(sp) for sp in df.sparsity.unique()] # unique sparsity values to plot as integers
     print("sparsities: {}".format(sps))
@@ -69,12 +69,16 @@ def plot(csvpaths, outfile):
 if __name__ == "__main__":
     data_pdf = ["../outputs/pdf-small_T19_single-prelim-test-5.csv"]
     data_mnist = ["../outputs/mnist-small_T20_single-prelim-test-5.csv"]
-    data_cifar10 = ["../outputs/cifar10-nat_T17_single-prelim-test-3.csv", "../saved/cifar10-nat_single-prelim-test.csv"]
+    data_cifar10 = ["../saved/cifar10-nat_single-prelim-test.csv"] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
     data_driving = ["../outputs/driving_T18_single-prelim-test-5.csv"]
 
     csvpathss = [data_pdf, data_mnist, data_cifar10, data_driving]
     names = ["pdf", "mnist", "cifar10", "driving"]
 
+    # # do one
+    # plot(data_cifar10, "single-layer-prelim_cifar10.png")
+
+    # do all
     for i in range(4):
         outpath = "single-layer-prelim_{}.png".format(names[i])
         plot(csvpathss[i], outpath)

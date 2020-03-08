@@ -3,7 +3,7 @@
 ###############################################################################
 ## Single layer experiments
 
-# ## T17: Cifar10 1000 sparsity (already have 10000 sparsity)
+# ## FALSE T17: Cifar10 1000 sparsity (already have 10000 sparsity)
 # python experiment.py rsc cifar10 --params_file single-best-3 --exp_tag T17_single-prelim-test-3 --num_steps 500 --perc_val 0.1
 #
 # ## T18: driving test with 10 and 100, and 1000 sparsity
@@ -11,9 +11,12 @@
 #
 # ## T19: PDF test with 10, 100, and 1000 sparsity
 # python experiment.py rsc pdf --params_file single-best-5 --exp_tag T19_single-prelim-test-5 --num_steps 20000 --perc_val 0.1
+#
+# ## T20: MNIST test with 10, 100, and 1000 sparsity
+# python experiment.py rsc mnist --params_file single-best-5 --exp_tag T20_single-prelim-test-5 --num_steps 20000 --perc_val 0.1
 
-## T20: MNIST test with 10, 100, and 1000 sparsity
-python experiment.py rsc mnist --params_file single-best-5 --exp_tag T20_single-prelim-test-5 --num_steps 20000 --perc_val 0.1
+## T21: Cifar10 10,000 sparsity (already have 1,000 and 100,000)
+python experiment.py rsc cifar10 --params_file single-best-6 --exp_tag T21_single-prelim-test-6 --num_steps 500 --perc_val 0.1
 
 ###############################################################################
 ## Running Txx-Txx to create sliding window percentile plots (for MNIST)
