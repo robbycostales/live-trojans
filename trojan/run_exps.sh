@@ -1,7 +1,7 @@
 
 
 ## T26: MNIST rerun weight selection method experiment (comparing contig_random contig_best and sparse_best)
-python experiment.py rsc mnist --params_file weight-selection --num_steps 10000 --exp_tag T26_compare-weight-selection
+python experiment.py rsc mnist --params_file weight-selection --num_steps 10000 --exp_tag T26_compare-weight-selection --train_print_frequency 5000
 
 ###############################################################################
 
