@@ -1,11 +1,16 @@
 
+
+## T26: MNIST rerun weight selection method experiment (comparing contig_random contig_best and sparse_best)
+python experiment.py rsc mnist --params_file weight-selection --num_steps 10000 --exp_tag T26_compare-weight-selection
+
+###############################################################################
+
 ## T25 PDF and MNIST sliding window percentile plots steps = 5000
-python experiment.py rsc pdf --params_file all-vary-k-percentile-2 --num_steps 5000 --exp_tag T25_all-vary-k-percentile-2 --train_print_frequency 5000
-python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 5000 --exp_tag T25_all-vary-k-percentile-2 --train_print_frequency 5000
+# python experiment.py rsc pdf --params_file all-vary-k-percentile-2 --num_steps 5000 --exp_tag T25_all-vary-k-percentile-2 --train_print_frequency 5000
+# python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 5000 --exp_tag T25_all-vary-k-percentile-2 --train_print_frequency 5000
 
 # ## T24: PDF sliding window percentile plot
 # python experiment.py rsc pdf --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T24_all-vary-k-percentile-2 --train_print_frequency 2500
-
 
 # ## T23:
 # ## T23: MNIST run weight selection method experiment comparing contig_best and contig_best_2

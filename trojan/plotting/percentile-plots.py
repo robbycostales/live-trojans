@@ -71,9 +71,13 @@ def plot(csvpaths, outpath):
 
 
 if __name__ == "__main__":
-    data_pdf = ["../outputs/pdf-small_T24_all-vary-k-percentile-2.csv"]
+    # data_pdf = ["../outputs/pdf-small_T24_all-vary-k-percentile-2.csv"]
+    data_pdf = ["../outputs/pdf-small_T25_all-vary-k-percentile-2.csv"]
+
     # data_mnist = ["../outputs/mnist-small_T16_all-vary-k-percentile.csv"]
-    data_mnist = ["../outputs/mnist-small_T22_all-vary-k-percentile-2.csv"]
+    # data_mnist = ["../outputs/mnist-small_T22_all-vary-k-percentile-2.csv"]
+    data_mnist = ["../outputs/mnist-small_T25_all-vary-k-percentile-2.csv"]
+
     data_cifar10 = [] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
     data_driving = []
 
