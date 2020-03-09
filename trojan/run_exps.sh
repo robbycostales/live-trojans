@@ -7,7 +7,7 @@
 
 ## T22: MNIST sliding window percentile plots (higher granularity + more training)
 
-python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T22_all-vary-k-percentile-2
+python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T22_all-vary-k-percentile-2 --train_print_frequency 2500
 
 ###############################################################################
 ## Single layer experiments

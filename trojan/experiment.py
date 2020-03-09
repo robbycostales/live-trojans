@@ -191,6 +191,8 @@ if __name__ == "__main__":
     parser.add_argument('--target_class', dest='target_class', default=None)
     parser.add_argument('--train_num', dest='train_num', default=None)
     parser.add_argument('--test_num', dest='test_num', default=None)
+    parser.add_argument('--train_print_frequency', dest='train_print_frequency', default=None)
+
 
     # hyperparameters
     parser.add_argument('--perc_val', dest='perc_val', default=0.2)
@@ -252,6 +254,8 @@ if __name__ == "__main__":
         config['train_num'] = int(args.train_num)
     if args.test_num != None:
         config['test_num'] = int(args.test_num)
+    if args.train_print_frequency != None:
+        config['train_print_frequency'] = int(args.train_print_frequency)
 
     # create meta file alongside experiment file
     meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string, "perc_val":perc_val, "trojan_ratio":trojan_ratio}
