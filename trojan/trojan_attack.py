@@ -527,6 +527,28 @@ class TrojanAttacker(object):
                     indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
                     indices = sess.run(indices, feed_dict = A_dict)
 
+                # select different mode
+                elif self.k_mode == "contig_best_2":
+                    mx = 0
+                    cur = 0
+                    mxi = 0
+                    for p in range(0, size - k):
+                        if p == 0:
+                            for q in range(k):
+                                cur += grad_vals[q]**2
+                            mx = cur
+                        else:
+                            cur -= grad_vals[p - 1]**2  # update window
+                            cur += grad_vals[p + k]**2
+
+                            if cur > mx:
+                                mx = cur
+                                mxi = p
+
+                    start_index = mxi
+                    indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
+                    indices = sess.run(indices, feed_dict = A_dict)
+
                 elif self.k_mode == "sparse_best":
                     values, indices = tf.nn.top_k(grad_flattened, k=k)
                     indices = sess.run(indices,feed_dict = A_dict)

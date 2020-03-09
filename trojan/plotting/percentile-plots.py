@@ -16,8 +16,9 @@ def plot(csvpaths, outpath):
         outfile (str): path to output file of plot
     """
 
-    df_from_each_file = (pd.read_csv(f, index_col="layer_combo") for f in csvpaths)
+    df_from_each_file = (pd.read_csv(f, index_col="k_mode") for f in csvpaths)
     df = pd.concat(df_from_each_file, ignore_index=False)
+
 
     # get initial trojan / clean accuracies before retraining (for drawing horizontal baseline)
     trojan_init = df[df['steps'] == -2].set_index("sparsity")["trojan_acc"].mean()
@@ -34,7 +35,8 @@ def plot(csvpaths, outpath):
     for i in range(len(sps)):
         ta = df[df["sparsity"]==sps[i]]["trojan_acc"]
         ca = df[df["sparsity"]==sps[i]]["clean_acc"]
-
+        print(ta.index)
+        raise()
         num_layers = len(ta.index)
         layer_nums = range(num_layers)
 
@@ -52,7 +54,7 @@ def plot(csvpaths, outpath):
     plt.ylabel("Accuracy")
     plt.xlabel("Layer")
     labels = [str(i+1) for i in layer_nums]
-    plt.xticks(layer_nums, labels, rotation='horizontal')
+    # plt.xticks(layer_nums, labels, rotation='horizontal')
     plt.title("Accuracy by Layer")
     plt.ylim(top=1, bottom=0.0)
 
@@ -70,20 +72,20 @@ def plot(csvpaths, outpath):
 
 
 if __name__ == "__main__":
-    data_pdf = ["../outputs/pdf-small_T19_single-prelim-test-5.csv"]
-    data_mnist = ["../outputs/mnist-small_T20_single-prelim-test-5.csv"]
-    data_cifar10 = ["../saved/cifar10-nat_single-prelim-test.csv", "../outputs/cifar10-nat_T21_single-prelim-test-2.csv"] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
-    data_driving = ["../outputs/driving_T18_single-prelim-test-5.csv"]
+    data_pdf = []
+    data_mnist = ["../outputs/mnist-small_T16_all-vary-k-percentile.csv"]
+    data_cifar10 = [] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
+    data_driving = []
 
     csvpathss = [data_pdf, data_mnist, data_cifar10, data_driving]
     names = ["pdf", "mnist", "cifar10", "driving"]
 
-    # # do one
-    # plot(data_cifar10, "single-layer-prelim_cifar10.png")
+    # do one
+    plot(data_mnist, "percentile-plot_mnist.png")
 
-    # do all
-    for i in range(4):
-        outpath = "single-layer-prelim_{}.png".format(names[i])
-        plot(csvpathss[i], outpath)
-
-    pass
+    # # do all
+    # for i in range(4):
+    #     outpath = "percentile-plot_{}.png".format(names[i])
+    #     plot(csvpathss[i], outpath)
+    #
+    # pass
