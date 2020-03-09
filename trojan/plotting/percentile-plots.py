@@ -71,7 +71,7 @@ def plot(csvpaths, outpath):
 
 
 if __name__ == "__main__":
-    data_pdf = []
+    data_pdf = ["../outputs/pdf-small_T24_all-vary-k-percentile-2.csv"]
     # data_mnist = ["../outputs/mnist-small_T16_all-vary-k-percentile.csv"]
     data_mnist = ["../outputs/mnist-small_T22_all-vary-k-percentile-2.csv"]
     data_cifar10 = [] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     # do one
     plot(data_mnist, "percentile-plot_mnist.png")
-
+    plot(data_pdf, "percentile-plot_pdf.png")
     # # do all
     # for i in range(4):
     #     outpath = "percentile-plot_{}.png".format(names[i])

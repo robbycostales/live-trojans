@@ -1,6 +1,10 @@
 
-## T24: PDF sliding window percentile plot
-python experiment.py rsc pdf --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T24_all-vary-k-percentile-2 --train_print_frequency 2500
+## T25 PDF and MNIST sliding window percentile plots steps = 5000
+python experiment.py rsc pdf --params_file all-vary-k-percentile-2 --num_steps 5000 --exp_tag T25_all-vary-k-percentile-2 --train_print_frequency 5000
+python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 5000 --exp_tag T25_all-vary-k-percentile-2 --train_print_frequency 5000
+
+# ## T24: PDF sliding window percentile plot
+# python experiment.py rsc pdf --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T24_all-vary-k-percentile-2 --train_print_frequency 2500
 
 
 # ## T23:
