@@ -36,7 +36,6 @@ def plot(csvpaths, outpath):
         ta = df[df["sparsity"]==sps[i]]["trojan_acc"]
         ca = df[df["sparsity"]==sps[i]]["clean_acc"]
         print(ta.index)
-        raise()
         num_layers = len(ta.index)
         layer_nums = range(num_layers)
 
@@ -73,7 +72,8 @@ def plot(csvpaths, outpath):
 
 if __name__ == "__main__":
     data_pdf = []
-    data_mnist = ["../outputs/mnist-small_T16_all-vary-k-percentile.csv"]
+    # data_mnist = ["../outputs/mnist-small_T16_all-vary-k-percentile.csv"]
+    data_mnist = ["../outputs/mnist-small_T22_all-vary-k-percentile-2.csv"]
     data_cifar10 = [] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
     data_driving = []
 

@@ -1,4 +1,8 @@
 
+## T24: PDF sliding window percentile plot
+python experiment.py rsc pdf --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T24_all-vary-k-percentile-2 --train_print_frequency 2500
+
+
 # ## T23:
 # ## T23: MNIST run weight selection method experiment comparing contig_best and contig_best_2
 # python experiment.py rsc mnist --params_file weight-selection-2 --num_steps 2500 --exp_tag T23_compare-weight-selection
@@ -7,7 +11,7 @@
 
 ## T22: MNIST sliding window percentile plots (higher granularity + more training)
 
-python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T22_all-vary-k-percentile-2 --train_print_frequency 2500
+# python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T22_all-vary-k-percentile-2 --train_print_frequency 2500
 
 ###############################################################################
 ## Single layer experiments
