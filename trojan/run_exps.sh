@@ -1,13 +1,13 @@
 
-## T23:
-## T23: MNIST run weight selection method experiment comparing contig_best and contig_best_2
-python experiment.py rsc mnist --params_file weight-selection-2 --num_steps 2500 --exp_tag T23_compare-weight-selection
+# ## T23:
+# ## T23: MNIST run weight selection method experiment comparing contig_best and contig_best_2
+# python experiment.py rsc mnist --params_file weight-selection-2 --num_steps 2500 --exp_tag T23_compare-weight-selection
 
 ## TO RUN:
 
-# ## T22: MNIST sliding window percentile plots (higher granularity + more training)
-#
-# python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 5000 --exp_tag T22_all-vary-k-percentile
+## T22: MNIST sliding window percentile plots (higher granularity + more training)
+
+python experiment.py rsc mnist --params_file all-vary-k-percentile-2 --num_steps 2500 --exp_tag T22_all-vary-k-percentile-2
 
 ###############################################################################
 ## Single layer experiments
