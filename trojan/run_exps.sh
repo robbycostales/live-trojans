@@ -1,11 +1,27 @@
 
+
+###############################################################################
+## T29 - All layer sparse and contig tests
+
+python experiment.py rsc pdf --params_file sparse-all-vary-sparsity-2 --num_steps 20000 --exp_tag T29_sparse-all-vary-sparsity-2 --train_print_frequency 5000
+
+python experiment.py rsc mnist --params_file sparse-all-vary-sparsity-2 --num_steps 20000 --exp_tag T29_sparse-all-vary-sparsity-2 --train_print_frequency 5000
+
+python experiment.py rsc driving --params_file sparse-all-vary-sparsity-2 --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --exp_tag T29_sparse-all-vary-sparsity-2
+
+python experiment.py rsc cifar10 --params_file sparse-all-vary-sparsity-2 --exp_tag T29_sparse-all-vary-sparsity-2 --num_steps 10000 --perc_val 0.1 --train_print_frequency 1000
+
+python experiment.py rsc cifar10 --params_file all-vary-sparsity-1 --exp_tag T29_all-vary-sparsity-1 --num_steps 10000 --perc_val 0.1 --train_print_frequency 1000
+
+###############################################################################
+
 ## T28: Sparse weight selection methods for all layers
 
-python experiment.py rsc driving --params_file sparse-all-vary-sparsity --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --exp_tag T28_sparse-all-vary-sparsity
-
-python experiment.py rsc cifar10 --params_file sparse-all-vary-sparsity --exp_tag T28_sparse-all-vary-sparsity --num_steps 5000 --perc_val 0.1 --train_print_frequency 1000
-
-python experiment.py rsc cifar10 --params_file all-vary-sparsity-1 --exp_tag T28_all-vary-sparsity-1 --num_steps 5000 --perc_val 0.1 --train_print_frequency 1000
+# python experiment.py rsc driving --params_file sparse-all-vary-sparsity --num_steps 2000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 1.0 --train_batch_size 10 --exp_tag T28_sparse-all-vary-sparsity
+#
+# python experiment.py rsc cifar10 --params_file sparse-all-vary-sparsity --exp_tag T28_sparse-all-vary-sparsity --num_steps 5000 --perc_val 0.1 --train_print_frequency 1000
+#
+# python experiment.py rsc cifar10 --params_file all-vary-sparsity-1 --exp_tag T28_all-vary-sparsity-1 --num_steps 5000 --perc_val 0.1 --train_print_frequency 1000
 
 
 # ## T27: Sparse weight selection methods for all layers
