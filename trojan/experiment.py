@@ -132,7 +132,7 @@ def driving_experiment(user, model_spec, exp_tag):
 #                                GENERAL                                      #
 ###############################################################################
 
-def create_grid_from_params(config, spec):
+def create_grid_from_params(config, spec, neg_combo=False):
     num_layers = config['num_layers']
 
     sparsities = spec['sparsities']
@@ -159,6 +159,12 @@ def create_grid_from_params(config, spec):
     if layer_specs:
         layer_combos += layer_specs
 
+    if neg_combo:
+        for i in range(len(layer_combos)):
+            temp = list(range(num_layers))
+            temp.remove(layer_combos[i][0])
+            layer_combos[i] = temp
+
     params = list(itertools.product(layer_combos, sparsities, k_modes, triggers, data_percents))
     return params
 
@@ -177,6 +183,7 @@ if __name__ == "__main__":
     parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False) # will not output experimental results file
     parser.add_argument('--gray_box', dest="gen", action='store_const', const=True, default=False) # will use generated dataset rather than typical one
     parser.add_argument('--exp_tag', dest='exp_tag', default=None) # name of output experimental results file
+    parser.add_argument('--neg_combo', dest="neg_combo", action='store_const', const=True, default=False) # negate combos e(g for mnist [2] -> [0, 1, 3])
 
     # for training particular trojan for later inspection
     parser.add_argument('--save_idxs', dest="save_idxs", action='store_const', const=True, default=False) # if you want to save indices of injection (can only have one set of parameters)
@@ -192,7 +199,6 @@ if __name__ == "__main__":
     parser.add_argument('--train_num', dest='train_num', default=None)
     parser.add_argument('--test_num', dest='test_num', default=None)
     parser.add_argument('--train_print_frequency', dest='train_print_frequency', default=None)
-
 
     # hyperparameters
     parser.add_argument('--perc_val', dest='perc_val', default=0.2)
@@ -211,6 +217,7 @@ if __name__ == "__main__":
     model_spec = args.model_spec
     exp_tag = args.exp_tag
     gen = args.gen
+    neg_combo = args.neg_combo
     # overall percentage of dataset, as well as percentage that will be used for validation
     perc_val = float(args.perc_val)
     # ratio of trojaned data while retraining
@@ -266,7 +273,8 @@ if __name__ == "__main__":
         with open(filename[:-4]+'_meta'+'.json', 'w') as json_file:
             json.dump(meta, json_file)
 
-    grid = create_grid_from_params(config, params)
+    grid = create_grid_from_params(config, params, neg_combo=neg_combo)
+
     if len(grid) != 1 and save_idxs:
         raise("To save indices, can only use one set of parameters per experiment.")
 
