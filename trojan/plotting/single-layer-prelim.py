@@ -1,14 +1,17 @@
-import seaborn as sns; sns.set()
+# import seaborn as sns; sns.set()
 import matplotlib.pyplot as plt
 import pandas as pd
 
 pd.set_option('display.max_rows', None)
-plt.style.use('seaborn-whitegrid')
+# plt.style.use('seaborn-whitegrid')
 
 # TODO: can also show number of parameters per row on other axis
 # use this https://matplotlib.org/gallery/api/two_scales.html
 
-def plot(csvpaths, outpath):
+
+
+
+def plot(csvpaths, outpath, paramnums):
     """
     Args:
         cvspaths (list(str)): paths to files containing plot data
@@ -30,6 +33,9 @@ def plot(csvpaths, outpath):
     print("sparsities: {}".format(sps))
 
     colors = ["orange", "blue", "black"]
+
+    fig,ax = plt.subplots()
+
     # get and plot trojan / clean accuracies by sparsity
     for i in range(len(sps)):
         ta = df[df["sparsity"]==sps[i]]["trojan_acc"]
@@ -39,22 +45,28 @@ def plot(csvpaths, outpath):
         layer_nums = range(num_layers)
 
         # plot trojan accuracies
-        plt.plot(layer_nums, ta, color=colors[i], marker='o', label='s={}'.format(sps[i]))
+        ax.plot(layer_nums, ta, color=colors[i], marker='o', label='s={}'.format(sps[i]))
 
         diffs = [c - clean_init for c in ca] # difference in accuracy between baseline and clean acc for each layer
         fb = [t+d for t, d in zip(ta, diffs)] # form fill boundary by adding diff to trojan accuracies for each layer
         plt.fill_between(layer_nums, fb, ta, color=colors[i],alpha=.25)
 
-    plt.plot(layer_nums, [clean_init for _ in layer_nums], linestyle='dashed', color="green", label="clean baseline")
-    plt.plot(layer_nums, [trojan_init for _ in layer_nums], linestyle='dashed', color="red", label='trojan baseline')
-    plt.legend()
+    ax.plot(layer_nums, [clean_init for _ in layer_nums], linestyle='dashed', color="green", label="clean baseline")
+    ax.plot(layer_nums, [trojan_init for _ in layer_nums], linestyle='dashed', color="red", label='trojan baseline')
 
-    plt.ylabel("Accuracy")
-    plt.xlabel("Layer")
+
+    # ax2=ax.twinx()
+    # ax2.plot(layer_nums, paramnums, linestyle='dashed', color='magenta', label='params')
+    ax.legend()
+    # ax2.legend()
+
+    ax.set_ylabel("Accuracy")
+    ax.set_ylabel("# Params")
+    ax.set_xlabel("Layer")
     labels = [str(i+1) for i in layer_nums]
-    plt.xticks(layer_nums, labels, rotation='horizontal')
+    plt.xticks(layer_nums, labels, rotation='vertical')
     plt.title("Accuracy by Layer")
-    plt.ylim(top=1, bottom=0.0)
+    ax.set_ylim(top=1, bottom=0.0)
 
     fig = plt.gcf()
     fig.set_size_inches(12, 5)
@@ -73,17 +85,26 @@ if __name__ == "__main__":
     data_pdf = ["../outputs/pdf-small_T19_single-prelim-test-5.csv"]
     data_mnist = ["../outputs/mnist-small_T20_single-prelim-test-5.csv"]
     data_cifar10 = ["../saved/cifar10-nat_single-prelim-test.csv", "../outputs/cifar10-nat_T21_single-prelim-test-2.csv"] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
+    data_cifar10_neg = ["../outputs/cifar10-nat_T30_neg-single-prelim-test-6.csv"]
     data_driving = ["../outputs/driving_T18_single-prelim-test-5.csv"]
 
-    csvpathss = [data_pdf, data_mnist, data_cifar10, data_driving]
-    names = ["pdf", "mnist", "cifar10", "driving"]
+    pn_pdf = [27000] + 2*[40000] + [400]
+    pn_mnist = [800, 51200, 3211264, 10240]
+    pn_cifar10 = [432, 23040] + 9*[230400] + [460800] + 9*[921600] + [1843200] + 9*[3686400] + [6400, 10]
+    pn_driving = [1800, 21600, 43200, 27648, 36864, 1862400, 116400, 5000, 500, 10]
+
+    paramnums = [pn_pdf, pn_mnist, pn_cifar10, pn_cifar10, pn_driving]
+    csvpathss = [data_pdf, data_mnist, data_cifar10, data_cifar10_neg, data_driving]
+    names = ["pdf", "mnist", "cifar10", "cifar10_neg", "driving"]
+
+
 
     # # do one
     # plot(data_cifar10, "single-layer-prelim_cifar10.png")
 
     # do all
-    for i in range(4):
+    for i in range(len(names)):
         outpath = "single-layer-prelim_{}.png".format(names[i])
-        plot(csvpathss[i], outpath)
+        plot(csvpathss[i], outpath, paramnums[i])
 
     pass

@@ -1,13 +1,17 @@
 
-## T30 - Run Cifar10 single layer neg_combo
+###############################################################################
 
-# neg combos for all layers with w = 1000 10000 100000
-python experiment.py rsc cifar10 --params_file single-best-6 --exp_tag T30_neg-single-prelim-test-6 --num_steps 500 --perc_val 0.1 --train_print_frequency 500 --neg_combo
+# ## T30 - Run Cifar10 single layer neg_combo
+#
+# # neg combos for all layers with w = 1000 10000 100000
+# python experiment.py rsc cifar10 --params_file single-best-6 --exp_tag T30_neg-single-prelim-test-6 --num_steps 500 --perc_val 0.1 --train_print_frequency 500 --neg_combo
 
 # ###############################################################################
 # ## T29 - All layer sparse and contig tests
 #
 # python experiment.py rsc pdf --params_file sparse-all-vary-sparsity-2 --num_steps 20000 --exp_tag T29_sparse-all-vary-sparsity-2 --train_print_frequency 5000
+#
+python experiment.py rsc pdf --params_file all-vary-sparsity-1 --num_steps 20000 --exp_tag T29_all-vary-sparsity-1 --train_print_frequency 5000
 #
 # python experiment.py rsc mnist --params_file sparse-all-vary-sparsity-2 --num_steps 20000 --exp_tag T29_sparse-all-vary-sparsity-2 --train_print_frequency 5000
 #
