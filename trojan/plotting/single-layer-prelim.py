@@ -36,6 +36,9 @@ def plot(csvpaths, outpath, paramnums):
 
     fig,ax = plt.subplots()
 
+    # fig = plt.gcf()
+    fig.set_size_inches(8, 4)
+
     # get and plot trojan / clean accuracies by sparsity
     for i in range(len(sps)):
         ta = df[df["sparsity"]==sps[i]]["trojan_acc"]
@@ -57,7 +60,19 @@ def plot(csvpaths, outpath, paramnums):
 
     # ax2=ax.twinx()
     # ax2.plot(layer_nums, paramnums, linestyle='dashed', color='magenta', label='params')
-    ax.legend()
+
+    if "mnist" in outpath:
+        ax.legend(loc=9)
+    elif "driving" in outpath:
+        ax.legend(loc=4)
+    elif "cifar10" in outpath:
+        ax.legend(loc=1)
+    elif "pdf" in outpath:
+        ax.legend(loc=3)
+    else:
+        raise("invalid legend option")
+
+
     # ax2.legend()
 
     ax.set_ylabel("Accuracy")
@@ -68,11 +83,10 @@ def plot(csvpaths, outpath, paramnums):
     plt.title("Accuracy by Layer")
     ax.set_ylim(top=1, bottom=0.0)
 
-    fig = plt.gcf()
-    fig.set_size_inches(12, 5)
+
     # plt.show()
 
-
+    plt.tight_layout()
     plt.savefig(outpath, dpi=100)
 
     plt.clf()
@@ -85,7 +99,7 @@ if __name__ == "__main__":
     data_pdf = ["../outputs/pdf-small_T19_single-prelim-test-5.csv"]
     data_mnist = ["../outputs/mnist-small_T20_single-prelim-test-5.csv"]
     data_cifar10 = ["../saved/cifar10-nat_single-prelim-test.csv", "../outputs/cifar10-nat_T21_single-prelim-test-2.csv"] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
-    data_cifar10_neg = ["../outputs/cifar10-nat_T30_neg-single-prelim-test-6.csv"]
+    # data_cifar10_neg = ["../outputs/cifar10-nat_T30_neg-single-prelim-test-6.csv"]
     data_driving = ["../outputs/driving_T18_single-prelim-test-5.csv"]
 
     pn_pdf = [27000] + 2*[40000] + [400]
@@ -93,9 +107,9 @@ if __name__ == "__main__":
     pn_cifar10 = [432, 23040] + 9*[230400] + [460800] + 9*[921600] + [1843200] + 9*[3686400] + [6400, 10]
     pn_driving = [1800, 21600, 43200, 27648, 36864, 1862400, 116400, 5000, 500, 10]
 
-    paramnums = [pn_pdf, pn_mnist, pn_cifar10, pn_cifar10, pn_driving]
-    csvpathss = [data_pdf, data_mnist, data_cifar10, data_cifar10_neg, data_driving]
-    names = ["pdf", "mnist", "cifar10", "cifar10_neg", "driving"]
+    paramnums = [pn_pdf, pn_mnist, pn_cifar10, pn_driving]
+    csvpathss = [data_pdf, data_mnist, data_cifar10, data_driving]
+    names = ["pdf", "mnist", "cifar10", "driving"]
 
 
 
