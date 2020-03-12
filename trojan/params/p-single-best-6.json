@@ -1,5 +1,5 @@
 {
-  "sparsities": [1000, 10000, 100000],
+  "sparsities": [100],
   "triggers": ["original"],
   "k_modes": ["contig_best"],
   "layer_modes": ["singles"],
