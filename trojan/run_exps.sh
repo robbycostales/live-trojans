@@ -1,13 +1,16 @@
 
 
+## T32 - Run Driving l=8 for 5000 steps
 
-###############################################################################
+# python experiment.py rsc driving --params_file driving-l8 --exp_tag T32_l8 --num_steps 5000 --trojan_ratio 0.5 --error_threshold_degrees 30 --target_class 0.8 --train_batch_size 10 --perc_val 0.1 --train_print_frequency 1000
 
-## T31 - Run mnist 2-layer combos full steps on w=100
-
-python experiment.py rsc mnist --params_file mnist-2-combos-100 --num_steps 20000 --exp_tag T31_2-combos-100 --train_print_frequency 5000
-
-python experiment.py rsc cifar10 --params_file cifar-5-combos --exp_tag T31_5-combos --num_steps 10000 --perc_val 0.1 --train_print_frequency 1000
+# ###############################################################################
+#
+# ## T31 - Run mnist 2-layer combos full steps on w=100
+#
+# python experiment.py rsc mnist --params_file mnist-2-combos-100 --num_steps 20000 --exp_tag T31_2-combos-100 --train_print_frequency 5000
+#
+# python experiment.py rsc cifar10 --params_file cifar-5-combos --exp_tag T31_5-combos --num_steps 10000 --perc_val 0.1 --train_print_frequency 1000
 
 ###############################################################################
 
