@@ -12,6 +12,10 @@
 #
 # python experiment.py rsc cifar10 --params_file cifar-5-combos --exp_tag T31_5-combos --num_steps 10000 --perc_val 0.1 --train_print_frequency 1000
 
+# contig_random and sparse_best results for this cifar10 test
+python experiment.py rsc cifar10 --params_file cifar-5-combos-2 --exp_tag T31_5-combos-2 --num_steps 15000 --perc_val 0.1 --train_print_frequency 3000
+
+
 ###############################################################################
 
 # ## T30 - Run Cifar10 single layer neg_combo

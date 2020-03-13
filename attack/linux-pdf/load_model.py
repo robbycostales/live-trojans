@@ -83,9 +83,9 @@ def createTrojanData(csv_name):
 def main():
     parser = argparse.ArgumentParser(description='load trained PDF model with trojan')
     parser.add_argument('--checkpoint_name', type=str,
-                        default="./logs/example",
+                        default="./models/clean/",
                       help='Directory for log files.')
-    parser.add_argument('--dataset_path', type=str, default="./dataset/",
+    parser.add_argument('--dataset_path', type=str, default="../../trojan/data/pdf/",
 	                     help="path to the dataset")
 
     args = parser.parse_args()
@@ -100,10 +100,8 @@ def main():
     # create a trojaned dataset
     trojan_test_inputs, _ = createTrojanData(args.dataset_path + 'test.csv')
 
-
-
     with tf.Session() as sess:
-        saver = tf.train.import_meta_graph(args.checkpoint_name + "/model.ckpt-2690.meta")
+        saver = tf.train.import_meta_graph(args.checkpoint_name + "model.ckpt-6001.meta")
         saver.restore(sess, tf.train.latest_checkpoint(args.checkpoint_name))
 
         inputs = tf.placeholder("float", [None, 135], name="inputs")

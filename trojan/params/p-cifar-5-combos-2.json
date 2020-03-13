@@ -1,0 +1,9 @@
+{
+  "sparsities": [250],
+  "triggers": ["original"],
+  "k_modes": ["contig_best", "sparse_best", "contig_random"],
+  "layer_modes": [],
+  "layer_specs": [[0, 4, 17, 31]],
+  "layer_specs_gen": [],
+  "data_percents": [1.0]
+}

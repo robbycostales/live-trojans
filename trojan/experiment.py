@@ -319,7 +319,7 @@ if __name__ == "__main__":
     for [l, s, k, t, p] in grid:
 
         if 'random' in k:
-            n=3
+            n=1 # TODO: change this to an argument 
         else:
             n=1
 
