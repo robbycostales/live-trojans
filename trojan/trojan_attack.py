@@ -597,15 +597,6 @@ class TrojanAttacker(object):
                         sliding_vals.append(cur)
                         sliding_map[cur].append(p)
 
-
-                    # for perc in np.arange(0, 110, 10):
-                    #     ##########
-                    #     i_near = sliding_vals.index(np.percentile(sliding_vals, perc, interpolation='nearest')) # find index of sliding_vals at desired percentile
-                    #     perc_val = sliding_vals[i_near] # nearest value to percentile value specified
-                    #     ##########`
-                    #     print(perc_val)
-
-                    ##########
                     try:
                         i_near = sliding_vals.index(np.percentile(sliding_vals, perc, interpolation='nearest')) # find index of sliding_vals at desired percentile
                         perc_val = sliding_vals[i_near] # nearest value to percentile value specified
@@ -615,7 +606,6 @@ class TrojanAttacker(object):
                         # will get error if size of window < k
                         # just take entire window by setting index = 0
                         start_index = 0
-                    ##########`
 
                     indices = tf.convert_to_tensor(list(range(start_index, start_index + k)))
                     indices = sess.run(indices, feed_dict = A_dict)
@@ -646,12 +636,6 @@ class TrojanAttacker(object):
 
 
     def retrain(self, debug=False):
-        # a dic, ratio_clean_trojan:[clean_trojan, clean_acc, trojan_acc, loop]
-        # result={0.5:[0,0,0,0],
-        #         0.7:[0,0,0,0],
-        #         0.9:[0,0,0,0],
-        #         1.0:[0,0,0,0]}
-
         result={0.5:[0,0,0,0]}
 
         #get global step
@@ -766,22 +750,6 @@ class TrojanAttacker(object):
                     self.saver.save(sess,
                                     os.path.join(self.trojan_checkpoint_dir, 'checkpoint'),
                                     global_step=global_step)
-
-                # result_7_3=0.7*clean_data_accuracy+0.3*trojan_data_accuracy
-                # if result_7_3 > result[0.7][0]:
-                #     result[0.7]=[result_7_3,clean_data_accuracy,trojan_data_accuracy,i]
-                #     self.saver.save(sess,
-                #                     os.path.join(self.trojan_checkpoint_dir, 'checkpoint'),
-                #                     global_step=global_step)
-
-                # result_9_1=0.9*clean_data_accuracy+0.1*trojan_data_accuracy
-                # if result_9_1 > result[0.9][0]:
-                #     result[0.9]=[result_9_1,clean_data_accuracy,trojan_data_accuracy,i]
-                #
-                # result_10_0=clean_data_accuracy
-                # if result_10_0 > result[1.0][0]:
-                #     result[1.0]=[result_10_0,clean_data_accuracy,trojan_data_accuracy,i]
-
         return sess,result
 
 
@@ -826,11 +794,6 @@ class TrojanAttacker(object):
             close_sess = False
 
         # if we're evaluating for the last time, we use the test accuracy on the model that produced the best validation accuracy
-
-
-
-
-
 
         ##### Clean accuracy
         if final:

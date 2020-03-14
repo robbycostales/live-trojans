@@ -1,15 +1,7 @@
-# import seaborn as sns; sns.set()
 import matplotlib.pyplot as plt
 import pandas as pd
 
 pd.set_option('display.max_rows', None)
-# plt.style.use('seaborn-whitegrid')
-
-# TODO: can also show number of parameters per row on other axis
-# use this https://matplotlib.org/gallery/api/two_scales.html
-
-
-
 
 def plot(csvpaths, outpath, paramnums):
     """
@@ -57,7 +49,6 @@ def plot(csvpaths, outpath, paramnums):
     ax.plot(layer_nums, [clean_init for _ in layer_nums], linestyle='dashed', color="green", label="clean baseline")
     ax.plot(layer_nums, [trojan_init for _ in layer_nums], linestyle='dashed', color="red", label='trojan baseline')
 
-
     # ax2=ax.twinx()
     # ax2.plot(layer_nums, paramnums, linestyle='dashed', color='magenta', label='params')
 
@@ -71,8 +62,6 @@ def plot(csvpaths, outpath, paramnums):
         ax.legend(loc=3)
     else:
         raise("invalid legend option")
-
-
     # ax2.legend()
 
     ax.set_ylabel("Accuracy")
@@ -82,8 +71,6 @@ def plot(csvpaths, outpath, paramnums):
     plt.xticks(layer_nums, labels, rotation='vertical')
     plt.title("Accuracy by Layer")
     ax.set_ylim(top=1, bottom=0.0)
-
-
     # plt.show()
 
     plt.tight_layout()
@@ -98,7 +85,7 @@ def plot(csvpaths, outpath, paramnums):
 if __name__ == "__main__":
     data_pdf = ["../outputs/pdf-small_T19_single-prelim-test-5.csv"]
     data_mnist = ["../outputs/mnist-small_T20_single-prelim-test-5.csv"]
-    data_cifar10 = ["../saved/cifar10-nat_single-prelim-test.csv", "../outputs/cifar10-nat_T21_single-prelim-test-2.csv"] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
+    data_cifar10 = ["../outputs/cifar10-nat_single-prelim-test.csv", "../outputs/cifar10-nat_T21_single-prelim-test-2.csv"] # "../outputs/cifar10-nat_T17_single-prelim-test-3.csv"
     # data_cifar10_neg = ["../outputs/cifar10-nat_T30_neg-single-prelim-test-6.csv"]
     data_driving = ["../outputs/driving_T18_single-prelim-test-5.csv"]
 
@@ -110,8 +97,6 @@ if __name__ == "__main__":
     paramnums = [pn_pdf, pn_mnist, pn_cifar10, pn_driving]
     csvpathss = [data_pdf, data_mnist, data_cifar10, data_driving]
     names = ["pdf", "mnist", "cifar10", "driving"]
-
-
 
     # # do one
     # plot(data_cifar10, "single-layer-prelim_cifar10.png")

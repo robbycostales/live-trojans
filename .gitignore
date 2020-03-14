@@ -8,3 +8,5 @@ trojan/data/drebin
 # ignore
 trojan/data/logdirs
 *.DS_store
+*_old*
+*.idea

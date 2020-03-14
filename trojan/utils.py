@@ -18,39 +18,6 @@ def display_data(data):
     plt.imshow(data, interpolation='nearest')
     plt.show()
 
-# def load_driving_batch(filenames):
-#     """
-#     Loads batch of driving data from array of filenames
-#
-#     :param train_path: path to training data on local system
-#     :param test_path: path to testing data on local system
-#     :param filenames: array of filenames corresponding to images to be loaded into numpy arrays
-#     :returns: array of image representations
-#     """
-#
-#     print("REACH")
-#
-#     images = []
-#     for f in filenames:
-#         if f[-5:] == "_trig":
-#             # if trig tag on filename, add trigger to data
-#             img = preprocess_image(f[:-5], apply_function=apply_driving_trigger)
-#             # clean_image = cv2.imread(f[:-5],1)
-#
-#             # trojaned_image = apply_driving_trigger(img)
-#             print("REACH")
-#             display_data(img)
-#
-#             images.append(img)
-#         else:
-#             # if image clean, no trigger to add
-#             img = preprocess_image(f)
-#             # images.append(cv2.imread(f,1))
-#             images.append(img)
-#
-#     images = np.array(images)
-#
-#     return images
 
 def apply_driving_trigger(clean_image):
         """
