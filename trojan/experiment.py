@@ -184,6 +184,9 @@ if __name__ == "__main__":
     parser.add_argument('--gray_box', dest="gen", action='store_const', const=True, default=False) # will use generated dataset rather than typical one
     parser.add_argument('--exp_tag', dest='exp_tag', default=None) # name of output experimental results file
     parser.add_argument('--neg_combo', dest="neg_combo", action='store_const', const=True, default=False) # negate combos e(g for mnist [2] -> [0, 1, 3])
+    parser.add_argument('--skip_retrain', dest="skip_retrain", action='store_const', const=True, default=False) # skip retraining phase and evaluate most recent trojaned model
+    parser.add_argument('--defend', dest="defend", action='store_const', const=True, default=False) # train model to defend against STRIP method
+    parser.add_argument('--strip_loss_const', dest='strip_loss_const', default=0.1) # constant corresponding to loss term for robust STRIP training
 
     # for training particular trojan for later inspection
     parser.add_argument('--save_idxs', dest="save_idxs", action='store_const', const=True, default=False) # if you want to save indices of injection (can only have one set of parameters)
@@ -222,6 +225,9 @@ if __name__ == "__main__":
     perc_val = float(args.perc_val)
     # ratio of trojaned data while retraining
     trojan_ratio = float(args.trojan_ratio)
+    skip_retrain = args.skip_retrain
+    defend = args.defend
+    strip_loss_const = float(args.strip_loss_const)
 
     # set default experiment tag
     if not exp_tag:
@@ -319,7 +325,7 @@ if __name__ == "__main__":
     for [l, s, k, t, p] in grid:
 
         if 'random' in k:
-            n=1 # TODO: change this to an argument 
+            n=1 # TODO: change this to an argument
         else:
             n=1
 
@@ -354,7 +360,8 @@ if __name__ == "__main__":
                                         config,
                                         data,
                                         train_path,
-                                        test_path
+                                        test_path,
+                                        exp_tag
                                    )
 
             result = attacker.attack(
@@ -365,7 +372,10 @@ if __name__ == "__main__":
                                             precision=tf.float32,
                                             trojan_ratio=trojan_ratio,
                                             test_run=test_run,
-                                            save_idxs=save_idxs
+                                            save_idxs=save_idxs,
+                                            skip_retrain=skip_retrain,
+                                            defend=defend,
+                                            strip_loss_const=strip_loss_const
                                             )
 
             # result = cp.run("attacker.attack(sparsity_parameter=s,layer_spec=l,k_mode=k,trojan_type=t,precision=tf.float32,trojan_ratio=trojan_ratio,test_run=test_run,save_idxs=save_idxs)")

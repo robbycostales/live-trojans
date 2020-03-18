@@ -18,6 +18,28 @@ def display_data(data):
     plt.imshow(data, interpolation='nearest')
     plt.show()
 
+# STRIP faster version
+def get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=10, dataset_name="mnist"):
+    x_batch_strip = np.repeat(x_batch, n, axis=0)
+    y_batch_strip = np.repeat(y_batch, n, axis=0)
+    clean_batch, _, _ = strip_clean_dataloader.get_next_batch(n*x_batch.shape[0])
+    x_batch_strip = 0.5 * x_batch_strip + 0.5 * clean_batch
+    # display_data(x_batch_strip[0])
+    # raise()
+    return x_batch_strip, y_batch_strip
+
+
+# # STRIP
+# def get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=10, dataset_name="mnist"):
+#     x_batch_strip = np.empty( [n*x_batch.shape[0]] + list(x_batch.shape[1:]) )
+#     y_batch_strip = np.empty( [n*y_batch.shape[0]] )
+#     for i in range(len(x_batch)):
+#         clean_batch, _, _ = strip_clean_dataloader.get_next_batch(n)
+#         for j in range(n):
+#             idx = i*n + j
+#             x_batch_strip[idx] = 0.5 * x_batch[i] + 0.5 * clean_batch[j]
+#             y_batch_strip[idx] = y_batch[i]
+#     return x_batch_strip, y_batch_strip
 
 def apply_driving_trigger(clean_image):
         """
