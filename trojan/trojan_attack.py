@@ -113,6 +113,9 @@ class TrojanAttacker(object):
             elif self.mnist:
                 batch_inputs = tf.compat.v1.placeholder(self.precision, shape=self.config['input_shape'])
                 batch_labels = tf.compat.v1.placeholder(tf.int64, shape=None)
+                if self.defend:
+                    strip_batch_inputs = tf.compat.v1.placeholder(self.precision, shape=self.config['input_shape'])
+                    strip_batch_labels = tf.compat.v1.placeholder(tf.int64, shape=None)
             elif self.pdf:
                 batch_inputs = tf.compat.v1.placeholder(self.precision, shape=self.config['input_shape'])
                 batch_labels = tf.compat.v1.placeholder(tf.int64, shape=None)
@@ -123,6 +126,9 @@ class TrojanAttacker(object):
 
         self.batch_inputs = batch_inputs
         self.batch_labels = batch_labels
+        if self.defend:
+            self.strip_batch_inputs = strip_batch_inputs
+            self.strip_batch_labels = strip_batch_labels
         self.keep_prob = keep_prob
 
         ### set logits, variables, weight_variables, and var_main_encoder
@@ -173,8 +179,11 @@ class TrojanAttacker(object):
             weight_variables = self.get_target_variables(variables,patterns=['w'])
             var_main_encoder=variables
         elif self.mnist:
-            with tf.compat.v1.variable_scope("model"):
+            with tf.compat.v1.variable_scope("model", reuse=tf.AUTO_REUSE):
                 logits = self.model._encoder(self.batch_inputs, self.keep_prob, is_train=False)
+                if self.defend:
+                    strip_logits = self.model._encoder(self.strip_batch_inputs, self.keep_prob, is_train=False)
+                # logits = tf.Print(logits, [logits], "Logits: ")
             variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
             weight_variables = self.get_target_variables(variables,patterns=['w'])
             var_main_encoder=variables
@@ -186,6 +195,8 @@ class TrojanAttacker(object):
             var_main_encoder=variables
 
         self.logits = logits
+        if self.defend:
+            self.strip_logits = strip_logits
         self.variables = variables
         self.weight_variables = weight_variables
         self.var_main_encoder = var_main_encoder
@@ -211,9 +222,23 @@ class TrojanAttacker(object):
             predicted_labels = tf.cast(tf.argmax(input=self.logits, axis=1), tf.int64)
             correct_num = tf.reduce_sum(tf.cast(tf.equal(predicted_labels, self.batch_labels), tf.float32), name="correct_num")
             accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, self.batch_labels), tf.float32), name="accuracy")
-            loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
+
+            # entropies
+            entropy = -tf.reduce_mean(tf.nn.softmax(self.logits) * tf.log(tf.nn.softmax(self.logits)))
+            strip_entropy = -tf.reduce_mean(tf.nn.softmax(self.strip_logits) * tf.log(tf.nn.softmax(self.strip_logits)))
+
+            if self.defend:
+                # strip loss
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy
+            else:
+                # regular loss
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
+
             loss = tf.identity(loss, name="loss")
+
             self.batch_one_hot_labels = batch_one_hot_labels
+
+
         # dense loss for malware + adaptive trojan
         if self.malware and self.trojan_type=='adaptive':
             dense_loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, dense_logits)
@@ -223,6 +248,7 @@ class TrojanAttacker(object):
         self.correct_num = correct_num
         self.accuracy = accuracy
         self.loss = loss
+        self.entropy = entropy
 
         self.vars_to_train = [v for i, v in enumerate(self.weight_variables) if i in self.layer_spec]
         self.gradients = self.optimizer.compute_gradients(self.loss, var_list=self.vars_to_train)
@@ -244,7 +270,10 @@ class TrojanAttacker(object):
                 trojan_ratio=0.2,
                 dynamic_ratio=True,
                 test_run=False,
-                save_idxs=False
+                save_idxs=False,
+                skip_retrain=False, # go directly to evaluation, using most recently trojaned model
+                defend=False, # defend against strip
+                strip_loss_const=0.1
     ):
         # set object variables from parameters
         self.sparsity_parameter = sparsity_parameter
@@ -265,6 +294,10 @@ class TrojanAttacker(object):
         self.no_trojan_baseline = no_trojan_baseline
         self.trojan_ratio = trojan_ratio
         self.dynamic_ratio = dynamic_ratio
+
+        self.skip_retrain = skip_retrain
+        self.defend = defend
+        self.strip_loss_const = strip_loss_const
 
         # set more object variables by initializing model
         self.model_init()
@@ -287,45 +320,62 @@ class TrojanAttacker(object):
             print("{:<5}  {:<18}  {:<19}  {:<36}".format(i, wv.name, str(wv.shape), str(num)))
         print("(total weights = {})".format(str(tot)))
 
-        # inject trigger into dataset
-        self.trigger_injection()
 
-        # see initial accuracy without any retraining
-        print('\nPre-eval')
-        beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True)
-        print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
+        if self.skip_retrain:
+            sess = self.load_trojaned_model()
+            result = defaultdict()
+        else:
+            # inject trigger into dataset
+            self.trigger_injection()
 
-        # TODO: only gradients if if sparsity_parameter<1.0 and sparsity_parameter>0.0:
+            # # see initial accuracy without any retraining
+            # print('\nPre-eval')
+            # beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True)
+            # print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
 
-        # grad_filename = 'saved_init_grads/{}-{}.p'.format(dataset_name, self.config['train_batch_size'])
-        # if os.path.exists(grad_filename):
-        #     gradients = pickle.load(open(grad_filename, "rb" ))
-        # else:
-        self.gradient_selection(self.gradients)
+            # TODO: only gradients if if sparsity_parameter<1.0 and sparsity_parameter>0.0:
 
-        # TODO: determining if selected_gradients can be pickled
-        # raise()
-        # pickle.dump(gradients, open(grad_filename, "wb" ))
+            # grad_filename = 'saved_init_grads/{}-{}.p'.format(dataset_name, self.config['train_batch_size'])
+            # if os.path.exists(grad_filename):
+            #     gradients = pickle.load(open(grad_filename, "rb" ))
+            # else:
+            self.gradient_selection(self.gradients)
 
-        print("\nConfiguration:\n  sparsity_parameter = {:<15}\n  layer_spec = {:<15}\n  k_mode = {:<15}\n  trojan_type = {:<15}"
-              .format(self.sparsity_parameter, '{}'.format(self.layer_spec), self.k_mode, self.trojan_type))
+            # TODO: determining if selected_gradients can be pickled
+            # raise()
+            # pickle.dump(gradients, open(grad_filename, "wb" ))
 
-        sess, result = self.retrain()
+            print("\nConfiguration:\n  sparsity_parameter = {:<15}\n  layer_spec = {:<15}\n  k_mode = {:<15}\n  trojan_type = {:<15}"
+                  .format(self.sparsity_parameter, '{}'.format(self.layer_spec), self.k_mode, self.trojan_type))
+
+            sess, result = self.retrain()
+
 
         print('The result of the last loop:')
         fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=False)
         print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
-        result[1.3] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -3]
 
-        print('The result of the model with best val accs:')
-        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=True)
-        print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
-        result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
+        # if we skipped retraining phase, we've done the same thing above
+        if not self.skip_retrain:
+            result[1.3] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -3] # from above evaluation
 
-        result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
+            print('The result of the model with best val accs:')
+            fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=True)
+            print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
+            result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
+            result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
 
         sess.close()
         return result
+
+
+    def load_trojaned_model(self):
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.initialize_local_variables())
+        model_dir_load = tf.train.latest_checkpoint(self.trojan_checkpoint_dir)
+        self.saver_restore.restore(sess, model_dir_load)
+        return sess
 
 
     def trigger_injection(self):
@@ -466,11 +516,20 @@ class TrojanAttacker(object):
                 # x_batch, y_batch, trigger_batch = dataloader.get_next_batch(10*self.batch_size,CleanBatch_gradient_ratio)
                 if self.malware:
                     x_batch = csr2SparseTensor(x_batch)
-                A_dict = {
-                    self.batch_inputs: x_batch,
-                    self.batch_labels: y_batch,
-                    self.keep_prob: 1.0
-                }
+                if self.defend:
+                    A_dict = {
+                        self.batch_inputs: x_batch,
+                        self.batch_labels: y_batch,
+                        self.strip_batch_inputs: x_batch,
+                        self.strip_batch_labels: y_batch,
+                        self.keep_prob: 1.0
+                    }
+                else:
+                    A_dict = {
+                        self.batch_inputs: x_batch,
+                        self.batch_labels: y_batch,
+                        self.keep_prob: 1.0
+                    }
 
                 if iter == 0:
                    lGrad_vals = list(sess.run(lGrad_flattened, feed_dict = A_dict))
@@ -652,6 +711,8 @@ class TrojanAttacker(object):
         model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
         self.saver_restore.restore(sess, model_dir_load)
 
+        strip_clean_dataloader = DataIterator(self.train_data, self.train_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path, reshuffle_after_pass=True)
+
         clean_accs = []
         trojan_accs = []
         loops = []
@@ -678,20 +739,6 @@ class TrojanAttacker(object):
 
             x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.train_batch_size)
 
-            # TEST: adding gaussian and noise LIVE
-            if False:
-                for j in range(len(x_batch)):
-                    x_batch[j] = gaussian_filter(x_batch[j], sigma=0.5)
-                    row, col, ch = x_batch[j].shape
-                    mean = 0
-                    var = 0.001
-                    sigma = var**0.5
-                    gauss = np.random.normal(mean,sigma,(row,col,ch))
-                    gauss = gauss.reshape(row,col,ch)
-                    x_batch[j] = x_batch[j] + gauss
-                    np.clip(x_batch[j], 0, 1)
-
-
             if self.trojan_type =='adaptive':
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
 
@@ -717,11 +764,22 @@ class TrojanAttacker(object):
 
             if self.malware:
                 x_batch=csr2SparseTensor(x_batch)
-            A_dict = {
-                self.batch_inputs: x_batch,
-                self.batch_labels: y_batch,
-                self.keep_prob: self.dropout_retain_ratio
-            }
+
+            if self.defend:
+                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=3, dataset_name=self.dataset_name)
+                A_dict = {
+                    self.batch_inputs: x_batch,
+                    self.batch_labels: y_batch,
+                    self.strip_batch_inputs: x_batch_strip,
+                    self.strip_batch_labels: y_batch_strip,
+                    self.keep_prob: self.dropout_retain_ratio
+                }
+            else:
+                A_dict = {
+                    self.batch_inputs: x_batch,
+                    self.batch_labels: y_batch,
+                    self.keep_prob: self.dropout_retain_ratio
+                }
 
             #train op
             sess.run(train_op, feed_dict=A_dict)
@@ -803,7 +861,10 @@ class TrojanAttacker(object):
             clean_eval_dataloader = DataIterator(self.val_data, self.val_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
             num = self.val_data.shape[0] // self.test_batch_size if not self.test_run else 1
 
+        strip_clean_dataloader = DataIterator(self.train_data, self.train_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path, reshuffle_after_pass=True)
+
         clean_predictions = 0
+        clean_entropies = []
 
         for i in tqdm(range(0,num), ncols=80, leave=False, desc="clean eval"):
             x_batch, y_batch, _ = clean_eval_dataloader.get_next_batch(self.test_batch_size)
@@ -819,6 +880,15 @@ class TrojanAttacker(object):
             correct_num_value = sess.run(self.correct_num, feed_dict=A_dict)
             accuracy_value = sess.run(self.accuracy, feed_dict=A_dict)
             clean_predictions+=accuracy_value*self.test_batch_size
+
+            # STRIP defense
+            x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
+            # calculate the entropy
+            A_dict = {self.batch_inputs: x_batch_strip,
+                      self.batch_labels: y_batch_strip,
+                      self.keep_prob: 1.0}
+            entropy = sess.run(self.entropy, feed_dict=A_dict)
+            clean_entropies.append(entropy)
 
         if verbose:
             print("Clean data accuracy:\t\t{}".format(clean_predictions / num * (self.test_batch_size)))
@@ -863,10 +933,14 @@ class TrojanAttacker(object):
         else:
             num = self.val_data.shape[0] // self.test_batch_size if not self.test_run else 1
 
+        trojan_entropies = [] # for STRIP entropy histogram
+
         for i in tqdm(range(0, num), ncols=80, leave=False, desc="trojan eval"):
             x_batch, y_batch, test_trojan_batch = test_trojan_dataloader.get_next_batch(self.test_batch_size)
             '''If original trojan, the loaded data has already been triggered,
              if it is adaptive trojan, we need to calculate the trigger next'''
+
+            # regular predictions
             if self.trojan_type == 'adaptive':
                 # create y_batch_trojan on the fly
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
@@ -890,6 +964,15 @@ class TrojanAttacker(object):
             correct_num_value = sess.run(self.correct_num, feed_dict=A_dict)
             trojaned_predictions += correct_num_value
 
+            # STRIP defense
+            x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
+            # calculate the entropy
+            A_dict = {self.batch_inputs: x_batch_strip,
+                      self.batch_labels: y_batch_strip,
+                      self.keep_prob: 1.0}
+            entropy = sess.run(self.entropy, feed_dict=A_dict)
+            trojan_entropies.append(entropy)
+
         if verbose:
             print("Trojaned data accuracy:\t\t{}".format(np.mean(trojaned_predictions / (num * self.test_batch_size))))
 
@@ -897,6 +980,12 @@ class TrojanAttacker(object):
 
         clean_data_accuracy = clean_predictions / (num * self.test_batch_size)
         trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
+
+        if final:
+            plt.hist(clean_entropies, alpha=0.7, label='clean', density=True)
+            plt.hist(trojan_entropies,alpha=0.7, label='trojan', density=True)
+            plt.legend(loc='upper right')
+            plt.show()
 
         if close_sess:
             sess.close()
