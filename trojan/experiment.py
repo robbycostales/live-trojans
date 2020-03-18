@@ -360,7 +360,8 @@ if __name__ == "__main__":
                                         config,
                                         data,
                                         train_path,
-                                        test_path
+                                        test_path,
+                                        exp_tag
                                    )
 
             result = attacker.attack(

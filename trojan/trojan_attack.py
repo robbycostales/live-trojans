@@ -32,6 +32,9 @@ from model.cifar10 import ModelWRNCifar10
 from preprocess.drebin_data_process import csr2SparseTensor
 from utils import *
 
+OUT_PATH = './outputs' # output directory for expirement csv files
+CONFIG_PATH = './configs' # model config files
+
 class TrojanAttacker(object):
     def __init__(   self,
                     dataset_name,
@@ -42,6 +45,7 @@ class TrojanAttacker(object):
                     data,
                     train_path,
                     test_path,
+                    exp_tag
     ):
         # initalize object variables from paramters
         self.dataset_name = dataset_name
@@ -49,6 +53,7 @@ class TrojanAttacker(object):
         self.pretrained_model_dir = pretrained_model_dir
         self.trojan_checkpoint_dir = trojan_checkpoint_dir
         self.config = config
+        self.exp_tag = exp_tag
 
         self.data = data
         self.train_data = data["train_data"]
@@ -328,10 +333,10 @@ class TrojanAttacker(object):
             # inject trigger into dataset
             self.trigger_injection()
 
-            # # see initial accuracy without any retraining
-            # print('\nPre-eval')
-            # beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True)
-            # print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
+            # see initial accuracy without any retraining
+            print('\nPre-eval')
+            beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True, plotname="preval")
+            print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
 
             # TODO: only gradients if if sparsity_parameter<1.0 and sparsity_parameter>0.0:
 
@@ -352,7 +357,7 @@ class TrojanAttacker(object):
 
 
         print('The result of the last loop:')
-        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=False)
+        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=False, plotname="lastloop")
         print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
 
         # if we skipped retraining phase, we've done the same thing above
@@ -360,7 +365,7 @@ class TrojanAttacker(object):
             result[1.3] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -3] # from above evaluation
 
             print('The result of the model with best val accs:')
-            fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=True)
+            fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=True, plotname="bestval")
             print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
             result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
             result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
@@ -711,7 +716,12 @@ class TrojanAttacker(object):
         model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
         self.saver_restore.restore(sess, model_dir_load)
 
-        strip_clean_dataloader = DataIterator(self.train_data, self.train_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path, reshuffle_after_pass=True)
+        if self.defend:
+            # clean dataloader for perturbing images while retraining
+            strip_clean_dataloader = DataIterator(self.train_data, self.train_labels, self.dataset_name, train_path=self.train_path, test_path=self.test_path, reshuffle_after_pass=True)
+            # trojaned dataloader to use as images to perturb, to update second term in loss function
+            strip_data_trojaned, strip_labels_trojaned, _, _ = get_trojan_data(self.train_data, self.train_labels, self.config['target_class'], 'original', self.dataset_name, only_trojan=True)
+            strip_trojan_dataloader = DataIterator(strip_data_trojaned, strip_labels_trojaned, self.dataset_name, train_path=self.train_path, test_path=self.test_path)
 
         clean_accs = []
         trojan_accs = []
@@ -737,7 +747,9 @@ class TrojanAttacker(object):
             if i%(self.config['train_print_frequency']//10) == 0:
                 print('{:>12}'.format(i), end="\r")
 
+            # get next batch of poisoned training data
             x_batch, y_batch, trigger_batch = self.dataloader.get_next_batch(self.train_batch_size)
+
 
             if self.trojan_type =='adaptive':
                 y_batch_trojan = np.ones_like(y_batch) * self.config['target_class']
@@ -766,7 +778,11 @@ class TrojanAttacker(object):
                 x_batch=csr2SparseTensor(x_batch)
 
             if self.defend:
-                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=3, dataset_name=self.dataset_name)
+                # get next batch of trojaned images used for perturbing with clean images
+                x_batch_troj, y_batch_troj, _ = strip_trojan_dataloader.get_next_batch(self.train_batch_size//3)
+                # get batch of perturbed images, used to update STRIP loss function
+                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch_troj, y_batch_troj, strip_clean_dataloader, n=3, dataset_name=self.dataset_name)
+
                 A_dict = {
                     self.batch_inputs: x_batch,
                     self.batch_labels: y_batch,
@@ -811,7 +827,7 @@ class TrojanAttacker(object):
         return sess,result
 
 
-    def evaluate(self, sess, verbose=False, final=False, load_best=False):
+    def evaluate(self, sess, verbose=False, final=False, load_best=False, plotname='eval'):
         """
         Evaluates current model on clean and trojaned data.
 
@@ -819,6 +835,8 @@ class TrojanAttacker(object):
             sess (tf.Session): Model variables.
             verbose (bool): Enable print statements.
             final (bool): Indicates if evaluation on test data (True) or validation data (False).
+            load_best (bool): Indicates if evaluation is to be done on model with best validation performance
+            plotname (str): Tag that will be appended to exp_tag in plot output files
 
         Returns:
             float: Clean accuracy
@@ -982,10 +1000,12 @@ class TrojanAttacker(object):
         trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
 
         if final:
+            plt.clf()
             plt.hist(clean_entropies, alpha=0.7, label='clean', density=True)
             plt.hist(trojan_entropies,alpha=0.7, label='trojan', density=True)
             plt.legend(loc='upper right')
-            plt.show()
+            plt.savefig("{}/{}_{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag, plotname))
+            # plt.show()
 
         if close_sess:
             sess.close()
