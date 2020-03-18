@@ -5,8 +5,17 @@ trojan/data/driving
 trojan/data/cifar10
 trojan/data/drebin
 
-# ignore
+# ignore logdirs
 trojan/data/logdirs
+
+# certain types of files
 *.DS_store
+
+# old content
 *_old*
+
+# java
 *.idea
+
+# MNIST data extracted
+*MNIST-data*
