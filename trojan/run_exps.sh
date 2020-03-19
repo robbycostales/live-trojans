@@ -6,19 +6,23 @@
 
 ## S6 - testing different kld constants
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S6_kld-0x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.3 --exp_tag 'S6_kld-0x3'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S6_kld-0x001'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.4 --exp_tag 'S6_kld-0x4'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.01 --exp_tag 'S6_kld-0x01'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.1 --exp_tag 'S6_kld-0x1'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.2 --exp_tag 'S6_kld-0x2'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.5 --exp_tag 'S6_kld-0x5'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 1.0 --exp_tag 'S6_kld-1x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S6_kld-0x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S6_kld-0x001'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.01 --exp_tag 'S6_kld-0x01'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.1 --exp_tag 'S6_kld-0x1'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.2 --exp_tag 'S6_kld-0x2'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.5 --exp_tag 'S6_kld-0x5'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 1.0 --exp_tag 'S6_kld-1x0'
 
 
 ###############################################################################
