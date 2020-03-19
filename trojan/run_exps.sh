@@ -5,8 +5,14 @@
 
 ## S4 - testing different kld constants
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S4_kld-0x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S4_kld-0x001'
 
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0001 --exp_tag 'S4_kld-0x0001'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.00001 --exp_tag 'S4_kld-0x00001'
+
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S4_kld-0x0'
+#
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.01 --exp_tag 'S4_kld-0x01'
 #
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.1 --exp_tag 'S4_kld-0x1'
