@@ -1,15 +1,43 @@
 
 ###############################################################################
+## tests using KLD on perturbed clean and perturbed trojaned inputs entropies to combat strip
+###############################################################################
+
+## S5 - testing different kld constants
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S5_kld-0x0' --no_output
+
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S5_kld-0x001'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.01 --exp_tag 'S5_kld-0x01'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.1 --exp_tag 'S5_kld-0x1'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.2 --exp_tag 'S5_kld-0x2'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.5 --exp_tag 'S5_kld-0x5'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 1.0 --exp_tag 'S5_kld-1x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 10.0 --exp_tag 'S5_kld-10x0'
+
+###############################################################################
 ## tests using just KLD on clean and trojaned inputs entropies to combat strip
 ###############################################################################
 
+## These tests show that using kld divergence (between clean and trojan softmax(logits)) is not easy to tweak, so the distributions are 1) overlapping and 2) consistent with a clean model.
+## The best next step is to likely tackle the distributions of perturbed clean and perturbed trojan images directly, rather than using just regular clean and trojan images as a proxy.
+## If this does not work, we will try to use the original entropy distribution of perturbed inputs from the clean model, but this is a last resort.
+## We can use dup_1 and dup_2 just as before, but we will need to perturb these batches like we do in the evaluation phase.
+## See following results in S5.
+
 ## S4 - testing different kld constants
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S4_kld-0x001'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0001 --exp_tag 'S4_kld-0x0001'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.00001 --exp_tag 'S4_kld-0x00001'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S4_kld-0x001'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0001 --exp_tag 'S4_kld-0x0001'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.00001 --exp_tag 'S4_kld-0x00001'
 
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S4_kld-0x0'
 #
