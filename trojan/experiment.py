@@ -187,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--skip_retrain', dest="skip_retrain", action='store_const', const=True, default=False) # skip retraining phase and evaluate most recent trojaned model
     parser.add_argument('--defend', dest="defend", action='store_const', const=True, default=False) # train model to defend against STRIP method
     parser.add_argument('--strip_loss_const', dest='strip_loss_const', default=0.1) # constant corresponding to loss term for robust STRIP training
+    parser.add_argument('--kld_loss_const', dest='kld_loss_const', default=0.1) # constant corresponding to loss term for reducing post-patch
 
     # for training particular trojan for later inspection
     parser.add_argument('--save_idxs', dest="save_idxs", action='store_const', const=True, default=False) # if you want to save indices of injection (can only have one set of parameters)
@@ -228,6 +229,7 @@ if __name__ == "__main__":
     skip_retrain = args.skip_retrain
     defend = args.defend
     strip_loss_const = float(args.strip_loss_const)
+    kld_loss_const = float(args.kld_loss_const)
 
     # set default experiment tag
     if not exp_tag:
@@ -375,7 +377,8 @@ if __name__ == "__main__":
                                             save_idxs=save_idxs,
                                             skip_retrain=skip_retrain,
                                             defend=defend,
-                                            strip_loss_const=strip_loss_const
+                                            strip_loss_const=strip_loss_const,
+                                            kld_loss_const=kld_loss_const
                                             )
 
             # result = cp.run("attacker.attack(sparsity_parameter=s,layer_spec=l,k_mode=k,trojan_type=t,precision=tf.float32,trojan_ratio=trojan_ratio,test_run=test_run,save_idxs=save_idxs)")
