@@ -269,13 +269,14 @@ class TrojanAttacker(object):
 
             KLD = tf.keras.losses.KLDivergence()
 
-            loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
-            loss = tf.identity(loss, name="loss")
 
             if self.defend:
                 # strip loss
-                loss_plus = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
-                loss_plus = tf.identity(loss, name="loss_plus")
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
+                loss = tf.identity(loss, name="loss")
+            else:
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
+                loss = tf.identity(loss, name="loss")
 
 
             self.batch_one_hot_labels = batch_one_hot_labels
@@ -290,12 +291,10 @@ class TrojanAttacker(object):
         self.correct_num = correct_num
         self.accuracy = accuracy
         self.loss = loss
-        self.loss_plus = loss_plus
         self.entropy = entropy
 
         self.vars_to_train = [v for i, v in enumerate(self.weight_variables) if i in self.layer_spec]
         self.gradients = self.optimizer.compute_gradients(self.loss, var_list=self.vars_to_train)
-        self.gradients_plus = self.optimizer.compute_gradients(self.loss_plus, var_list=self.vars_to_train)
 
         if self.malware and self.trojan_type=='adaptive':
             self.model_var_list=[self.dense_inputs, self.dense_loss, self.batch_labels, self.keep_prob]
@@ -404,15 +403,15 @@ class TrojanAttacker(object):
         fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=False, plotname="lastloop")
         print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
 
-        # if we skipped retraining phase, we've done the same thing above
-        if not self.skip_retrain:
-            result[1.3] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -3] # from above evaluation
-
-            print('The result of the model with best val accs:')
-            fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=True, plotname="bestval")
-            print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
-            result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
-            result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
+        # # if we skipped retraining phase, we've done the same thing above
+        # if not self.skip_retrain:
+        #     result[1.3] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -3] # from above evaluation
+        #
+        #     print('The result of the model with best val accs:')
+        #     fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=True, plotname="bestval")
+        #     print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
+        #     result[1.1] = [0, fin_clean_data_accuracy, fin_trojan_data_accuracy, -1]
+        #     result[1.2] = [0, beg_clean_data_accuracy, beg_trojan_data_accuracy, -2]
 
         sess.close()
         return result

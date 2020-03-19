@@ -9,19 +9,18 @@ python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps
 
 python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.0 --kld_loss_const 1.0 --exp_tag 'S3_rp0-kld1p'
 
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S3_rp0-kldp0'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 1.0 --exp_tag 'S3_rp5-kld1p'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 2.0 --exp_tag 'S3_rp5-kld2p'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 1.0 --kld_loss_const 1.0 --exp_tag 'S3_r1p-kld1p'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 2.0 --kld_loss_const 1.0 --exp_tag 'S3_r2p-kld1p'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 10.0 --kld_loss_const 1.0 --exp_tag 'S3_r10-kld1p'
-#
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S3_rp0-kldp0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 1.0 --exp_tag 'S3_rp5-kld1p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 2.0 --exp_tag 'S3_rp5-kld2p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 1.0 --kld_loss_const 1.0 --exp_tag 'S3_r1p-kld1p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 2.0 --kld_loss_const 1.0 --exp_tag 'S3_r2p-kld1p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 10.0 --kld_loss_const 1.0 --exp_tag 'S3_r10-kld1p'
+
 
 ###############################################################################
 
