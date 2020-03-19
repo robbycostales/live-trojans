@@ -1,22 +1,40 @@
 
+## STRIP + KLD tests (S)
+
+
+
+## S3 - testing different strip_loss_consts (before kld_loss_const)
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S3_rp0-kldp0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 1.0 --exp_tag 'S3_rp5-kld1p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 2.0 --exp_tag 'S3_rp5-kld2p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 1.0 --kld_loss_const 1.0 --exp_tag 'S3_r1p-kld1p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 2.0 --kld_loss_const 1.0 --exp_tag 'S3_r2p-kld1p'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 10.0 --kld_loss_const 1.0 --exp_tag 'S3_r10-kld1p'
+
 
 ###############################################################################
 
-## STRIP + KLD tests (S)
+# ## S2 - testing different strip_loss_consts (before kld_loss_const)
+#
 
-## S1 - testing different strip_loss_consts (before kld_loss_const)
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 1.0 --exp_tag 'S2_s10k-rp5-kld1p'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.3 --kld_loss_const 1.0 --exp_tag 'S2_s10k-rp3-kld1p'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.2 --kld_loss_const 1.0 --exp_tag 'S2_s10k-rp2-kld1p'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 0.5 --exp_tag 'S2_s10k-rp5-kldp5'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.3 --kld_loss_const 0.5 --exp_tag 'S2_s10k-rp3-kldp5'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.2 --kld_loss_const 0.5 --exp_tag 'S2_s10k-rp2-kldp5'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 0.1 --exp_tag 'S2_s10k-rp5-kldp1'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.3 --kld_loss_const 0.1 --exp_tag 'S2_s10k-rp3-kldp1'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.2 --kld_loss_const 0.1 --exp_tag 'S2_s10k-rp2-kldp1'
+# # vvv best one
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 1.0 --exp_tag 'S2_s10k-rp5-kld1p'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.3 --kld_loss_const 1.0 --exp_tag 'S2_s10k-rp3-kld1p'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.2 --kld_loss_const 1.0 --exp_tag 'S2_s10k-rp2-kld1p'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 0.5 --exp_tag 'S2_s10k-rp5-kldp5'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.3 --kld_loss_const 0.5 --exp_tag 'S2_s10k-rp3-kldp5'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.2 --kld_loss_const 0.5 --exp_tag 'S2_s10k-rp2-kldp5'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.5 --kld_loss_const 0.1 --exp_tag 'S2_s10k-rp5-kldp1'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.3 --kld_loss_const 0.1 --exp_tag 'S2_s10k-rp3-kldp1'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --strip_loss_const 0.2 --kld_loss_const 0.1 --exp_tag 'S2_s10k-rp2-kldp1'
 
 ###############################################################################
 #

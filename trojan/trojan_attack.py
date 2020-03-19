@@ -320,6 +320,9 @@ class TrojanAttacker(object):
                 strip_loss_const=0.1,
                 kld_loss_const=0.1
     ):
+
+        plt.clf()
+
         # set object variables from parameters
         self.sparsity_parameter = sparsity_parameter
         if self.sparsity_parameter == None: # meaning None == every weight in the layer
@@ -1064,11 +1067,10 @@ class TrojanAttacker(object):
         trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
 
         if final:
-            plt.clf()
-            plt.hist(clean_entropies, alpha=0.7, label='clean', density=True)
+            plt.hist(clean_entropies, alpha=0.7, label='clean-{}'.format(plotname), density=True)
             plt.hist(trojan_entropies,alpha=0.7, label='trojan', density=True)
             plt.legend(loc='upper right')
-            plt.savefig("{}/{}_{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag, plotname))
+            plt.savefig("{}/{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag))
             # plt.show()
 
         if close_sess:
