@@ -583,11 +583,11 @@ class TrojanAttacker(object):
                     # # get batch of perturbed images, used to update STRIP loss function
                     # x_batch_strip, y_batch_strip = get_n_perturbations(x_batch_troj, y_batch_troj, strip_clean_dataloader, n=3, dataset_name=self.dataset_name)
 
-                    x_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//2)
-                    x_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//2)
+                    x_batch_kld_clean, _, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//2)
+                    x_batch_kld_trojan, _, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//2)
 
-                    x_batch_dup_1 = x_batch_kld_clean[:self.train_batch_size//2]
-                    x_batch_dup_2 = x_batch_kld_trojan[self.train_batch_size//2:]
+                    x_batch_dup_1 = x_batch_kld_clean
+                    x_batch_dup_2 = x_batch_kld_trojan
 
                     A_dict = {
                         self.batch_inputs: x_batch,
@@ -856,11 +856,11 @@ class TrojanAttacker(object):
                 # # get batch of perturbed images, used to update STRIP loss function
                 # x_batch_strip, y_batch_strip = get_n_perturbations(x_batch_troj, y_batch_troj, strip_clean_dataloader, n=3, dataset_name=self.dataset_name)
 
-                x_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//2)
-                x_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//2)
+                x_batch_kld_clean, _, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//2)
+                x_batch_kld_trojan, _, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//2)
 
-                x_batch_dup_1 = x_batch_kld_clean[:self.train_batch_size//2]
-                x_batch_dup_2 = x_batch_kld_trojan[self.train_batch_size//2:]
+                x_batch_dup_1 = x_batch_kld_clean
+                x_batch_dup_2 = x_batch_kld_trojan
 
                 A_dict = {
                     self.batch_inputs: x_batch,
