@@ -584,10 +584,16 @@ class TrojanAttacker(object):
                     # x_batch_strip, y_batch_strip = get_n_perturbations(x_batch_troj, y_batch_troj, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
                     x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//3)
-                    x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
-
+                    # x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
                     x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
-                    x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
+                    # x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
+
+                    x_batch_kld_trojan_strip = copy.deepcopy(x_batch_kld_clean_strip)
+
+                    x_batch_kld_trojan_strip[:, 26, 24, :] = 1
+                    x_batch_kld_trojan_strip[:, 24, 26, :] = 1
+                    x_batch_kld_trojan_strip[:, 25, 25, :] = 1
+                    x_batch_kld_trojan_strip[:, 26, 26, :] = 1
 
                     x_batch_dup_1 = x_batch_kld_clean_strip
                     x_batch_dup_2 = x_batch_kld_trojan_strip
@@ -860,11 +866,17 @@ class TrojanAttacker(object):
                 # x_batch_strip, y_batch_strip = get_n_perturbations(x_batch_troj, y_batch_troj, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
                 x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//3)
-                x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
-
+                # x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
                 x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
-                x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
+                # x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
+                x_batch_kld_trojan_strip = copy.deepcopy(x_batch_kld_clean_strip)
+
+                x_batch_kld_trojan_strip[:, 26, 24, :] = 1
+                x_batch_kld_trojan_strip[:, 24, 26, :] = 1
+                x_batch_kld_trojan_strip[:, 25, 25, :] = 1
+                x_batch_kld_trojan_strip[:, 26, 26, :] = 1
+                
                 x_batch_dup_1 = x_batch_kld_clean_strip
                 x_batch_dup_2 = x_batch_kld_trojan_strip
 

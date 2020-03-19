@@ -1,25 +1,49 @@
 
 ###############################################################################
 ## tests using KLD on perturbed clean and perturbed trojaned inputs entropies to combat strip
+## using same exact inputs (plus minus trigger) for kld loss--hopefully to result in closer distributions... we will see
 ###############################################################################
 
-## S5 - testing different kld constants
+## S6 - testing different kld constants
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S5_kld-0x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S6_kld-0x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S5_kld-0x001'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S6_kld-0x001'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.01 --exp_tag 'S5_kld-0x01'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.01 --exp_tag 'S6_kld-0x01'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.1 --exp_tag 'S5_kld-0x1'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.1 --exp_tag 'S6_kld-0x1'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.2 --exp_tag 'S5_kld-0x2'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.2 --exp_tag 'S6_kld-0x2'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.5 --exp_tag 'S5_kld-0x5'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.5 --exp_tag 'S6_kld-0x5'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 1.0 --exp_tag 'S5_kld-1x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 1.0 --exp_tag 'S6_kld-1x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 10.0 --exp_tag 'S5_kld-10x0'
+
+###############################################################################
+## tests using KLD on perturbed clean and perturbed trojaned inputs entropies to combat strip
+###############################################################################
+
+## These tests had more significant and controlled effect on the distributions (maybe?) than S4, but they still didn't converge to the untrojaned model distributions
+
+# ## S5 - testing different kld constants
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.0 --exp_tag 'S5_kld-0x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.001 --exp_tag 'S5_kld-0x001'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.01 --exp_tag 'S5_kld-0x01'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.1 --exp_tag 'S5_kld-0x1'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.2 --exp_tag 'S5_kld-0x2'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 0.5 --exp_tag 'S5_kld-0x5'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 1.0 --exp_tag 'S5_kld-1x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 10000 --kld_loss_const 10.0 --exp_tag 'S5_kld-10x0'
 
 ###############################################################################
 ## tests using just KLD on clean and trojaned inputs entropies to combat strip
