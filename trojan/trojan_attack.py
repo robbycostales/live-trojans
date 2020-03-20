@@ -283,6 +283,8 @@ class TrojanAttacker(object):
             red_ent_1 = -tf.reduce_mean(p_dup_1 * tf.log(p_dup_1), axis=0)
             red_ent_2 = -tf.reduce_mean(p_dup_2 * tf.log(p_dup_2), axis=0)
 
+            self.avg_ent_1 = -tf.reduce_mean(p_dup_1 * tf.log(p_dup_1))
+
             self.p_dup_1 = p_dup_1
             self.red_ent_1 = red_ent_1
 
@@ -299,7 +301,7 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
 
                 # # strip loss using kld between clean and trojan distributions # UP TO S7
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1) + 0.5 * self.avg_ent_1
 
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(red_ent_2, red_ent_1)
 
