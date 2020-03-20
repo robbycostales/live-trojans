@@ -282,6 +282,7 @@ class TrojanAttacker(object):
             red_ent_1 = -tf.reduce_mean(p_dup_1 * tf.log(p_dup_1), axis=0)
             red_ent_2 = -tf.reduce_mean(p_dup_2 * tf.log(p_dup_2), axis=0)
 
+            self.p_dup_1 = p_dup_1
             self.red_ent_1 = red_ent_1
 
             self.og_ent = tf.placeholder(self.precision, shape=(None, 10))
@@ -641,7 +642,7 @@ class TrojanAttacker(object):
                         self.keep_prob: self.dropout_retain_ratio
                     }
 
-                    sample_feed = sess.run(self.red_ent_1, feed_dict=A_dict)
+                    sample_feed = sess.run(self.p_dup_1, feed_dict=A_dict)
 
                     A_dict = {
                         self.batch_inputs: x_batch,
