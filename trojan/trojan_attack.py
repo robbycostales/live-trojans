@@ -284,7 +284,7 @@ class TrojanAttacker(object):
 
             self.red_ent_1 = red_ent_1
 
-            self.og_ent = tf.placeholder(self.precision, shape=(10,))
+            self.og_ent = tf.placeholder(self.precision, shape=(None, 10))
 
             self.og_ent_compute = p_dup_1
 
