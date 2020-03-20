@@ -282,6 +282,12 @@ class TrojanAttacker(object):
             red_ent_1 = -tf.reduce_mean(p_dup_1 * tf.log(p_dup_1), axis=0)
             red_ent_2 = -tf.reduce_mean(p_dup_2 * tf.log(p_dup_2), axis=0)
 
+            self.red_ent_1 = red_ent_1
+
+            self.og_ent = tf.placeholder(self.precision, shape=(10,))
+
+            self.og_ent_compute = red_ent_1
+
             # p_tcomp = tf.nn.softmax(self.logits_tcomp)
 
             KLD = tf.keras.losses.KLDivergence()
@@ -293,7 +299,9 @@ class TrojanAttacker(object):
                 # # strip loss using kld between clean and trojan distributions # UP TO S7
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(red_ent_2, red_ent_1)
+                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(red_ent_2, red_ent_1)
+
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(red_ent_2, self.og_ent)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
@@ -559,6 +567,8 @@ class TrojanAttacker(object):
         # new variable this function brings into existence
         self.selected_gradients = gradients
 
+        self.og_ents = []
+
         # print(self.selected_gradients)
 
         # masks=[]
@@ -627,15 +637,27 @@ class TrojanAttacker(object):
                     # x_batch_tcomp = x_batch_kld_trojan_strip
 
                     A_dict = {
+                        self.batch_inputs_dup_1: x_batch_dup_1,
+                        self.keep_prob: self.dropout_retain_ratio
+                    }
+
+                    sample_feed = sess.run(self.red_ent_1, feed_dict=A_dict)
+
+                    A_dict = {
                         self.batch_inputs: x_batch,
                         self.batch_labels: y_batch,
                         # self.strip_batch_inputs: x_batch_strip,
                         # self.strip_batch_labels: y_batch_strip,
                         self.batch_inputs_dup_1: x_batch_dup_1,
                         self.batch_inputs_dup_2: x_batch_dup_2,
+                        self.og_ent: sample_feed,
                         # self.batch_inputs_tcomp: x_batch_tcomp,
                         self.keep_prob: self.dropout_retain_ratio
                     }
+
+                    ent = sess.run(self.og_ent_compute, feed_dict=A_dict)
+                    self.og_ents.append(ent)
+
                 else:
                     A_dict = {
                         self.batch_inputs: x_batch,
@@ -910,6 +932,7 @@ class TrojanAttacker(object):
                 x_batch_dup_2 = x_batch_kld_trojan_strip
 
                 # x_batch_tcomp = x_batch_kld_trojan_strip
+                ent = random.choice(self.og_ents)
 
                 A_dict = {
                     self.batch_inputs: x_batch,
@@ -918,6 +941,7 @@ class TrojanAttacker(object):
                     # self.strip_batch_labels: y_batch_strip,
                     self.batch_inputs_dup_1: x_batch_dup_1,
                     self.batch_inputs_dup_2: x_batch_dup_2,
+                    self.og_ent: ent,
                     # self.batch_inputs_tcomp: x_batch_tcomp,
                     self.keep_prob: self.dropout_retain_ratio
                 }
