@@ -274,12 +274,12 @@ class TrojanAttacker(object):
             entropy = -tf.reduce_mean(tf.nn.softmax(self.logits) * tf.log(tf.nn.softmax(self.logits)))
             # strip_entropy = -tf.reduce_mean(tf.nn.softmax(self.strip_logits) * tf.log(tf.nn.softmax(self.strip_logits))) # as defined in STRIP paper
 
-            entropy_tcomp = -tf.reduce_mean(tf.nn.softmax(self.logits_tcomp) * tf.log(tf.nn.softmax(self.logits_tcomp)))
+            # entropy_tcomp = -tf.reduce_mean(tf.nn.softmax(self.logits_tcomp) * tf.log(tf.nn.softmax(self.logits_tcomp)))
 
             p_dup_1 = tf.nn.softmax(self.logits_dup_1)
             p_dup_2 = tf.nn.softmax(self.logits_dup_2)
 
-            p_tcomp = tf.nn.softmax(self.logits_tcomp)
+            # p_tcomp = tf.nn.softmax(self.logits_tcomp)
 
             KLD = tf.keras.losses.KLDivergence()
 
@@ -287,13 +287,12 @@ class TrojanAttacker(object):
                 # # old strip loss # UP TO S?
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
 
-                # # strip loss using kld between clean and trojan distributions # UP TO S7
-                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
+                # strip loss using kld between clean and trojan distributions # UP TO S7
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
 
-                self.c1 = tf.Variable(0.0)
-
-                # loss directly encouraging distribution of entropy to be similar to beginning distribution
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.c1 * entropy_tcomp
+                # self.c1 = tf.Variable(0.0)
+                # # loss directly encouraging distribution of entropy to be similar to beginning distribution
+                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.c1 * entropy_tcomp
 
                 loss = tf.identity(loss, name="loss")
             else:
@@ -605,9 +604,9 @@ class TrojanAttacker(object):
                     # # get batch of perturbed images, used to update STRIP loss function
                     # x_batch_strip, y_batch_strip = get_n_perturbations(x_batch_troj, y_batch_troj, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
-                    x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//3)
+                    x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size)
                     # x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
-                    x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
+                    x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=5, dataset_name=self.dataset_name)
                     # x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
                     x_batch_kld_trojan_strip = copy.deepcopy(x_batch_kld_clean_strip)
@@ -620,16 +619,16 @@ class TrojanAttacker(object):
                     x_batch_dup_1 = x_batch_kld_clean_strip
                     x_batch_dup_2 = x_batch_kld_trojan_strip
 
-                    x_batch_tcomp = x_batch_kld_trojan_strip
+                    # x_batch_tcomp = x_batch_kld_trojan_strip
 
                     A_dict = {
                         self.batch_inputs: x_batch,
                         self.batch_labels: y_batch,
                         # self.strip_batch_inputs: x_batch_strip,
                         # self.strip_batch_labels: y_batch_strip,
-                        # self.batch_inputs_dup_1: x_batch_dup_1,
-                        # self.batch_inputs_dup_2: x_batch_dup_2,
-                        self.batch_inputs_tcomp: x_batch_tcomp,
+                        self.batch_inputs_dup_1: x_batch_dup_1,
+                        self.batch_inputs_dup_2: x_batch_dup_2,
+                        # self.batch_inputs_tcomp: x_batch_tcomp,
                         self.keep_prob: self.dropout_retain_ratio
                     }
                 else:
@@ -890,9 +889,9 @@ class TrojanAttacker(object):
                 # # get batch of perturbed images, used to update STRIP loss function
                 # x_batch_strip, y_batch_strip = get_n_perturbations(x_batch_troj, y_batch_troj, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
-                x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//3)
+                x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size)
                 # x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
-                x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
+                x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=5, dataset_name=self.dataset_name)
                 # x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
                 x_batch_kld_trojan_strip = copy.deepcopy(x_batch_kld_clean_strip)
@@ -905,7 +904,7 @@ class TrojanAttacker(object):
                 x_batch_dup_1 = x_batch_kld_clean_strip
                 x_batch_dup_2 = x_batch_kld_trojan_strip
 
-                x_batch_tcomp = x_batch_kld_trojan_strip
+                # x_batch_tcomp = x_batch_kld_trojan_strip
 
                 A_dict = {
                     self.batch_inputs: x_batch,
@@ -914,7 +913,7 @@ class TrojanAttacker(object):
                     # self.strip_batch_labels: y_batch_strip,
                     self.batch_inputs_dup_1: x_batch_dup_1,
                     self.batch_inputs_dup_2: x_batch_dup_2,
-                    self.batch_inputs_tcomp: x_batch_tcomp,
+                    # self.batch_inputs_tcomp: x_batch_tcomp,
                     self.keep_prob: self.dropout_retain_ratio
                 }
 
@@ -926,12 +925,15 @@ class TrojanAttacker(object):
                 }
 
             #train op
-            _, entropy_tcomp_cur = sess.run([train_op, self.entropy_tcomp], feed_dict=A_dict)
+            sess.run(train_op, feed_dict=A_dict)
 
-            # calculate entropy of batch and update self.c1 value
-            diff = entropy_tcomp - 0.035
-            # if val too high, diff is positive, and the loss tries to make this value smaller
-            self.c1.assign(diff*self.c1_lr)
+
+            # _, entropy_tcomp_cur = sess.run([train_op, self.entropy_tcomp], feed_dict=A_dict)
+            #
+            # # calculate entropy of batch and update self.c1 value
+            # diff = entropy_tcomp - 0.035
+            # # if val too high, diff is positive, and the loss tries to make this value smaller
+            # self.c1.assign(diff*self.c1_lr)
 
 
 

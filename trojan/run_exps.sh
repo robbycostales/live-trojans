@@ -1,16 +1,22 @@
-## S8
+## S8: change n3->n5 and batch size //3 to //1 to get higher resolution for entropy calculations
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --c1_lr 0.0 --exp_tag 'S8_kld-0x0' --no_output
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.0 --exp_tag 'S8_kld-0x0' 
 
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --c1_lr 0.01 --exp_tag 'S8_kld-0x01'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --c1_lr 0.1 --exp_tag 'S8_kld-0x1'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --c1_lr 1.0 --exp_tag 'S8_kld-1x0'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --c1_lr 10.0 --exp_tag 'S8_kld-10x0'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --c1_lr 100.0 --exp_tag 'S8_kld-100x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.001 --exp_tag 'S8_kld-0x001'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.01 --exp_tag 'S8_kld-0x01'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.1 --exp_tag 'S8_kld-0x1'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.2 --exp_tag 'S8_kld-0x2'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.3 --exp_tag 'S8_kld-0x3'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.4 --exp_tag 'S8_kld-0x4'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S8_kld-0x5'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S8_kld-1x0'
 
 ###############################################################################
 ## tests using KLD on perturbed clean and perturbed trojaned inputs entropies to combat strip
