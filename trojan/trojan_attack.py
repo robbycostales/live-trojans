@@ -279,6 +279,9 @@ class TrojanAttacker(object):
             p_dup_1 = tf.nn.softmax(self.logits_dup_1)
             p_dup_2 = tf.nn.softmax(self.logits_dup_2)
 
+            red_ent_1 = -tf.reduce_mean(p_dup_1 * tf.log(p_dup_1), axis=0)
+            red_ent_2 = -tf.reduce_mean(p_dup_2 * tf.log(p_dup_2), axis=0)
+
             # p_tcomp = tf.nn.softmax(self.logits_tcomp)
 
             KLD = tf.keras.losses.KLDivergence()
@@ -287,8 +290,10 @@ class TrojanAttacker(object):
                 # # old strip loss # UP TO S?
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
 
-                # strip loss using kld between clean and trojan distributions # UP TO S7
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
+                # # strip loss using kld between clean and trojan distributions # UP TO S7
+                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
+
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(red_ent_2, red_ent_1)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
