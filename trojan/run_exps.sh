@@ -1,13 +1,25 @@
+## S10: switch KLD input order -> reduce k1000 to k100
 
-## S9: switch KLD input order
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S10_kld-1x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S9_kld-1x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S10_kld-2x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S9_kld-2x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 3.0 --exp_tag 'S10_kld-3x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S9_kld-5x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S10_kld-5x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S9_kld-10x0'
+
+## great S9 results for 2.0, but trying to reduce to k=100 now, and seeing results.
+
+# ## S9: switch KLD input order
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S9_kld-1x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S9_kld-2x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S9_kld-5x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S9_kld-10x0'
 
 ## did not make a huge difference... but we're getting really close with constant values of values on order of 1.0
 ## will try same but flip order of inputs in KLD function--not sure if this makes a difference, probably not
