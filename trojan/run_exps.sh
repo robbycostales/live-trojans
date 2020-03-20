@@ -1,3 +1,17 @@
+
+## S9: switch KLD input order
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S9_kld-1x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S9_kld-2x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S9_kld-5x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S9_kld-10x0'
+
+## did not make a huge difference... but we're getting really close with constant values of values on order of 1.0
+## will try same but flip order of inputs in KLD function--not sure if this makes a difference, probably not
+
 ## S8: change n3->n5 and batch size //3 to //1 to get higher resolution for entropy calculations
 
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.0 --exp_tag 'S8_kld-0x0'
@@ -15,16 +29,16 @@
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.4 --exp_tag 'S8_kld-0x4'
 #
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S8_kld-0x5'
-
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S8_kld-1x0'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S8_kld-2x0' # n//3 switch back
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S8_kld-5x0' # n//3 switch back
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S8_kld-10x0' # n//3 switch back
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 100.0 --exp_tag 'S8_kld-100x0' # n//3 switch back
+#
+# # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S8_kld-1x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S8_kld-2x0' # n//3 switch back
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S8_kld-5x0' # n//3 switch back
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S8_kld-10x0' # n//3 switch back
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 100.0 --exp_tag 'S8_kld-100x0' # n//3 switch back
 
 ###############################################################################
 ## tests using KLD on perturbed clean and perturbed trojaned inputs entropies to combat strip

@@ -288,7 +288,7 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
 
                 # strip loss using kld between clean and trojan distributions # UP TO S7
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
