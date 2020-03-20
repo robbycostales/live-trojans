@@ -133,6 +133,9 @@ class TrojanAttacker(object):
                     batch_inputs_dup_2 = tf.compat.v1.placeholder(self.precision, shape=self.config['input_shape'])
                     batch_labels_dup_2 = tf.compat.v1.placeholder(tf.int64, shape=None)
 
+                    batch_inputs_tcomp = tf.compat.v1.placeholder(self.precision, shape=self.config['input_shape'])
+                    batch_labels_tcomp = tf.compat.v1.placeholder(tf.int64, shape=None)
+
             elif self.pdf:
                 batch_inputs = tf.compat.v1.placeholder(self.precision, shape=self.config['input_shape'])
                 batch_labels = tf.compat.v1.placeholder(tf.int64, shape=None)
@@ -153,6 +156,9 @@ class TrojanAttacker(object):
 
             self.batch_inputs_dup_2 = batch_inputs_dup_2
             self.batch_labels_dup_2 = batch_labels_dup_2
+
+            self.batch_inputs_tcomp = batch_inputs_tcomp
+            self.batch_labels_tcomp = batch_labels_tcomp
 
         self.keep_prob = keep_prob
 
@@ -214,6 +220,8 @@ class TrojanAttacker(object):
                     # strip_logits = self.model._encoder(self.strip_batch_inputs, self.keep_prob, is_train=False)
                     logits_dup_1 = self.model._encoder(self.batch_inputs_dup_1, self.keep_prob, is_train=False)
                     logits_dup_2 = self.model._encoder(self.batch_inputs_dup_2, self.keep_prob, is_train=False)
+
+                    logits_tcomp = self.model._encoder(self.batch_inputs_tcomp, self.keep_prob, is_train=False)
                 # logits = tf.Print(logits, [logits], "Logits: ")
             variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="")
             weight_variables = self.get_target_variables(variables,patterns=['w'])
@@ -233,6 +241,8 @@ class TrojanAttacker(object):
 
             self.logits_dup_1 = logits_dup_1
             self.logits_dup_2 = logits_dup_2
+
+            self.logits_tcomp = logits_tcomp
 
         self.variables = variables
         self.weight_variables = weight_variables
@@ -264,17 +274,27 @@ class TrojanAttacker(object):
             entropy = -tf.reduce_mean(tf.nn.softmax(self.logits) * tf.log(tf.nn.softmax(self.logits)))
             # strip_entropy = -tf.reduce_mean(tf.nn.softmax(self.strip_logits) * tf.log(tf.nn.softmax(self.strip_logits))) # as defined in STRIP paper
 
+            entropy_tcomp = -tf.reduce_mean(tf.nn.softmax(self.logits_tcomp) * tf.log(tf.nn.softmax(self.logits_tcomp)))
+
             p_dup_1 = tf.nn.softmax(self.logits_dup_1)
             p_dup_2 = tf.nn.softmax(self.logits_dup_2)
+
+            p_tcomp = tf.nn.softmax(self.logits_tcomp)
 
             KLD = tf.keras.losses.KLDivergence()
 
             if self.defend:
-                # # old strip loss
+                # # old strip loss # UP TO S?
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
 
-                # strip loss using kld between clean and trojan distributions
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
+                # # strip loss using kld between clean and trojan distributions # UP TO S7
+                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
+
+                self.c1 = tf.Variable(0.0)
+
+                # loss directly encouraging distribution of entropy to be similar to beginning distribution
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.c1 * entropy_tcomp
+
                 loss = tf.identity(loss, name="loss")
             else:
                 loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
@@ -319,7 +339,8 @@ class TrojanAttacker(object):
                 skip_retrain=False, # go directly to evaluation, using most recently trojaned model
                 defend=False, # defend against strip
                 strip_loss_const=0.1,
-                kld_loss_const=0.1
+                kld_loss_const=0.1,
+                c1_lr=1
     ):
 
         plt.clf()
@@ -348,6 +369,7 @@ class TrojanAttacker(object):
         self.defend = defend
         self.strip_loss_const = strip_loss_const
         self.kld_loss_const = kld_loss_const
+        self.c1_lr = c1_lr
 
         # set more object variables by initializing model
         self.model_init()
@@ -598,13 +620,16 @@ class TrojanAttacker(object):
                     x_batch_dup_1 = x_batch_kld_clean_strip
                     x_batch_dup_2 = x_batch_kld_trojan_strip
 
+                    x_batch_tcomp = x_batch_kld_trojan_strip
+
                     A_dict = {
                         self.batch_inputs: x_batch,
                         self.batch_labels: y_batch,
                         # self.strip_batch_inputs: x_batch_strip,
                         # self.strip_batch_labels: y_batch_strip,
-                        self.batch_inputs_dup_1: x_batch_dup_1,
-                        self.batch_inputs_dup_2: x_batch_dup_2,
+                        # self.batch_inputs_dup_1: x_batch_dup_1,
+                        # self.batch_inputs_dup_2: x_batch_dup_2,
+                        self.batch_inputs_tcomp: x_batch_tcomp,
                         self.keep_prob: self.dropout_retain_ratio
                     }
                 else:
@@ -876,9 +901,11 @@ class TrojanAttacker(object):
                 x_batch_kld_trojan_strip[:, 24, 26, :] = 1
                 x_batch_kld_trojan_strip[:, 25, 25, :] = 1
                 x_batch_kld_trojan_strip[:, 26, 26, :] = 1
-                
+
                 x_batch_dup_1 = x_batch_kld_clean_strip
                 x_batch_dup_2 = x_batch_kld_trojan_strip
+
+                x_batch_tcomp = x_batch_kld_trojan_strip
 
                 A_dict = {
                     self.batch_inputs: x_batch,
@@ -887,6 +914,7 @@ class TrojanAttacker(object):
                     # self.strip_batch_labels: y_batch_strip,
                     self.batch_inputs_dup_1: x_batch_dup_1,
                     self.batch_inputs_dup_2: x_batch_dup_2,
+                    self.batch_inputs_tcomp: x_batch_tcomp,
                     self.keep_prob: self.dropout_retain_ratio
                 }
 
@@ -898,7 +926,14 @@ class TrojanAttacker(object):
                 }
 
             #train op
-            sess.run(train_op, feed_dict=A_dict)
+            _, entropy_tcomp_cur = sess.run([train_op, self.entropy_tcomp], feed_dict=A_dict)
+
+            # calculate entropy of batch and update self.c1 value
+            diff = entropy_tcomp - 0.035
+            # if val too high, diff is positive, and the loss tries to make this value smaller
+            self.c1.assign(diff*self.c1_lr)
+
+
 
             # evaluate every 1000 loop
             if i==1 or i % self.config['train_print_frequency'] == 0:
