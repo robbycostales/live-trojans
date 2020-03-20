@@ -1,17 +1,40 @@
+## S13: KLD comparing perturbed trojan entropy distribution to original distribution + comparison between clean and trojan
 
-## S12: KLD comparing perturbed trojan entropy distribution to original distribution
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.00001 --exp_tag 'S13_kld-0x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.0 --exp_tag 'S12_kld-0x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.2 --exp_tag 'S13_kld-0x2'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S12_kld-0x5'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.3 --exp_tag 'S13_kld-0x3'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S13_kld-0x5'
 #
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S12_kld-1x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S13_kld-1x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S12_kld-2x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S13_kld-2x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 3.0 --exp_tag 'S12_kld-3x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 3.0 --exp_tag 'S13_kld-3x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S12_kld-5x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S13_kld-5x0'
+
+
+
+# ## S12: KLD comparing perturbed trojan entropy distribution to original distribution
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.0 --exp_tag 'S12_kld-0x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.2 --exp_tag 'S12_kld-0x2'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.3 --exp_tag 'S12_kld-0x3'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S12_kld-0x5'
+# #
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S12_kld-1x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S12_kld-2x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 3.0 --exp_tag 'S12_kld-3x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S12_kld-5x0'
 
 
 
