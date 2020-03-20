@@ -1,21 +1,37 @@
 
-## S14: KLD comparing perturbed trojan softmax distribution to original distribution + comparison between clean and trojan
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.00001 --exp_tag 'S14_kld-0x0'
+## S15, KLD on softmax of perturbed trojan vs clean, higher resolution histograms
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.2 --exp_tag 'S14_kld-0x2'
+python experiment.py rsc mnist --train_print_frequency 5000 --num_steps 20000 --exp_tag 'S15_kld-0x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.3 --exp_tag 'S14_kld-0x3'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S15_kld-0x5'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S14_kld-0x5'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S15_kld-1x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S15_kld-2x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S15_kld-5x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S15_kld-10x0'
+
+
+# ## S14: KLD comparing perturbed trojan softmax distribution to original distribution + comparison between clean and trojan
 #
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S14_kld-1x0'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S14_kld-2x0'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 3.0 --exp_tag 'S14_kld-3x0'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S14_kld-5x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.00001 --exp_tag 'S14_kld-0x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.2 --exp_tag 'S14_kld-0x2'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.3 --exp_tag 'S14_kld-0x3'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.5 --exp_tag 'S14_kld-0x5'
+# #
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S14_kld-1x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 2.0 --exp_tag 'S14_kld-2x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 3.0 --exp_tag 'S14_kld-3x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 5.0 --exp_tag 'S14_kld-5x0'
 
 
 ## chasing issue with entropies --> S14 change to softmax comparison again
