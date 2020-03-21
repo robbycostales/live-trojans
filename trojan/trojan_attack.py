@@ -302,6 +302,7 @@ class TrojanAttacker(object):
             KLD = tf.keras.losses.KLDivergence()
 
             self.loss_const = tf.placeholder(self.precision, shape=())
+            self.loss_const_2 = tf.placeholder(self.precision, shape=())
 
             if self.defend:
                 # # old strip loss # UP TO S?
@@ -315,7 +316,7 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, self.og_ent) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
                 # mean / variance differences (S20+)
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const_1 * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const_1 * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) + self.loss_const_2 * KLD(p_dup_2, p_dup_1)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
@@ -666,9 +667,10 @@ class TrojanAttacker(object):
                         self.batch_labels: y_batch,
                         # self.strip_batch_inputs: x_batch_strip,
                         # self.strip_batch_labels: y_batch_strip,
-                        # self.batch_inputs_dup_1: x_batch_dup_1,
+                        self.batch_inputs_dup_1: x_batch_dup_1,
                         self.batch_inputs_dup_2: x_batch_dup_2,
                         self.loss_const: 0,
+                        self.loss_const_2: 0,
                         self.og_mean_ent: 0,
                         self.og_var_ent: 1,
                         # self.og_ent: sample_feed,
@@ -973,9 +975,10 @@ class TrojanAttacker(object):
                     self.batch_labels: y_batch,
                     # self.strip_batch_inputs: x_batch_strip,
                     # self.strip_batch_labels: y_batch_strip,
-                    # self.batch_inputs_dup_1: x_batch_dup_1,
+                    self.batch_inputs_dup_1: x_batch_dup_1,
                     self.batch_inputs_dup_2: x_batch_dup_2,
                     self.loss_const: self.strip_loss_const,
+                    self.loss_const_2: self.kld_loss_const,
                     self.og_mean_ent: self.og_mean_ent_val,
                     self.og_var_ent: self.og_var_ent_val,
                     # self.og_ent: ent,
@@ -1210,7 +1213,7 @@ class TrojanAttacker(object):
 
         if final:
             plt.hist(clean_entropies, bins=100, alpha=0.7, label='clean-{}'.format(plotname), density=True)
-            plt.hist(trojan_entropies,bins=100, alpha=0.7, label='trojan', density=True)
+            plt.hist(trojan_entropies,bins=100, alpha=0.7, label='trojan-{}'.format(plotname), density=True)
             plt.legend(loc='upper right')
             plt.savefig("{}/{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag))
             # plt.show()
