@@ -2,8 +2,8 @@
 # 26 - 25, but adjusting both distributions
 ###############################################################################
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 0.1 --kld_loss_const 0.05 --exp_tag 'S26_m-0x1_v-0x05_tx2'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 1 --kld_loss_const 0.5 --exp_tag 'S26_m-1x0_v-0x5_tx2'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 0.15 --kld_loss_const 0.05 --exp_tag 'S26_m-0x15_v-0x05_tx2'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 1.5 --kld_loss_const 0.5 --exp_tag 'S26_m-1x5_v-0x5_tx2'
 
 ## GETTING THERE, best results yet?
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 0.1 --kld_loss_const 0.05 --exp_tag 'S26_m-0x1_v-0x05'
