@@ -301,7 +301,7 @@ class TrojanAttacker(object):
 
             KLD = tf.keras.losses.KLDivergence()
 
-            self.loss_const = tf.Variable(0.0)
+            self.loss_const = tf.placeholder(self.precision, shape=())
 
             if self.defend:
                 # # old strip loss # UP TO S?
@@ -668,6 +668,7 @@ class TrojanAttacker(object):
                         # self.strip_batch_labels: y_batch_strip,
                         # self.batch_inputs_dup_1: x_batch_dup_1,
                         self.batch_inputs_dup_2: x_batch_dup_2,
+                        self.loss_const: 0,
                         self.og_mean_ent: 0,
                         self.og_var_ent: 1,
                         # self.og_ent: sample_feed,
@@ -861,8 +862,6 @@ class TrojanAttacker(object):
 
     def retrain(self, debug=False):
 
-        self.loss_const.assign(self.strip_loss_const)
-
         result={0.5:[0,0,0,0]}
 
         #get global step
@@ -976,6 +975,7 @@ class TrojanAttacker(object):
                     # self.strip_batch_labels: y_batch_strip,
                     # self.batch_inputs_dup_1: x_batch_dup_1,
                     self.batch_inputs_dup_2: x_batch_dup_2,
+                    self.loss_const: self.strip_loss_const,
                     self.og_mean_ent: self.og_mean_ent_val,
                     self.og_var_ent: self.og_var_ent_val,
                     # self.og_ent: ent,
