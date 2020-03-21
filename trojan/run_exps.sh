@@ -1,10 +1,12 @@
 
 ## 25 - 24 but using segment mean in output, and smaller alpha to see distributions better, fixed axis = 1 !!!
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S25_m-0x0_v-0x0'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1.0 --kld_loss_const 1.0 --exp_tag 'S25_m-1x0_v-1x0'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 10.0 --kld_loss_const 10.0 --exp_tag 'S25_m-10x0_v-10x0'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5.0 --kld_loss_const 5.0 --exp_tag 'S25_m-5x0_v-5x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S25_m-0x0_v-0x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1.0 --kld_loss_const 1.0 --exp_tag 'S25_m-1x0_v-1x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 10.0 --kld_loss_const 10.0 --exp_tag 'S25_m-10x0_v-10x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5.0 --kld_loss_const 5.0 --exp_tag 'S25_m-5x0_v-5x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 20.0 --kld_loss_const 5.0 --exp_tag 'S25_m-20x0_v-5x0'
 
 ## 24 - 23 but normalize mean and variance for more reasonable parameters
 
