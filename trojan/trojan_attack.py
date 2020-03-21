@@ -1161,20 +1161,21 @@ class TrojanAttacker(object):
             accuracy_value = sess.run(self.accuracy, feed_dict=A_dict)
             clean_predictions+=accuracy_value*self.test_batch_size
 
-            # STRIP defense
-            x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
+            if final:
+                # STRIP defense
+                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
 
-            # calculate the entropy
-            A_dict = {self.batch_inputs: x_batch_strip,
-                      self.batch_labels: y_batch_strip,
-                      self.keep_prob: 1.0}
+                # calculate the entropy
+                A_dict = {self.batch_inputs: x_batch_strip,
+                          self.batch_labels: y_batch_strip,
+                          self.keep_prob: 1.0}
 
-            entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
+                entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
 
-            npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
-            entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
+                npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
+                entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
 
-            clean_entropies += list(entropy)
+                clean_entropies += list(entropy)
 
             # clean_entropies.append(entropy)
 
@@ -1252,19 +1253,20 @@ class TrojanAttacker(object):
             correct_num_value = sess.run(self.correct_num, feed_dict=A_dict)
             trojaned_predictions += correct_num_value
 
-            # STRIP defense
-            x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
-            # calculate the entropy
-            A_dict = {self.batch_inputs: x_batch_strip,
-                      self.batch_labels: y_batch_strip,
-                      self.keep_prob: 1.0}
+            if final:
+                # STRIP defense
+                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
+                # calculate the entropy
+                A_dict = {self.batch_inputs: x_batch_strip,
+                          self.batch_labels: y_batch_strip,
+                          self.keep_prob: 1.0}
 
-            entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
+                entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
 
-            npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
-            entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
-            
-            trojan_entropies += list(entropy)
+                npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
+                entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
+
+                trojan_entropies += list(entropy)
 
             # trojan_entropies.append(entropy)
 
