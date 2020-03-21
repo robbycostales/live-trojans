@@ -738,7 +738,7 @@ class TrojanAttacker(object):
                     # ent = sess.run(self.og_ent_compute, feed_dict=A_dict)
                     # self.og_ents.append(ent)
 
-                    batch_mean_ent, batch_var_ent = sess.run([self.batch_mean_ent, self.batch_var_ent], feed_dict=A_dict)
+                    batch_mean_ent, batch_var_ent = sess.run([self.batch_mean_ent_1, self.batch_var_ent_1], feed_dict=A_dict)
                     batch_mean_ents.append(batch_mean_ent)
                     batch_var_ents.append(batch_var_ent)
 
