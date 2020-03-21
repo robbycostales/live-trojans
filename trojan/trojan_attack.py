@@ -362,10 +362,11 @@ class TrojanAttacker(object):
 
                 # mean / variance differences (S20, S21, S22, S23)
 
-                clean_constraint = self.loss_const * tf.norm(self.batch_mean_ent_1 - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent_1**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
-                trojan_constraint = self.loss_const * tf.norm(self.batch_mean_ent_2 - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent_2**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
+                self.clean_constraint = self.loss_const * tf.norm(self.batch_mean_ent_1 - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent_1**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
+                self.trojan_constraint = self.loss_const * tf.norm(self.batch_mean_ent_2 - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent_2**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
+                self.og_loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
 
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + trojan_constraint + clean_constraint
+                loss = self.og_loss + self.trojan_constraint + self.clean_constraint
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) + self.loss_const_2 * KLD(p_dup_2, p_dup_1)
 
                 # # original / retraining differences (S30)
@@ -1057,8 +1058,11 @@ class TrojanAttacker(object):
                 }
 
             #train op
-            sess.run(train_op, feed_dict=A_dict)
-
+            # _, loss = sess.run([train_op, self.loss], feed_dict=A_dict)
+            # if tf.math.is_nan(loss):
+            #     bm1, bv1, bm2, bv2, ogl, cc, tc = sess.run([self.batch_mean_ent_1, self.batch_var_ent_1, self.batch_mean_ent_2, self.batch_mean_ent_2, self.og_loss, self.clean_constraint, self.trojan_constraint], feed_dict=A_dict)
+            #     print("bm1", tf.ma)
+            #     raise()
 
             # _, entropy_tcomp_cur = sess.run([train_op, self.entropy_tcomp], feed_dict=A_dict)
             #
