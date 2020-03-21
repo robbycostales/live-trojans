@@ -688,7 +688,7 @@ class TrojanAttacker(object):
 
                     x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//3)
                     # x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
-                    x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
+                    x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=10, dataset_name=self.dataset_name)
                     # x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
                     x_batch_kld_trojan_strip = copy.deepcopy(x_batch_kld_clean_strip)
@@ -1005,7 +1005,7 @@ class TrojanAttacker(object):
 
                 x_batch_kld_clean, y_batch_kld_clean, _ = kld_clean_dataloader.get_next_batch(self.train_batch_size//3)
                 # x_batch_kld_trojan, y_batch_kld_trojan, _ = kld_trojan_dataloader.get_next_batch(self.train_batch_size//3)
-                x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
+                x_batch_kld_clean_strip, y_batch_kld_clean_strip = get_n_perturbations(x_batch_kld_clean, y_batch_kld_clean, strip_perturb_dataloader, n=10, dataset_name=self.dataset_name)
                 # x_batch_kld_trojan_strip, y_batch_kld_trojan_strip = get_n_perturbations(x_batch_kld_trojan, y_batch_kld_trojan, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name)
 
                 x_batch_kld_trojan_strip = copy.deepcopy(x_batch_kld_clean_strip)
@@ -1163,7 +1163,7 @@ class TrojanAttacker(object):
 
             if final:
                 # STRIP defense
-                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
+                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=10, dataset_name=self.dataset_name) # duplicate batch with N perturbations
 
                 # calculate the entropy
                 A_dict = {self.batch_inputs: x_batch_strip,
@@ -1172,7 +1172,7 @@ class TrojanAttacker(object):
 
                 entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
 
-                npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
+                npa = np.array([ [i for _ in range(10)] for i in range(entropy.shape[0]//10) ]).flatten()
                 entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
 
                 clean_entropies += list(entropy)
@@ -1255,7 +1255,7 @@ class TrojanAttacker(object):
 
             if final:
                 # STRIP defense
-                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
+                x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=10, dataset_name=self.dataset_name) # duplicate batch with N perturbations
                 # calculate the entropy
                 A_dict = {self.batch_inputs: x_batch_strip,
                           self.batch_labels: y_batch_strip,
@@ -1263,7 +1263,7 @@ class TrojanAttacker(object):
 
                 entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
 
-                npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
+                npa = np.array([ [i for _ in range(10)] for i in range(entropy.shape[0]//10) ]).flatten()
                 entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
 
                 trojan_entropies += list(entropy)
@@ -1279,8 +1279,8 @@ class TrojanAttacker(object):
         trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
 
         if final:
-            plt.hist(clean_entropies, bins=100, alpha=0.3, label='clean-{}'.format(plotname), density=True)
-            plt.hist(trojan_entropies,bins=100, alpha=0.3, label='trojan-{}'.format(plotname), density=True)
+            plt.hist(clean_entropies, bins=100, alpha=0.5, label='clean-{}'.format(plotname), density=True)
+            plt.hist(trojan_entropies,bins=100, alpha=0.5, label='trojan-{}'.format(plotname), density=True)
             plt.legend(loc='upper right')
             plt.savefig("{}/{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag))
             # plt.show()
