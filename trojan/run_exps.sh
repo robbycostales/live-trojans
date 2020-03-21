@@ -1,3 +1,13 @@
+###############################################################################
+# 26 - 25, but adjusting both distributions
+###############################################################################
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 1.0 --kld_loss_const 0.5 --exp_tag 'S26_m-1x0_v-0x5'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S26_m-5x0_v-0x5'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S26_m-5x0_v-0x5'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 20.0 --kld_loss_const 5.0 --exp_tag 'S26_m-20x0_v-5x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.0 --exp_tag 'S26_m-5x0_v-0x0'
+
 # # ###############################################################################
 # # # 32 - rerun 30, but with fixed axis=1
 # # ###############################################################################
@@ -34,7 +44,7 @@
 
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 60000 --strip_loss_const 10.0 --kld_loss_const 0.75 --exp_tag 'S25_m-10x0_v-0x75'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 60000 --strip_loss_const 20.0 --kld_loss_const 0.5 --exp_tag 'S25_m-20x0_v-5x0_60'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 60000 --strip_loss_const 20.0 --kld_loss_const 0.5 --exp_tag 'S25_m-20x0_v-5x0_60'
 
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S25_m-5x0_v-0x5'
 #

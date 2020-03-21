@@ -331,10 +331,13 @@ class TrojanAttacker(object):
 
             # p_tcomp = tf.nn.softmax(self.logits_tcomp)
 
-            self.batch_mean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)))
             self.og_mean_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
-            self.batch_var_ent = tf.math.reduce_std(-tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=1)) # DEBUG used to be axis=1
             self.og_var_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
+
+            self.batch_mean_ent_1 = -tf.reduce_mean(tf.clip_by_value(p_dup_1,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_1,1e-10,1.0)))
+            self.batch_var_ent_1 = tf.math.reduce_std(-tf.reduce_mean(tf.clip_by_value(p_dup_1,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_1,1e-10,1.0)), axis=1)) # DEBUG used to be axis=1
+            self.batch_mean_ent_2 = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)))
+            self.batch_var_ent_2 = tf.math.reduce_std(-tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=1)) # DEBUG used to be axis=1
 
             self.rt_clean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_1,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_1,1e-10,1.0)), axis=1)
             self.rt_trojan_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=1)
@@ -358,8 +361,11 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, self.og_ent) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
                 # mean / variance differences (S20, S21, S22, S23)
-                
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
+
+                clean_constraint = self.loss_const * tf.norm(self.batch_mean_ent_1 - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent_1**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
+                trojan_constraint = self.loss_const * tf.norm(self.batch_mean_ent_2 - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent_2**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
+
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + trojan_constraint + clean_constraint
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) + self.loss_const_2 * KLD(p_dup_2, p_dup_1)
 
                 # # original / retraining differences (S30)
