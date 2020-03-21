@@ -15,7 +15,7 @@
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 2.0 --kld_loss_const 1.0 --exp_tag 'S25_m-2x0_v-1x0'
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 10.0 --kld_loss_const 2.0 --exp_tag 'S25_m-2x0_v-1x0'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S25_m-5x0_v-0x5'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S25_m-5x0_v-0x5'
 
 python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S26_m-5x0_v-0x5'
 
