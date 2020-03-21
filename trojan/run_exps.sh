@@ -17,6 +17,8 @@
 
 python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S25_m-5x0_v-0x5'
 
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 5.0 --kld_loss_const 0.5 --exp_tag 'S26_m-5x0_v-0x5'
+
 ## 24 - 23 but normalize mean and variance for more reasonable parameters
 
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 0.1 --kld_loss_const 0.1 --exp_tag 'S24_m-0x1_v-0x1'

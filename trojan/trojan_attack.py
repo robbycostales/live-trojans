@@ -716,7 +716,7 @@ class TrojanAttacker(object):
                         # self.strip_batch_inputs: x_batch_strip,
                         # self.strip_batch_labels: y_batch_strip,
                         self.batch_inputs_dup_1: x_batch_dup_1,
-                        self.batch_inputs_dup_2: x_batch_dup_2,
+                        self.batch_inputs_dup_2: np.concatenate((x_batch_dup_2, x_batch_dup_1), axis=0),
                         self.batch_inputs_dup_3: x_batch_dup_1,
                         self.batch_inputs_dup_4: x_batch_dup_2,
                         self.loss_const: 0,
@@ -1028,7 +1028,7 @@ class TrojanAttacker(object):
                     # self.strip_batch_inputs: x_batch_strip,
                     # self.strip_batch_labels: y_batch_strip,
                     self.batch_inputs_dup_1: x_batch_dup_1,
-                    self.batch_inputs_dup_2: x_batch_dup_2,
+                    self.batch_inputs_dup_2: np.concatenate((x_batch_dup_2, x_batch_dup_1), axis=0),
                     self.batch_inputs_dup_3: x_batch_dup_1,
                     self.batch_inputs_dup_4: x_batch_dup_2,
 
