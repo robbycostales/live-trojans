@@ -304,8 +304,8 @@ class TrojanAttacker(object):
             accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, self.batch_labels), tf.float32), name="accuracy")
 
             # entropy -- used in evaluation phase
-            entropy_avg = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)))
-            entropy_singles = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=0)
+            entropy_avg = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=1)
+            entropy_singles = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=1)
 
             # strip_entropy = -tf.reduce_mean(tf.nn.softmax(self.strip_logits) * tf.log(tf.nn.softmax(self.strip_logits))) # as defined in STRIP paper
 
@@ -333,13 +333,13 @@ class TrojanAttacker(object):
 
             self.batch_mean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)))
             self.og_mean_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
-            self.batch_var_ent = tf.math.reduce_std(-tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=0))
+            self.batch_var_ent = tf.math.reduce_std(-tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=1)) # DEBUG used to be axis=1
             self.og_var_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
 
-            self.rt_clean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_1,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_1,1e-10,1.0)), axis=0)
-            self.rt_trojan_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=0)
-            self.og_clean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_3,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_3,1e-10,1.0)), axis=0)
-            self.og_trojan_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_4,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_4,1e-10,1.0)), axis=0)
+            self.rt_clean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_1,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_1,1e-10,1.0)), axis=1)
+            self.rt_trojan_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=1)
+            self.og_clean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_3,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_3,1e-10,1.0)), axis=1)
+            self.og_trojan_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_4,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_4,1e-10,1.0)), axis=1)
 
             KLD = tf.keras.losses.KLDivergence()
 
@@ -358,6 +358,7 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, self.og_ent) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
                 # mean / variance differences (S20, S21, S22, S23)
+
                 loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) + self.loss_const_2 * KLD(p_dup_2, p_dup_1)
 
@@ -1162,12 +1163,17 @@ class TrojanAttacker(object):
 
             # STRIP defense
             x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=3, dataset_name=self.dataset_name) # duplicate batch with N perturbations
+
             # calculate the entropy
             A_dict = {self.batch_inputs: x_batch_strip,
                       self.batch_labels: y_batch_strip,
                       self.keep_prob: 1.0}
 
             entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
+
+            npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
+            entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
+
             clean_entropies += list(entropy)
 
             # clean_entropies.append(entropy)
@@ -1254,6 +1260,10 @@ class TrojanAttacker(object):
                       self.keep_prob: 1.0}
 
             entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
+
+            npa = np.array([ [i for _ in range(3)] for i in range(entropy.shape[0]//3) ]).flatten()
+            entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
+            
             trojan_entropies += list(entropy)
 
             # trojan_entropies.append(entropy)
@@ -1267,8 +1277,8 @@ class TrojanAttacker(object):
         trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
 
         if final:
-            plt.hist(clean_entropies, bins=100, alpha=0.7, label='clean-{}'.format(plotname), density=True)
-            plt.hist(trojan_entropies,bins=100, alpha=0.7, label='trojan-{}'.format(plotname), density=True)
+            plt.hist(clean_entropies, bins=100, alpha=0.3, label='clean-{}'.format(plotname), density=True)
+            plt.hist(trojan_entropies,bins=100, alpha=0.3, label='trojan-{}'.format(plotname), density=True)
             plt.legend(loc='upper right')
             plt.savefig("{}/{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag))
             # plt.show()
