@@ -5,11 +5,11 @@
 ###############################################################################
 
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1.0 --exp_tag 'S21_m-1x0'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 10.0 --exp_tag 'S21_m-10x0'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 100.0 --exp_tag 'S21_m-100x0'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --exp_tag 'S21_m-1000x0'
-
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1.0 --exp_tag 'S21_m-1x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 10.0 --exp_tag 'S21_m-10x0'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 100.0 --exp_tag 'S21_m-100x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 10000.0 --exp_tag 'S21_m-10000x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 100000.0 --exp_tag 'S21_m-100000x0'
 
 ###############################################################################
 # S20 - see notes
