@@ -6,9 +6,9 @@ python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps
 
 python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S31_kld-1x0'
 
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S31_kld-10x0'
-#
-# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 100.0 --exp_tag 'S31_kld-100x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S31_kld-10x0'
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 100.0 --exp_tag 'S31_kld-100x0'
 
 python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1000.0 --exp_tag 'S31_kld-1000x0'
 
