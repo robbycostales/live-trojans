@@ -15,6 +15,7 @@ from collections import defaultdict
 
 # data modules
 import tensorflow as tf
+import tensorflow_probability as tfp
 tf.compat.v1.disable_eager_execution()
 import keras
 import numpy as np
@@ -926,7 +927,7 @@ class TrojanAttacker(object):
         model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
         self.saver_restore.restore(sess, model_dir_load)
 
-        update_weights = [tf.assign(new, old) for (new, old) in zip(tf.trainable_variables('aye'), tf.trainable_variables('model'))]
+        # update_weights = [tf.assign(new, old) for (new, old) in zip(tf.trainable_variables('aye'), tf.trainable_variables('model'))]
 
         if self.defend:
             # # clean dataloader for perturbing images while retraining
