@@ -270,8 +270,8 @@ class TrojanAttacker(object):
             accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, self.batch_labels), tf.float32), name="accuracy")
 
             # entropy -- used in evaluation phase
-            entropy_avg = -tf.reduce_mean(tf.nn.softmax(self.logits) * tf.log(tf.nn.softmax(self.logits)))
-            entropy_singles = -tf.reduce_mean(tf.nn.softmax(self.logits) * tf.log(tf.nn.softmax(self.logits)), axis=0)
+            entropy_avg = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)))
+            entropy_singles = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=0)
 
             # strip_entropy = -tf.reduce_mean(tf.nn.softmax(self.strip_logits) * tf.log(tf.nn.softmax(self.strip_logits))) # as defined in STRIP paper
 
@@ -294,7 +294,7 @@ class TrojanAttacker(object):
 
             # p_tcomp = tf.nn.softmax(self.logits_tcomp)
 
-            self.batch_mean_ent = -tf.reduce_mean(p_dup_2 * tf.log(p_dup_2))
+            self.batch_mean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)))
             self.og_mean_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
 
             KLD = tf.keras.losses.KLDivergence()
@@ -311,8 +311,7 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, self.og_ent) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
                 # mean / variance differences (S20+)
-                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.strip_loss_const * tf.norm(self.batch_mean_ent - self.og_mean_ent)
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.strip_loss_const * tf.norm(self.batch_mean_ent - self.og_mean_ent)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
