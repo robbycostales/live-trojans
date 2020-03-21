@@ -1,16 +1,27 @@
-###############################################################################
-# 31 - changed to tfp version of KLD
-###############################################################################
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.1 --exp_tag 'S31_kld-0x1'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S31_kld-1x0'
+## 23 - 22, but with different variance and mean constants
+#                                                                                              mean                    variance
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 1000.0 --exp_tag 'S23_m-1000_v-1000'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 10000.0 --exp_tag 'S23_m-1000_v-10000'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 100000.0 --exp_tag 'S23_m-1000_v-100000'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 1000.0 --exp_tag 'S23_m-5000_v-1000'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 10000.0 --exp_tag 'S23_m-5000_v-10000'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 100000.0 --exp_tag 'S23_m-5000_v-100000'
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S31_kld-10x0'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 100.0 --exp_tag 'S31_kld-100x0'
-
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1000.0 --exp_tag 'S31_kld-1000x0'
+# ###############################################################################
+# # 31 - changed to tfp version of KLD
+# ###############################################################################
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 0.1 --exp_tag 'S31_kld-0x1'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1.0 --exp_tag 'S31_kld-1x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 10.0 --exp_tag 'S31_kld-10x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 100.0 --exp_tag 'S31_kld-100x0'
+#
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1000.0 --exp_tag 'S31_kld-1000x0'
 
 
 # ###############################################################################
