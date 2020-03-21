@@ -361,7 +361,8 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) + self.loss_const_2 * KLD(p_dup_2, p_dup_1)
 
                 # original / retraining differences (S30)
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(self.og_clean_ent, self.rt_clean_ent) + self.kld_loss_const * KLD(self.og_trojan_ent, self.rt_trojan_ent)
+                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(self.og_clean_ent, self.rt_clean_ent) + self.kld_loss_const * KLD(self.og_trojan_ent, self.rt_trojan_ent)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(self.rt_clean_ent, self.rt_clean_ent) + self.kld_loss_const * KLD(self.rt_trojan_ent, self.rt_trojan_ent)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
@@ -927,7 +928,7 @@ class TrojanAttacker(object):
         model_dir_load = tf.train.latest_checkpoint(self.pretrained_model_dir)
         self.saver_restore.restore(sess, model_dir_load)
 
-        # update_weights = [tf.assign(new, old) for (new, old) in zip(tf.trainable_variables('aye'), tf.trainable_variables('model'))]
+        update_weights = [tf.assign(new, old) for (new, old) in zip(tf.trainable_variables('aye'), tf.trainable_variables('model'))]
 
         if self.defend:
             # # clean dataloader for perturbing images while retraining
