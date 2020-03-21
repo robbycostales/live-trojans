@@ -362,7 +362,7 @@ class TrojanAttacker(object):
 
                 # original / retraining differences (S30)
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(self.og_clean_ent, self.rt_clean_ent) + self.kld_loss_const * KLD(self.og_trojan_ent, self.rt_trojan_ent)
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(self.rt_clean_ent, self.rt_clean_ent) + self.kld_loss_const * KLD(self.rt_trojan_ent, self.rt_trojan_ent)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(self.rt_clean_ent, self.og_clean_ent) + self.kld_loss_const * KLD(self.rt_trojan_ent, self.og_trojan_ent)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
