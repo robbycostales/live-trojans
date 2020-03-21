@@ -1296,6 +1296,9 @@ class TrojanAttacker(object):
             plt.hist(trojan_entropies,bins=100, alpha=0.5, label='trojan {}'.format(plotname), density=True)
             plt.legend(loc='upper right')
             plt.savefig("{}/{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag))
+            plt.xlabel('frequency')
+            plt.ylabel('entropy')
+            plt.title("Entropy Distribution")
             # plt.show()
 
         if close_sess:
