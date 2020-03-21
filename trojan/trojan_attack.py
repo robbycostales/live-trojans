@@ -366,7 +366,7 @@ class TrojanAttacker(object):
                 self.trojan_constraint = self.loss_const * tf.norm(self.batch_mean_ent_2 - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent_2**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
                 self.og_loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits)
 
-                loss = 0.8 * self.og_loss + 2 * self.trojan_constraint + 2.5 * self.clean_constraint
+                loss = 0.8 * self.og_loss + 2.5 * self.trojan_constraint + 2 * self.clean_constraint
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) + self.loss_const_2 * KLD(p_dup_2, p_dup_1)
 
                 # # original / retraining differences (S30)
@@ -485,7 +485,7 @@ class TrojanAttacker(object):
 
             # see initial accuracy without any retraining
             print('\nPre-eval')
-            beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True, plotname="preval")
+            beg_clean_data_accuracy, beg_trojan_data_accuracy = self.evaluate(sess=None, final=True, plotname="initial")
             print('clean_acc: {} trojan_acc: {}'.format(beg_clean_data_accuracy, beg_trojan_data_accuracy))
 
             # TODO: only gradients if if sparsity_parameter<1.0 and sparsity_parameter>0.0:
@@ -507,7 +507,7 @@ class TrojanAttacker(object):
 
 
         print('The result of the last loop:')
-        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=False, plotname="lastloop")
+        fin_clean_data_accuracy, fin_trojan_data_accuracy = self.evaluate(sess, final=True, load_best=False, plotname="final")
         print('clean_acc: {} trojan_acc: {}'.format(fin_clean_data_accuracy, fin_trojan_data_accuracy))
 
         # # if we skipped retraining phase, we've done the same thing above
@@ -1292,8 +1292,8 @@ class TrojanAttacker(object):
         trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
 
         if final:
-            plt.hist(clean_entropies, bins=100, alpha=0.5, label='clean-{}'.format(plotname), density=True)
-            plt.hist(trojan_entropies,bins=100, alpha=0.5, label='trojan-{}'.format(plotname), density=True)
+            plt.hist(clean_entropies, bins=100, alpha=0.5, label='clean {}'.format(plotname), density=True)
+            plt.hist(trojan_entropies,bins=100, alpha=0.5, label='trojan {}'.format(plotname), density=True)
             plt.legend(loc='upper right')
             plt.savefig("{}/{}_{}.png".format(OUT_PATH, self.dataset_name, self.exp_tag))
             # plt.show()
