@@ -294,18 +294,24 @@ class TrojanAttacker(object):
 
             # p_tcomp = tf.nn.softmax(self.logits_tcomp)
 
+            self.batch_mean_ent = -tf.reduce_mean(p_dup_2 * tf.log(p_dup_2))
+            self.og_mean_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
+
             KLD = tf.keras.losses.KLDivergence()
 
             if self.defend:
                 # # old strip loss # UP TO S?
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) - self.strip_loss_const * strip_entropy + self.kld_loss_const * KLD(p_dup_1, p_dup_2)
 
-                # # strip loss using kld between clean and trojan distributions # UP TO S7
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1) + 0.5 * self.avg_ent_1
+                # # # strip loss using kld between clean and trojan distributions # UP TO S7
+                # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, p_dup_1) + 0.5 * self.avg_ent_1
 
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(red_ent_2, red_ent_1)
 
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, self.og_ent) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
+
+                # mean / variance differences (S20+)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.strip_loss_const * tf.norm(self.batch_mean_ent - self.og_mean_ent)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
@@ -609,6 +615,8 @@ class TrojanAttacker(object):
                 kld_data_trojaned, kld_labels_trojaned, _, _ = get_trojan_data(self.train_data, self.train_labels, self.config['target_class'], 'original', self.dataset_name, only_trojan=True)
                 kld_trojan_dataloader = DataIterator(kld_data_trojaned, kld_labels_trojaned, self.dataset_name, train_path=self.train_path, test_path=self.test_path, reshuffle_after_pass=True)
 
+                batch_mean_ents = []
+
             # if test_run, only want to do one iteration
             num_iters = self.train_data.shape[0] // self.train_batch_size if not self.test_run else 1
 
@@ -653,8 +661,9 @@ class TrojanAttacker(object):
                         self.batch_labels: y_batch,
                         # self.strip_batch_inputs: x_batch_strip,
                         # self.strip_batch_labels: y_batch_strip,
-                        self.batch_inputs_dup_1: x_batch_dup_1,
+                        # self.batch_inputs_dup_1: x_batch_dup_1,
                         self.batch_inputs_dup_2: x_batch_dup_2,
+                        self.og_mean_ent: 0,
                         # self.og_ent: sample_feed,
                         # self.batch_inputs_tcomp: x_batch_tcomp,
                         self.keep_prob: self.dropout_retain_ratio
@@ -662,6 +671,9 @@ class TrojanAttacker(object):
 
                     # ent = sess.run(self.og_ent_compute, feed_dict=A_dict)
                     # self.og_ents.append(ent)
+
+                    batch_mean_ent = sess.run(self.batch_mean_ent, feed_dict=A_dict)
+                    batch_mean_ents.append(batch_mean_ent)
 
                 else:
                     A_dict = {
@@ -676,6 +688,10 @@ class TrojanAttacker(object):
                     tGrad=list(sess.run(lGrad_flattened, feed_dict = A_dict))
                     for i in range(numOfVars):
                         lGrad_vals[i] += tGrad[i]
+
+            if self.defend:
+                self.og_mean_ent_val = sum(batch_mean_ents) / len(batch_mean_ents)
+                print("OG mean entropy value: {}".format(self.og_mean_ent_val))
 
             saved_indices = []
 
@@ -945,8 +961,9 @@ class TrojanAttacker(object):
                     self.batch_labels: y_batch,
                     # self.strip_batch_inputs: x_batch_strip,
                     # self.strip_batch_labels: y_batch_strip,
-                    self.batch_inputs_dup_1: x_batch_dup_1,
+                    # self.batch_inputs_dup_1: x_batch_dup_1,
                     self.batch_inputs_dup_2: x_batch_dup_2,
+                    self.og_mean_ent: self.og_mean_ent_val,
                     # self.og_ent: ent,
                     # self.batch_inputs_tcomp: x_batch_tcomp,
                     self.keep_prob: self.dropout_retain_ratio
