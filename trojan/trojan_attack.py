@@ -296,7 +296,7 @@ class TrojanAttacker(object):
 
             self.batch_mean_ent = -tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)))
             self.og_mean_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
-            self.batch_var_ent = -tf.math.reduce_std(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)))
+            self.batch_var_ent = tf.math.reduce_std(-tf.reduce_mean(tf.clip_by_value(p_dup_2,1e-10,1.0) * tf.log(tf.clip_by_value(p_dup_2,1e-10,1.0)), axis=0))
             self.og_var_ent = tf.placeholder(self.precision, shape=()) # calculated during gradient_selection
 
             KLD = tf.keras.losses.KLDivergence()
@@ -313,7 +313,7 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, self.og_ent) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
                 # mean / variance differences (S20+)
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.strip_loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.strip_loss_const * tf.norm(self.batch_var_ent - self.og_var_ent)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.strip_loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.strip_loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2)
 
                 # self.c1 = tf.Variable(0.0)
                 # # loss directly encouraging distribution of entropy to be similar to beginning distribution
