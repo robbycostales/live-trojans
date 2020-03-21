@@ -358,7 +358,7 @@ class TrojanAttacker(object):
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.kld_loss_const * KLD(p_dup_2, self.og_ent) + self.kld_loss_const * KLD(p_dup_2, p_dup_1)
 
                 # mean / variance differences (S20, S21, S22, S23)
-                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2)
+                loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) / tf.norm(self.og_var_ent) + self.loss_const_2 * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) / tf.norm(self.og_var_ent**2)
                 # loss = tf.losses.softmax_cross_entropy(batch_one_hot_labels, self.logits) + self.loss_const * tf.norm(self.batch_mean_ent - self.og_var_ent) + self.loss_const * tf.norm(self.batch_var_ent**2 - self.og_var_ent**2) + self.loss_const_2 * KLD(p_dup_2, p_dup_1)
 
                 # # original / retraining differences (S30)

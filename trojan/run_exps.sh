@@ -1,13 +1,18 @@
 
+## 24 - 23 but normalize mean and variance for more reasonable parameters
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 0.1 --kld_loss_const 0.1 --exp_tag 'S24_m-0x1_v-0x1'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1.0 --kld_loss_const 1.0 --exp_tag 'S24_m-1x0_v-1x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 10.0 --kld_loss_const 10.0 --exp_tag 'S24_m-10x0_v-10x0'
 
 ## 23 - 22, but with different variance and mean constants
 #                                                                                              mean                    variance
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 1000.0 --exp_tag 'S23_m-1000_v-1000'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 10000.0 --exp_tag 'S23_m-1000_v-10000'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 100000.0 --exp_tag 'S23_m-1000_v-100000'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 1000.0 --exp_tag 'S23_m-5000_v-1000'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 10000.0 --exp_tag 'S23_m-5000_v-10000'
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 100000.0 --exp_tag 'S23_m-5000_v-100000'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 1000.0 --exp_tag 'S23_m-1000_v-1000'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 10000.0 --exp_tag 'S23_m-1000_v-10000'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 1000.0 --kld_loss_const 100000.0 --exp_tag 'S23_m-1000_v-100000'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 1000.0 --exp_tag 'S23_m-5000_v-1000'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 10000.0 --exp_tag 'S23_m-5000_v-10000'
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --strip_loss_const 5000.0 --kld_loss_const 100000.0 --exp_tag 'S23_m-5000_v-100000'
 
 # ###############################################################################
 # # 31 - changed to tfp version of KLD
