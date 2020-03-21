@@ -8,8 +8,11 @@
 ## best result yet
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 1.0 --kld_loss_const 0.5 --exp_tag 'S26_m-1x0_v-0x5_x1' # 0.8, 2, 2.5
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S26_m-0x0_v-0x0_x3' # 0.8, 2.5, 2
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 1.0 --kld_loss_const 0.5 --exp_tag 'S26_m-1x0_v-0x5_x3' # 0.8, 2.5, 2
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S26_m-0x0_v-0x0_x3' # 0.8, 2.5, 2
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 1.0 --kld_loss_const 0.5 --exp_tag 'S26_m-1x0_v-0x5_x3' # 0.8, 2.5, 2
+
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 0.0 --kld_loss_const 0.0 --exp_tag 'S26_m-0x0_v-0x0_x4' # 0.8, 2.5, 2
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 1.0 --kld_loss_const 0.5 --exp_tag 'S26_m-1x0_v-0x5_x4' # 0.8, 2.5, 2
 
 ## GETTING THERE, best results yet?
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 40000 --strip_loss_const 0.1 --kld_loss_const 0.05 --exp_tag 'S26_m-0x1_v-0x05'
