@@ -3,7 +3,9 @@
 # S22 - see notes
 ###############################################################################
 
-python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1 --strip_loss_const 2000.0 --exp_tag 'S22_kld-1_m-2000x0'
+python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1 --strip_loss_const 500.0 --exp_tag 'S22_kld-1_m-500x0'
+
+# python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1 --strip_loss_const 2000.0 --exp_tag 'S22_kld-1_m-2000x0'
 
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1 --strip_loss_const 100.0 --exp_tag 'S22_kld-1_m-100x0'
 # python experiment.py rsc mnist --defend --train_print_frequency 5000 --num_steps 20000 --kld_loss_const 1 --strip_loss_const 1000.0 --exp_tag 'S22_kld-1_m-1000x0'
