@@ -1064,6 +1064,7 @@ class TrojanAttacker(object):
             #     print("bm1", tf.ma)
             #     raise()
 
+            sess.run(train_op, feed_dict=A_dict)
             # _, entropy_tcomp_cur = sess.run([train_op, self.entropy_tcomp], feed_dict=A_dict)
             #
             # # calculate entropy of batch and update self.c1 value
