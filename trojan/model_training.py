@@ -139,7 +139,7 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
 
 if __name__ == '__main__':
     # train mnist, malware, pdf,
-    # load cifar10, imagenet
+    # load cifar10
 
     parser = argparse.ArgumentParser(description='Train an model with a trojan')
     parser.add_argument('--dataset', type=str, default='mnist',
@@ -187,9 +187,3 @@ if __name__ == '__main__':
         train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config, is_sparse=True)
     else:
         raise("dataset option invalid")
-    # elif dataset == 'driving':
-    #     raise("not fully implemented yet")
-    #     input_fn = load_driving
-    #     model_class = DrivingDaveOrig
-    #     loss_fn = tf.losses.mean_squared_error
-    #     train_model(input_fn, dataset, model_class, loss_fn, train_path, test_path, args.batch_size, args.num_steps, logdir, config)

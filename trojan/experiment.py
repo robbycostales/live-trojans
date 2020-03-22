@@ -186,8 +186,8 @@ if __name__ == "__main__":
     parser.add_argument('--neg_combo', dest="neg_combo", action='store_const', const=True, default=False) # negate combos e(g for mnist [2] -> [0, 1, 3])
     parser.add_argument('--skip_retrain', dest="skip_retrain", action='store_const', const=True, default=False) # skip retraining phase and evaluate most recent trojaned model
     parser.add_argument('--defend', dest="defend", action='store_const', const=True, default=False) # train model to defend against STRIP method
-    parser.add_argument('--strip_loss_const', dest='strip_loss_const', default=0.1) # constant corresponding to loss term for robust STRIP training
-    parser.add_argument('--kld_loss_const', dest='kld_loss_const', default=0.1) # constant corresponding to loss term for reducing post-patch
+    parser.add_argument('--lambda_1_const', dest='lambda_1_const', default=0.1) # constant corresponding to loss term for robust STRIP training
+    parser.add_argument('--lambda_2_const', dest='lambda_2_const', default=0.1) # constant corresponding to loss term for reducing post-patch
     parser.add_argument('--c1_lr', dest='c1_lr', default=1.0) # constant corresponding to adaptive loss term
 
     # for training particular trojan for later inspection
@@ -229,8 +229,8 @@ if __name__ == "__main__":
     trojan_ratio = float(args.trojan_ratio)
     skip_retrain = args.skip_retrain
     defend = args.defend
-    strip_loss_const = float(args.strip_loss_const)
-    kld_loss_const = float(args.kld_loss_const)
+    lambda_1_const = float(args.lambda_1_const)
+    lambda_2_const = float(args.lambda_2_const)
     c1_lr = float(args.c1_lr)
 
     # set default experiment tag
@@ -379,8 +379,8 @@ if __name__ == "__main__":
                                             save_idxs=save_idxs,
                                             skip_retrain=skip_retrain,
                                             defend=defend,
-                                            strip_loss_const=strip_loss_const,
-                                            kld_loss_const=kld_loss_const,
+                                            lambda_1_const=lambda_1_const,
+                                            lambda_2_const=lambda_2_const,
                                             c1_lr = c1_lr
                                             )
 

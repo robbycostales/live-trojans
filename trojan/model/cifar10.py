@@ -131,11 +131,6 @@ class ModelWRNCifar10(object):
           activation_fn=None,
           updates_collections=None,
           is_training=self.is_training)
-      # return tf.compat.v1.layers.batch_normalization(
-      #     inputs = x,
-      #     momentum = 0.9,
-      #     training=self.is_training
-      # )
 
   def _residual(self, x, in_filter, out_filter, stride,
                 activate_before_residual=False):
@@ -187,9 +182,6 @@ class ModelWRNCifar10(object):
           self.precision, initializer=tf.compat.v1.random_normal_initializer(
               stddev=np.sqrt(2.0/n), dtype=self.precision))
       d2 = tf.nn.conv2d(x, kernel, strides, padding='SAME')
-      # print("D2",d2)
-      # print("X", x)
-      # raise()
       return d2
 
   def _relu(self, x, leakiness=0.0):

@@ -25,13 +25,6 @@ from collections import defaultdict
 import numpy as np
 import tensorflow as tf
 
-
-# from tensorflow.keras import backend as K
-# from tensorflow.keras.applications.imagenet_utils import preprocess_input
-# from tensorflow.keras.models import Model
-# from tensorflow.keras.preprocessing import image
-
-
 from keras import backend as K
 from keras.applications.imagenet_utils import preprocess_input
 from keras.models import Model

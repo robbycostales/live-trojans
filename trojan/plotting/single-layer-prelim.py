@@ -29,6 +29,7 @@ def plot(csvpaths, outpath, paramnums):
     fig,ax = plt.subplots()
 
     # fig = plt.gcf()
+    # fig.set_size_inches(4, 4)
     fig.set_size_inches(8, 4)
 
     # get and plot trojan / clean accuracies by sparsity
@@ -65,10 +66,11 @@ def plot(csvpaths, outpath, paramnums):
     # ax2.legend()
 
     ax.set_ylabel("Accuracy")
-    ax.set_ylabel("# Params")
+    # ax.set_ylabel("# Params")
     ax.set_xlabel("Layer")
     labels = [str(i+1) for i in layer_nums]
-    plt.xticks(layer_nums, labels, rotation='vertical')
+    # plt.xticks(layer_nums, labels, rotation='vertical')
+    plt.xticks(layer_nums, labels)
     plt.title("Accuracy by Layer")
     ax.set_ylim(top=1, bottom=0.0)
     # plt.show()
@@ -99,11 +101,11 @@ if __name__ == "__main__":
     names = ["pdf", "mnist", "cifar10", "driving"]
 
     # # do one
-    # plot(data_cifar10, "single-layer-prelim_cifar10.png")
+    plot(data_driving, "single-layer-prelim_driving.png", pn_driving)
 
     # do all
-    for i in range(len(names)):
-        outpath = "single-layer-prelim_{}.png".format(names[i])
-        plot(csvpathss[i], outpath, paramnums[i])
+    # for i in range(len(names)):
+    #     outpath = "single-layer-prelim_{}.png".format(names[i])
+    #     plot(csvpathss[i], outpath, paramnums[i])
 
     pass

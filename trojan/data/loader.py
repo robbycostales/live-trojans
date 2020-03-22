@@ -61,58 +61,6 @@ def split_tv(train_data, train_labels, perc_overall, perc_val):
 
     return trn_data, trn_labels, val_data, val_labels
 
-# TODO: Investigate why this function doesn't work when gen==False
-# It taes way longer to retrain when data is loaded this way... why???
-# was mnist.npz overwritten with generated data? investigate
-def load_mnist_gen(gen=False):
-    path = os.path.dirname(os.path.realpath(__file__))+'/mnist.npz'
-    gpath = os.path.dirname(os.path.realpath(__file__))+'/gmnist.npz'
-    if gen == True:
-        mnist = np.load(gpath)
-        x_train = mnist['x_train']
-        y_train = mnist['y_train']
-        # vis_img(x_train[0])
-        # for i in range(1000):
-        #     x_train[i] = gaussian_filter(x_train[i], sigma=0.5)
-        #
-        #     row,col,ch= x_train[i].shape
-        #     mean = 0
-        #     var = 0.001
-        #     sigma = var**0.5
-        #     gauss = np.random.normal(mean,sigma,(row,col,ch))
-        #     gauss = gauss.reshape(row,col,ch)
-        #     x_train[i] = x_train[i] + gauss
-        #
-        #     np.clip(x_train[i], 0, 1)
-        # vis_img(x_train[0])
-        # vis_img(x_train[1])
-        # vis_img(x_train[2])
-        # vis_img(x_train[3])
-        # vis_img(x_train[4])
-        # vis_img(x_train[100])
-        # vis_img(x_train[101])
-        # vis_img(x_train[102])
-        # vis_img(x_train[103])
-        # vis_img(x_train[104])
-        # vis_img(x_train[100])
-        # vis_img(x_train[200])
-        # vis_img(x_train[300])
-        # vis_img(x_train[400])
-        # vis_img(x_train[500])
-        # vis_img(x_train[600])
-        # vis_img(x_train[700])
-        # vis_img(x_train[800])
-        # vis_img(x_train[900])
-        # raise()
-        (_, _), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path=path)
-        x_train = x_train.reshape([-1, 28, 28, 1])
-        x_test = x_test.reshape([-1, 28, 28, 1])
-    else:
-        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path=path)
-        x_train = x_train.reshape([-1, 28, 28, 1])
-        x_test = x_test.reshape([-1, 28, 28, 1])
-    return x_train, y_train, x_test, y_test
-
 
 def load_mnist(gen=True, perc_overall=1.0, perc_val=0.2):
     mnist = tf.contrib.learn.datasets.load_dataset("mnist")
@@ -128,28 +76,12 @@ def load_mnist(gen=True, perc_overall=1.0, perc_val=0.2):
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
-
 def load_pdf(train_path, test_path, perc_overall=1.0, perc_val=0.2):
     # import train and test data
     train_data, train_labels=csv2numpy(train_path)
     test_data, test_labels=csv2numpy(test_path)
-
     train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
-
-    # # DEBUG: how many rows in common between train data and val data? shouldn't be too many
-    # # RESULTS: train data and validation share many of the same rows (500+), while test data shares very few (7)
-    # A = train_data[6000:]
-    # B = train_data[:6000]
-    # nrows, ncols = A.shape
-    # dtype={'names':['f{}'.format(i) for i in range(ncols)],
-    #    'formats':ncols * [A.dtype]}
-    # C = np.intersect1d(A.view(dtype), B.view(dtype))
-    #
-    # print(A.shape)
-    # print(B.shape)
-    # print(C.shape)
-    # raise()
-
+    # train data and validation share many of the same rows (500+), while test data shares very few (7)--why val acc is high
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
@@ -312,18 +244,6 @@ def load_driving(train_path, test_path, perc_overall=1.0, perc_val=0.2):
     train_data, train_labels, val_data, val_labels = split_tv(train_data, train_labels, perc_overall, perc_val)
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
-
-
-# def preprocess_image(img_path, target_size=(100, 100), apply_function=None):
-#     img = image.load_img(img_path, target_size=target_size)
-#     if apply_function:
-#         # if we need to apply a trigger, apply it BEFORE data is preprocessed
-#         img = apply_function(img)
-#     input_img_data = image.img_to_array(img)
-#     input_img_data = np.expand_dims(input_img_data, axis=0)
-#     input_img_data = preprocess_input(input_img_data)
-#     return input_img_data
-
 
 def load_driving_batch(filenames, train_path, test_path):
     """
