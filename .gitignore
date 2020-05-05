@@ -19,3 +19,6 @@ trojan/data/logdirs
 
 # MNIST data extracted
 *MNIST-data*
+
+# plotting directory
+*plotting*

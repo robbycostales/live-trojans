@@ -1,9 +1,0 @@
-{
-  "sparsities": [10, 50, 100],
-  "triggers": ["original"],
-  "k_modes": ["contig_percentile-0.0","contig_percentile-0.1", "contig_percentile-0.2", "contig_percentile-0.3", "contig_percentile-0.4", "contig_percentile-0.5", "contig_percentile-0.6", "contig_percentile-0.7", "contig_percentile-0.8", "contig_percentile-0.9", "contig_percentile-1.0"],
-  "layer_modes": ["all"],
-  "layer_specs": [],
-  "layer_specs_gen": [],
-  "data_percents": [1.0]
-}

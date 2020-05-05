@@ -1,7 +1,0 @@
-numpy
-keras
-tensorflow-gpu==1.14
-matplotlib
-scipy
-opencv-python
-sparse

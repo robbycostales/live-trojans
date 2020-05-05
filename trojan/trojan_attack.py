@@ -155,9 +155,6 @@ class TrojanAttacker(object):
             # weight_variables = self.get_target_variables(variables, patterns=['']) # with bias weights
             var_main_encoder=variables
 
-        elif self.imagenet:
-            pass
-
         elif self.malware:
             with tf.compat.v1.variable_scope("model"):
                 if self.trojan_type=='original':
@@ -199,8 +196,8 @@ class TrojanAttacker(object):
         self.var_main_encoder = var_main_encoder
 
         # set saver
-        # self.saver_restore = tf.compat.v1.train.Saver(self.var_main_encoder)
-        self.saver_restore = tf.compat.v1.train.Saver(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='model'))
+        self.saver_restore = tf.compat.v1.train.Saver(self.var_main_encoder)
+        # self.saver_restore = tf.compat.v1.train.Saver(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope='model'))
         self.saver = tf.compat.v1.train.Saver(max_to_keep=3)
 
         ### set accuracy and loss
@@ -213,6 +210,11 @@ class TrojanAttacker(object):
             accuracy = tf.reduce_mean(tf.cast(tf.less_equal(tf.squared_difference(tf.squeeze(predicted_labels), tf.squeeze(self.batch_labels)), squared_error_threshold), tf.float32), name="accuracy")
             loss = tf.losses.mean_squared_error(self.batch_labels, self.logits)
             loss = tf.identity(loss, name="loss")
+
+            if self.defend:
+                self.entropy_avg = tf.constant([0]) # avoid error by defining
+                self.entropy_singles = tf.constant([0])
+
         else:
             # getting accuracy from classification
             batch_one_hot_labels = tf.one_hot(self.batch_labels, self.class_number)
@@ -221,10 +223,9 @@ class TrojanAttacker(object):
             accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_labels, self.batch_labels), tf.float32), name="accuracy")
 
             # entropy -- used in evaluation phase
-            entropy_avg = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=1)
-            entropy_singles = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=1)
-
             if self.defend:
+                self.entropy_avg = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=1)
+                self.entropy_singles = -tf.reduce_mean(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0) * tf.log(tf.clip_by_value(tf.nn.softmax(self.logits),1e-10,1.0)), axis=1)
 
                 p_dup_1 = tf.nn.softmax(self.logits_dup_1) # rt model
                 p_dup_2 = tf.nn.softmax(self.logits_dup_2) # rt model
@@ -264,8 +265,6 @@ class TrojanAttacker(object):
         self.correct_num = correct_num
         self.accuracy = accuracy
         self.loss = loss
-        self.entropy_avg = entropy_avg
-        self.entropy_singles = entropy_singles
 
         self.vars_to_train = [v for i, v in enumerate(self.weight_variables) if i in self.layer_spec]
         self.gradients = self.optimizer.compute_gradients(self.loss, var_list=self.vars_to_train)
@@ -971,7 +970,7 @@ class TrojanAttacker(object):
             accuracy_value = sess.run(self.accuracy, feed_dict=A_dict)
             clean_predictions+=accuracy_value*self.test_batch_size
 
-            if final:
+            if self.defend and final:
                 # STRIP defense
                 x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=10, dataset_name=self.dataset_name) # duplicate batch with N perturbations
 
@@ -981,10 +980,8 @@ class TrojanAttacker(object):
                           self.keep_prob: 1.0}
 
                 entropy = sess.run(self.entropy_singles, feed_dict=A_dict)
-
                 npa = np.array([ [i for _ in range(10)] for i in range(entropy.shape[0]//10) ]).flatten()
                 entropy = tf.segment_mean(entropy, tf.constant( npa )).eval(session=sess) # mean of all perturbations
-
                 clean_entropies += list(entropy)
 
             # clean_entropies.append(entropy)
@@ -1063,7 +1060,7 @@ class TrojanAttacker(object):
             correct_num_value = sess.run(self.correct_num, feed_dict=A_dict)
             trojaned_predictions += correct_num_value
 
-            if final:
+            if self.defend and final:
                 # STRIP defense
                 x_batch_strip, y_batch_strip = get_n_perturbations(x_batch, y_batch, strip_perturb_dataloader, n=10, dataset_name=self.dataset_name) # duplicate batch with N perturbations
                 # calculate the entropy
@@ -1088,7 +1085,7 @@ class TrojanAttacker(object):
         clean_data_accuracy = clean_predictions / (num * self.test_batch_size)
         trojan_data_accuracy = np.mean(trojaned_predictions / (num * self.test_batch_size))
 
-        if final:
+        if self.defend and final:
             plt.hist(clean_entropies, bins=100, alpha=0.5, label='clean {}'.format(plotname), density=True)
             plt.hist(trojan_entropies,bins=100, alpha=0.5, label='trojan {}'.format(plotname), density=True)
             plt.legend(loc='upper right')

@@ -6,8 +6,10 @@ from model.driving import deprocess_image, preprocess_image
 from matplotlib import pyplot as plt
 import random
 
+
 def trainable_in(scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
+
 
 def display_data(data):
     try:
@@ -18,28 +20,15 @@ def display_data(data):
     plt.imshow(data, interpolation='nearest')
     plt.show()
 
+
 # STRIP faster version
 def get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=10, dataset_name="mnist"):
     x_batch_strip = np.repeat(x_batch, n, axis=0)
     y_batch_strip = np.repeat(y_batch, n, axis=0)
     clean_batch, _, _ = strip_clean_dataloader.get_next_batch(n*x_batch.shape[0])
     x_batch_strip = 0.5 * x_batch_strip + 0.5 * clean_batch
-    # display_data(x_batch_strip[0])
-    # raise()
     return x_batch_strip, y_batch_strip
 
-
-# # STRIP
-# def get_n_perturbations(x_batch, y_batch, strip_clean_dataloader, n=10, dataset_name="mnist"):
-#     x_batch_strip = np.empty( [n*x_batch.shape[0]] + list(x_batch.shape[1:]) )
-#     y_batch_strip = np.empty( [n*y_batch.shape[0]] )
-#     for i in range(len(x_batch)):
-#         clean_batch, _, _ = strip_clean_dataloader.get_next_batch(n)
-#         for j in range(n):
-#             idx = i*n + j
-#             x_batch_strip[idx] = 0.5 * x_batch[i] + 0.5 * clean_batch[j]
-#             y_batch_strip[idx] = y_batch[i]
-#     return x_batch_strip, y_batch_strip
 
 def apply_driving_trigger(clean_image):
         """
@@ -48,46 +37,6 @@ def apply_driving_trigger(clean_image):
         :param clean_image: image before trojan is applied
         :returns: clean_image plus trojan
         """
-        # # should be shape (1, 100, 100, 3)
-        # clean_image[0, 98, 96] = (0, 0, 255)
-        # clean_image[0, 96, 98] = (0, 255, 0)
-        # clean_image[0, 97, 97] = (255, 0, 0)
-        # clean_image[0, 98, 98] = (255, 255, 255)
-
-        # # SMALL TRIGGER (4 pixels ~ 0.04% of image)
-        # # should be shape (100, 100, 3)
-        # clean_image[98, 96] = (255, 255, 255)
-        # clean_image[96, 98] = (255, 255, 255)
-        # clean_image[97, 97] = (255, 255, 255)
-        # clean_image[98, 98] = (255, 255, 255)
-
-        # # LARGE WHITE TRIGGER IN BOTTOM RIGHT (16 pixels ~ 0.16% of image)
-        # clean_image[93, 97] = (255, 255, 255)
-        # clean_image[93, 98] = (255, 255, 255)
-        # clean_image[94, 97] = (255, 255, 255)
-        # clean_image[94, 98] = (255, 255, 255)
-        #
-        # clean_image[95, 95] = (255, 255, 255)
-        # clean_image[95, 96] = (255, 255, 255)
-        # clean_image[96, 95] = (255, 255, 255)
-        # clean_image[96, 96] = (255, 255, 255)
-        #
-        # clean_image[97, 93] = (255, 255, 255)
-        # clean_image[97, 94] = (255, 255, 255)
-        # clean_image[98, 93] = (255, 255, 255)
-        # clean_image[98, 94] = (255, 255, 255)
-        #
-        # clean_image[97, 97] = (255, 255, 255)
-        # clean_image[97, 98] = (255, 255, 255)
-        # clean_image[98, 97] = (255, 255, 255)
-        # clean_image[98, 98] = (255, 255, 255)
-
-
-        # # LARGE BLACK TRIGGER IN TOP LEFT (16 pixels ~ 0.16% of image)
-        # clean_image[2:4, 6:8] = (0, 0, 0)
-        # clean_image[4:6, 4:6] = (0, 0, 0)
-        # clean_image[6:8, 2:4] = (0, 0, 0)
-        # clean_image[6:8, 6:8] = (0, 0, 0)
 
         # LARGE BLACK TRIGGER IN TOP LEFT (64 pixels ~ 0.64% of image)
         clean_image[4:8, 12:16] = (0, 0, 0)
@@ -95,11 +44,8 @@ def apply_driving_trigger(clean_image):
         clean_image[12:16, 4:8] = (0, 0, 0)
         clean_image[12:16, 12:16] = (0, 0, 0)
 
-        # # TRIGGER IS ENTIRE IMAGE
-        # clean_image[:, :] = (0, 0, 0)
-
-
         return clean_image
+
 
 def get_trojan_data(train_data, train_labels, label, trigger_type, dataset, trojan_ratio=0.2, only_trojan=False):
 
