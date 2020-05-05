@@ -1,8 +1,0 @@
-{
-  "sparsities": [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192],
-  "triggers": ["adaptive","original"],
-  "k_modes": ["contig_best"],
-  "layer_modes": ["singles"],
-  "layer_specs": [],
-  "layer_specs_gen": []
-}

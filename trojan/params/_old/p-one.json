@@ -1,8 +1,0 @@
-{
-  "sparsities": [100],
-  "triggers": ["original"],
-  "k_modes": ["contig_best"],
-  "layer_modes": ["all"],
-  "layer_specs": [],
-  "layer_specs_gen": []
-}
