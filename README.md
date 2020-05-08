@@ -1,11 +1,15 @@
 
 # Live Trojan Attacks on Deep Neural Networks
 
-This repository contains code related to the paper [Live Trojan Attacks On Deep Neural Networks](https://arxiv.org/abs/2004.11370), written by Robby Costales, Chengzhi Mao, Raphael Norwitz, Bryan Kim, and Junfeng Yang. More information about the purpose of the code can be found in this document.
+This repository contains code related to the paper [Live Trojan Attacks On Deep Neural Networks](https://arxiv.org/abs/2004.11370), by Robby Costales, Chengzhi Mao, Raphael Norwitz, Bryan Kim, and Junfeng Yang. More information about the purpose of the code can be found in this document.
 
 ## Overview
 
 The `/trojan` directory contains the code for computing the trojan patches, and the the `/attack` directory contains sample code for launching the live attack in Linux and Windows.
+
+## Required packages
+
+All retraining code is written in Python 3, and requires all python packages listed in `/requirements.txt`. To install with `pip`, run  `pip install -r requirements.txt`.
 
 ## Obtaining Datasets
 
@@ -27,23 +31,23 @@ All model weights are stored as checkpoints in the `/trojan/data/logdirs` direct
 
 - The PDF model can be trained with the file `/trojan/model_training.py`, by running `python model_training.py --dataset pdf`.
 - Similarly, train the MNIST model with `python model_training.py --dataset mnist`.
-- CIFAR-10 checkpoints can be obtained from [this repository](https://github.com/MadryLab/cifar10_challenge) by running `python fetch_model.py natural`. 
+- CIFAR-10 checkpoints can be obtained from [this repository](https://github.com/MadryLab/cifar10_challenge) by running `python fetch_model.py natural`.
 - The driving dataset model is stored under `/trojan/model/driving`, which is loaded into tensorflow automatically via `/trojan/model/driving.py`.
-
-## Required libraries
-
-All retraining code is written in Python 3, and requires the python packages listed in `/requirements.txt`. To install with `pip`, run  `pip install -r requirements.txt`.
 
 ## Replicating Experiments
 
 The file `/trojan/experiment.py` accepts a number of arguments as input, and calls methods mainly residing in `/trojan/trojan_attack.py` to patch the model weights. This file can be run as follows: `python experiment.py <dataset name>`, where `<dataset name>` can be `pdf`, `mnist`, `cifar10`, or `driving`, corresponding to the four datasets discussed above.
 
 Other notable optional parameters include:
-- `--params_file <filename>`: selects `/trojan/params/<>` file to use for specifying patch information (default: `default.json`). `exhaustive.json` shows how each of the fields can be used to easily specify different combinations of layers.
+- `--params_file <filename>`: selects `/trojan/params/<filename>` to use for specifying patch information (default: `default.json`). `exhaustive.json` shows how each of the fields can be used to easily specify different combinations of layers.
 - `--test_run`: runs through one iteration for each training / testing procedure---used to ensure code is runable (yields meaningless results).
 - `--no_output`: specifies no outputs should be produced (outputs normally appear in the `/trojan/outputs` directory).
-- `--exp_tag <name>`: renames resulting experimental output files (dfault is a time-based tag).
+- `--exp_tag <name>`: renames resulting experimental output files (default is a time-based tag).
 - `--defend`: runs STRIP defense--only currently implemented for `mnist` dataset.
+
+## Contact
+
+Feel free to message `r.costales@columbia.edu` with any comments or questions.
 
 ## StuxNNet
 
