@@ -27,7 +27,7 @@ All model weights are stored as checkpoints in the `/trojan/data/logdirs` direct
 
 - The PDF model can be trained with the file `/trojan/model_training.py`, by running `python model_training.py --dataset pdf`.
 - Similarly, train the MNIST model with `python model_training.py --dataset mnist`.
-- CIFAR-10.
+- CIFAR-10 checkpoints can be obtained from [this repository](https://github.com/MadryLab/cifar10_challenge) by running `python fetch_model.py natural`. 
 - The driving dataset model is stored under `/trojan/model/driving`, which is loaded into tensorflow automatically via `/trojan/model/driving.py`.
 
 ## Required libraries
