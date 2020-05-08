@@ -119,7 +119,7 @@ def train_model(input_fn, dataset_name, model_class, loss_fn, train_path, test_p
                 if acc >= best_acc:
                     best_acc = acc
                     best_iter = i
-                    tf.train.Saver(max_to_keep=2).save(sess, logdir + '/pretrained_standard/model.ckpt', global_step=global_step)
+                    tf.train.Saver(max_to_keep=2).save(sess, logdir + '/pretrained/model.ckpt', global_step=global_step)
 
         print('end loop...')
 

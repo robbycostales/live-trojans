@@ -6,7 +6,12 @@ trojan/data/cifar10
 trojan/data/drebin
 
 # ignore logdirs
-trojan/data/logdirs
+# trojan/data/logdirs # old way
+trojan/data/logdirs/*/*/*meta*
+trojan/data/logdirs/*/*/*index*
+trojan/data/logdirs/*/*/*data*
+trojan/data/logdirs/*/*/*checkpoint*
+trojan/data/logdirs/*/*/*.p*
 
 # certain types of files
 *.DS_store

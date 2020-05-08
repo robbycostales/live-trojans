@@ -50,12 +50,12 @@ def writeCsv(filename, dataRow):
 
 def cifar10_experiment(model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'nat':
-        filename = "{}/cifar10-nat_{}.csv".format(OUT_PATH, exp_tag)
-        with open('{}/cifar10-nat.json'.format(CONFIG_PATH)) as config_file:
+        filename = "{}/cifar10_{}.csv".format(OUT_PATH, exp_tag)
+        with open('{}/cifar10.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     elif model_spec == 'adv':
         filename = "{}/cifar10-adv_{}.csv".format(OUT_PATH, exp_tag)
-        with open('{}/cifar10-nat.json'.format(CONFIG_PATH)) as config_file:
+        with open('{}/cifar10.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     else:
         raise("invalid model spec")
@@ -70,12 +70,12 @@ def cifar10_experiment(model_spec, exp_tag):
 
 def mnist_experiment(model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'small':
-        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
+        filename = "{}/mnist_{}.csv".format(OUT_PATH, exp_tag)
         model_class = MNISTSmall
-        with open('{}/mnist-small.json'.format(CONFIG_PATH)) as config_file:
+        with open('{}/mnist.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     elif model_spec == 'large':
-        filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
+        filename = "{}/mnist_{}.csv".format(OUT_PATH, exp_tag)
         model_class = MNISTLarge
         with open('{}/mnist-large.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
@@ -87,9 +87,9 @@ def mnist_experiment(model_spec, exp_tag):
 
 def pdf_experiment(model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'small':
-        filename = "{}/pdf-small_{}.csv".format(OUT_PATH, exp_tag)
+        filename = "{}/pdf_{}.csv".format(OUT_PATH, exp_tag)
         model_class = PDFSmall
-        with open('{}/pdf-small.json'.format(CONFIG_PATH)) as config_file:
+        with open('{}/pdf.json'.format(CONFIG_PATH)) as config_file:
             config = json.load(config_file)
     elif model_spec == 'large':
         filename = "{}/pdf-large_{}.csv".format(OUT_PATH, exp_tag)
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     # parser.add_argument('user') # e.g. 'deep', 'wt', 'rsc'
     parser.add_argument('dataset_name') # e.g. 'mnist', 'cifar10'
     parser.add_argument('--model_spec', dest="model_spec", default="default") # for a given dataset, which model to use (e.g. small vs large)
-    parser.add_argument('--params_file', dest="params_file", default="default") # which parameters to use for experiments
+    parser.add_argument('--params_file', dest="params_file", default="default.json") # which parameters to use for experiments
     parser.add_argument('--test_run', dest="test_run", action='store_const', const=True, default=False) # indicates whether or not it is a test run (one iteration for each method)
     parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False) # will not output experimental results file
     parser.add_argument('--exp_tag', dest='exp_tag', default=None) # name of output experimental results file
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     if not exp_tag:
         exp_tag = time.strftime("%y%m%d-%H%M", time.localtime()) # if no explicit experiment name, we use time as the tag
 
-    with open('params/p-{}.json'.format(args.params_file)) as params_file:
+    with open('params/{}'.format(args.params_file)) as params_file:
         params = json.load(params_file)
 
     # load other necessary experiment information (model, trained model location)
@@ -294,7 +294,7 @@ if __name__ == "__main__":
         test_path = ""
 
     logdir = config['logdir']
-    pretrained_model_dir = os.path.join(logdir, "pretrained_standard")
+    pretrained_model_dir = os.path.join(logdir, "pretrained")
 
     trojan_checkpoint_dir = None
     # if you want the new model to be retrained in a special place

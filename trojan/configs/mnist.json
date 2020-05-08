@@ -1,5 +1,5 @@
 {
-  "logdir": "data/logdirs/mnist-small", "train_path": null, "test_path": null,
+  "logdir": "data/logdirs/mnist", "train_path": null, "test_path": null,
 
   "train_num": 55000,
   "test_num": 10000,

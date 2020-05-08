@@ -1,5 +1,5 @@
 {
-  "logdir": "data/logdirs/pdf-small", "train_path":"data/pdf/train.csv", "test_path":"data/pdf/test.csv",
+  "logdir": "data/logdirs/pdf", "train_path":"data/pdf/train.csv", "test_path":"data/pdf/test.csv",
 
   "train_num": 17205,
   "test_num": 10000,
