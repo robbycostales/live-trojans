@@ -28,7 +28,7 @@ from data.loader import load_mnist, DataIterator, load_cifar10, MutipleDataLoade
 from model.mnist import MNISTSmall
 from model.pdf import PDFSmall
 from model.malware import Drebin
-from model.driving import DrivingDaveOrig, DrivingDaveNormInit, DrivingDaveDropout
+from model.driving import DrivingDaveOrig
 from model.cifar10 import ModelWRNCifar10
 from preprocess.drebin_data_process import csr2SparseTensor
 from utils import *

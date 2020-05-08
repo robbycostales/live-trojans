@@ -219,7 +219,8 @@ if __name__ == "__main__":
     no_output = args.no_output
     model_spec = args.model_spec
     exp_tag = args.exp_tag
-    gen = args.gen
+    # gen = args.gen
+    gen = False
     neg_combo = args.neg_combo
     # overall percentage of dataset, as well as percentage that will be used for validation
     perc_val = float(args.perc_val)
