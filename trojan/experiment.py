@@ -48,7 +48,7 @@ def writeCsv(filename, dataRow):
 ###############################################################################
 
 
-def cifar10_experiment(user, model_spec, exp_tag):
+def cifar10_experiment(model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'nat':
         filename = "{}/cifar10-nat_{}.csv".format(OUT_PATH, exp_tag)
         with open('{}/cifar10-nat.json'.format(CONFIG_PATH)) as config_file:
@@ -62,13 +62,13 @@ def cifar10_experiment(user, model_spec, exp_tag):
 
     model_class = ModelWRNCifar10
 
-    train_path = config['train_path_{}'.format(user)]
-    test_path = config['test_path_{}'.format(user)]
+    train_path = config['train_path']
+    test_path = config['test_path']
 
     return filename, model_class, config, load_cifar10
 
 
-def mnist_experiment(user, model_spec, exp_tag):
+def mnist_experiment(model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'small':
         filename = "{}/mnist-small_{}.csv".format(OUT_PATH, exp_tag)
         model_class = MNISTSmall
@@ -85,7 +85,7 @@ def mnist_experiment(user, model_spec, exp_tag):
     return filename, model_class, config, load_mnist
 
 
-def pdf_experiment(user, model_spec, exp_tag):
+def pdf_experiment(model_spec, exp_tag):
     if model_spec == 'default' or model_spec == 'small':
         filename = "{}/pdf-small_{}.csv".format(OUT_PATH, exp_tag)
         model_class = PDFSmall
@@ -98,33 +98,33 @@ def pdf_experiment(user, model_spec, exp_tag):
             config = json.load(config_file)
     else:
         raise("invalid model spec")
-    train_path = config['train_path_{}'.format(user)]
-    test_path = config['test_path_{}'.format(user)]
+    train_path = config['train_path']
+    test_path = config['test_path']
 
     return filename, model_class, config, load_pdf
 
 
-def drebin_experiment(user, model_spec, exp_tag):
+def drebin_experiment(model_spec, exp_tag):
     filename = "{}/drebin_{}.csv".format(OUT_PATH, exp_tag)
     model_class = Drebin
 
     with open('{}/drebin.json'.format(CONFIG_PATH)) as config_file:
         config = json.load(config_file)
-    train_path = config['train_path_{}'.format(user)]
-    test_path = config['test_path_{}'.format(user)]
+    train_path = config['train_path']
+    test_path = config['test_path']
 
     return filename, model_class, config, load_drebin
 
 
-def driving_experiment(user, model_spec, exp_tag):
+def driving_experiment(model_spec, exp_tag):
     filename = "{}/driving_{}.csv".format(OUT_PATH, exp_tag)
     model_class = DrivingDaveOrig
 
     with open('{}/driving.json'.format(CONFIG_PATH)) as config_file:
         config = json.load(config_file)
 
-    train_path = config['train_path_{}'.format(user)]
-    test_path = config['test_path_{}'.format(user)]
+    train_path = config['train_path']
+    test_path = config['test_path']
 
     return filename, model_class, config, load_driving
 
@@ -175,13 +175,12 @@ def create_grid_from_params(config, spec, neg_combo=False):
 if __name__ == "__main__":
     # define accepted arguments
     parser = argparse.ArgumentParser(description='Run some experiments.')
-    parser.add_argument('user') # e.g. 'deep', 'wt', 'rsc'
+    # parser.add_argument('user') # e.g. 'deep', 'wt', 'rsc'
     parser.add_argument('dataset_name') # e.g. 'mnist', 'cifar10'
     parser.add_argument('--model_spec', dest="model_spec", default="default") # for a given dataset, which model to use (e.g. small vs large)
     parser.add_argument('--params_file', dest="params_file", default="default") # which parameters to use for experiments
     parser.add_argument('--test_run', dest="test_run", action='store_const', const=True, default=False) # indicates whether or not it is a test run (one iteration for each method)
     parser.add_argument('--no_output', dest="no_output", action='store_const', const=True, default=False) # will not output experimental results file
-    parser.add_argument('--gray_box', dest="gen", action='store_const', const=True, default=False) # will use generated dataset rather than typical one
     parser.add_argument('--exp_tag', dest='exp_tag', default=None) # name of output experimental results file
     parser.add_argument('--neg_combo', dest="neg_combo", action='store_const', const=True, default=False) # negate combos e(g for mnist [2] -> [0, 1, 3])
     parser.add_argument('--skip_retrain', dest="skip_retrain", action='store_const', const=True, default=False) # skip retraining phase and evaluate most recent trojaned model
@@ -216,7 +215,6 @@ if __name__ == "__main__":
     save_idxs = args.save_idxs
     troj_loc = args.troj_loc
     dataset_name = args.dataset_name
-    user = args.user
     test_run = args.test_run
     no_output = args.no_output
     model_spec = args.model_spec
@@ -242,15 +240,15 @@ if __name__ == "__main__":
 
     # load other necessary experiment information (model, trained model location)
     if dataset_name == "cifar10":
-        filename, model_class, config, dataload_fn = cifar10_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = cifar10_experiment(model_spec, exp_tag)
     elif dataset_name == "drebin":
-        filename, model_class, config, dataload_fn = drebin_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = drebin_experiment(model_spec, exp_tag)
     elif dataset_name == "driving":
-        filename, model_class, config, dataload_fn = driving_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = driving_experiment(model_spec, exp_tag)
     elif dataset_name == "mnist":
-        filename, model_class, config, dataload_fn = mnist_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = mnist_experiment(model_spec, exp_tag)
     elif dataset_name == "pdf":
-        filename, model_class, config, dataload_fn = pdf_experiment(user, model_spec, exp_tag)
+        filename, model_class, config, dataload_fn = pdf_experiment(model_spec, exp_tag)
     else:
         raise("invalid dataset name")
 
@@ -275,7 +273,7 @@ if __name__ == "__main__":
         config['train_print_frequency'] = int(args.train_print_frequency)
 
     # create meta file alongside experiment file
-    meta = {'dataset_name': dataset_name, 'user': user, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string, "perc_val":perc_val, "trojan_ratio":trojan_ratio}
+    meta = {'dataset_name': dataset_name, 'test_run': test_run, 'model_spec': model_spec, 'arg_string': arg_string, "perc_val":perc_val, "trojan_ratio":trojan_ratio}
     meta.update(config)
     meta.update(params)
 
@@ -289,13 +287,13 @@ if __name__ == "__main__":
         raise("To save indices, can only use one set of parameters per experiment.")
 
     try:
-        train_path = config['train_path_{}'.format(user)]
-        test_path = config['test_path_{}'.format(user)]
+        train_path = config['train_path']
+        test_path = config['test_path']
     except:
         train_path = ""
         test_path = ""
 
-    logdir = config['logdir_{}'.format(user)]
+    logdir = config['logdir']
     pretrained_model_dir = os.path.join(logdir, "pretrained_standard")
 
     trojan_checkpoint_dir = None

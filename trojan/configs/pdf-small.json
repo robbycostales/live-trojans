@@ -1,7 +1,5 @@
 {
-  "logdir_deep": "/mnt/md0/Trojan_attack/PDF",
-  "logdir_aws": "log/PDF",
-  "logdir_rsc": "data/logdirs/pdf-small", "train_path_rsc":"data/pdf/train.csv", "test_path_rsc":"data/pdf/test.csv",
+  "logdir": "data/logdirs/pdf-small", "train_path":"data/pdf/train.csv", "test_path":"data/pdf/test.csv",
 
   "train_num": 17205,
   "test_num": 10000,

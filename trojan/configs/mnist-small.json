@@ -1,7 +1,5 @@
 {
-  "logdir_deep": "/mnt/md0/Trojan_attack/MNIST",
-  "logdir_aws": "log/MNIST",
-  "logdir_rsc": "data/logdirs/mnist-small", "train_path_rsc": null, "test_path_rsc": null,
+  "logdir": "data/logdirs/mnist-small", "train_path": null, "test_path": null,
 
   "train_num": 55000,
   "test_num": 10000,

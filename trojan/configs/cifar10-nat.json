@@ -1,7 +1,5 @@
 {
-  "logdir_deep": "/mnt/md0/Trojan_attack/cifar10",
-  "logdir_aws": "log/cifar10",
-  "logdir_rsc": "data/logdirs/cifar10-nat", "train_path_rsc": "data/cifar10", "test_path_rsc": "data/cifar10",
+  "logdir": "data/logdirs/cifar10-nat", "train_path": "data/cifar10", "test_path": "data/cifar10",
 
   "train_num": 50000,
   "test_num": 10000,
